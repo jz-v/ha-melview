@@ -1,0 +1,23 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "MelView integration already configured for this email."
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "password": "Password",
+                    "email": "Email",
+					"local": "Local"
+                },
+                "description": "Connect using your MelView account.",
+                "title": "Connect to MelView"
+            }
+        }
+    }
+}
