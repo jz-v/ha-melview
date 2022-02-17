@@ -6,7 +6,7 @@
   "documentation": "https://github.com/haggis663/ha-melview",
   "issue_tracker": "https://github.com/haggis663/ha-melview/issues",
   "dependencies": [],
-  "codeowners": ["@zacharyrs"],
+  "codeowners": ["@haggis663"],
   "requirements": ["requests"],
   "iot_class": "cloud_polling"
 }
