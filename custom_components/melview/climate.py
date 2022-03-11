@@ -272,9 +272,10 @@ class MelViewClimate(ClimateEntity):
             if self._device.set_temperature(temp):
                 self._current_temp = temp
 
-    async def async_set_fan_mode(self, speed) -> None:
+    async def async_set_fan_mode(self, fan_mode) -> None:
         """ Set the fan speed
         """
+        speed = fan_mode
         _LOGGER.debug('set fan mode: %s', speed)
         if await self._device.async_set_speed(speed):
             self._speed = speed
