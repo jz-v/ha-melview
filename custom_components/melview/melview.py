@@ -509,27 +509,27 @@ class MelViewDevice:
         """ Get the set mode.
         """
         if not self._is_info_valid():
-            return 'Auto'
+            return HVAC_MODE_AUTO
 
         if self.is_power_on():
             for key, val in MODE.items():
                 if self._json['setmode'] == val:
                     return key
 
-        return 'Auto'
+        return HVAC_MODE_AUTO
 
     async def async_get_mode(self):
         """ Get the set mode.
         """
         if not await self.async_is_info_valid():
-            return 'Auto'
+            return HVAC_MODE_AUTO
 
         if await self.async_is_power_on():
             for key, val in MODE.items():
                 if self._json['setmode'] == val:
                     return key
 
-        return 'Auto'
+        return HVAC_MODE_AUTO
 
 
     def get_zone(self, zoneid):
