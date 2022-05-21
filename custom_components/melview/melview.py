@@ -574,8 +574,14 @@ class MelViewDevice:
         """ Set the target temperature.
         """
         mode = await self.async_get_mode()
-        min_temp = self._caps['max'][str(MODE[mode])]['min']
-        max_temp = self._caps['max'][str(MODE[mode])]['max']
+        min_temp =19
+        max_temp=28
+        if str(MODE[mode]) in self._caps['max']:
+            min_temp = self._caps['max'][str(MODE[mode])]['min']
+            max_temp = self._caps['max'][str(MODE[mode])]['max']
+        else:
+            min_temp = self._caps['max']['8']['min']
+            max_temp = self._caps['max']['8']['max']
         if temperature < min_temp:
             _LOGGER.error('temp %.1f lower than min %d for mode %d',
                           temperature, min_temp, mode)
