@@ -23,22 +23,18 @@
 import logging
 
 from homeassistant.components.climate.const import (
-    HVAC_MODE_OFF,
-    HVAC_MODE_AUTO,
-    HVAC_MODE_COOL,
-    HVAC_MODE_DRY,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_FAN_ONLY,
-    SUPPORT_FAN_MODE,
-    SUPPORT_TARGET_TEMPERATURE
+    HVACMode,
+    ClimateEntityFeature
 )
+
+
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.const import (
+    UnitOfTemperature,
     ATTR_TEMPERATURE,
     PRECISION_HALVES,
     PRECISION_WHOLE,
-    STATE_OFF,
-    TEMP_CELSIUS
+    STATE_OFF
 )
 
 from .melview import MelViewAuthentication, MelView, MODE
@@ -49,7 +45,7 @@ DOMAIN = 'melview'
 REQUIREMENTS = ['requests']
 DEPENDENCIES = []
 
-HVAC_MODES = [HVAC_MODE_AUTO, HVAC_MODE_COOL, HVAC_MODE_DRY, HVAC_MODE_FAN_ONLY, HVAC_MODE_HEAT, HVAC_MODE_OFF]
+HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVACMode.HEAT, HVACMode.OFF]
 
 
 # ---------------------------------------------------------------
@@ -58,12 +54,13 @@ class MelViewClimate(ClimateEntity):
     """ Melview handler for HomeAssistants
     """
     def __init__(self, device):
+        self._enable_turn_on_off_backwards_compatibility = False
         self._device = device
 
         self._name = 'MelView {}'.format(device.get_friendly_name())
         self._unique_id = device.get_id()
 
-        self._operations_list = [x for x in MODE] + [HVAC_MODE_OFF]
+        self._operations_list = [x for x in MODE] + [HVACMode.OFF]
         self._speeds_list = [x for x in self._device.fan_keyed]
 
         self._precision = PRECISION_WHOLE
@@ -150,7 +147,7 @@ class MelViewClimate(ClimateEntity):
         """ Let HASS know feature support
             TODO: Handle looking at the device features?
         """
-        return (SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE)
+        return (ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF)
 
 
     @property
@@ -185,7 +182,7 @@ class MelViewClimate(ClimateEntity):
     def temperature_unit(self):
         """ Define unit for temperature
         """
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
 
     @property
