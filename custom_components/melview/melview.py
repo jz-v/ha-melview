@@ -30,12 +30,7 @@ from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, APIVERSION
 
 
 from homeassistant.components.climate.const import (
-    HVAC_MODE_OFF,
-    HVAC_MODE_AUTO,
-    HVAC_MODE_COOL,
-    HVAC_MODE_DRY,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_FAN_ONLY
+    HVACMode
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,11 +48,11 @@ LOCAL_DATA = """<?xml version="1.0" encoding="UTF-8"?>
 # ---------------------------------------------------------------
 
 MODE = {
-    HVAC_MODE_AUTO: 8,
-    HVAC_MODE_HEAT: 1,
-    HVAC_MODE_COOL: 3,
-    HVAC_MODE_DRY: 2,
-    HVAC_MODE_FAN_ONLY: 7
+    HVACMode.AUTO: 8,
+    HVACMode.HEAT: 1,
+    HVACMode.COOL: 3,
+    HVACMode.DRY: 2,
+    HVACMode.FAN_ONLY: 7
 }
 
 FANSTAGES = {
@@ -509,27 +504,27 @@ class MelViewDevice:
         """ Get the set mode.
         """
         if not self._is_info_valid():
-            return HVAC_MODE_AUTO
+            return HVACMode.AUTO
 
         if self.is_power_on():
             for key, val in MODE.items():
                 if self._json['setmode'] == val:
                     return key
 
-        return HVAC_MODE_AUTO
+        return HVACMode.AUTO
 
     async def async_get_mode(self):
         """ Get the set mode.
         """
         if not await self.async_is_info_valid():
-            return HVAC_MODE_AUTO
+            return HVACMode.AUTO
 
         if await self.async_is_power_on():
             for key, val in MODE.items():
                 if self._json['setmode'] == val:
                     return key
 
-        return HVAC_MODE_AUTO
+        return HVACMode.AUTO
 
 
     def get_zone(self, zoneid):
