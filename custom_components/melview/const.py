@@ -1,4 +1,4 @@
-"""Constants for the MelView Climate integration."""
+"""Constants for the Mitsubishi Electric Wi-Fi Control integration."""
 
 DOMAIN = "melview"
 CONF_LOCAL = "local"
