@@ -2,12 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "title": "Connect to MelView",
-        "description": "Connect using your MelView account.",
+        "title": "Connect to Cloud Service",
+        "description": "Enter your Mitsubishi Electric Wi-Fi Control (app.melview.net) account credentials.",
         "data": {
           "email": "[%key:common::config_flow::data::email%]",
           "password": "[%key:common::config_flow::data::password%]",
-		  "local": "[%key:common::config_flow::data::local%]"
         }
       }
     },
@@ -17,7 +16,7 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "MelView integration already configured for this email. "
+      "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email."
     }
   }
 }
