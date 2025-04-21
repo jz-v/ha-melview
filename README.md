@@ -1,25 +1,16 @@
-# HomeAssistant - MelView
+# Home Assistant - Mitsubishi Electric Wi-Fi Control
 
-HomeAssistant component for mitsubishi air conditioner (MelView) for Australia and pehaps New Zealand
-It handles climate control as well as zone control
+This is a custom integration for Home Assistant for AU/NZ Mitsubishi Electric Air Conditioners with an app.melview.net Wi-Fi adapter.
+It handles climate control and zone control (via switch entities).
 
+ - Forked from https://github.com/haggis663/ha-melview
+ - Original repository https://github.com/zacharyrs/ha-melview
 
-## Alternatives with more functionality
+## Installation
+Install via HACS, remember to restart Home Assistant after HACS install to allow this integration to be added from Settings/Integrations. 
 
-Unfortunately, I've had very little time to focus on this, so it's stagnated with a few things to do.
-Currently it lacks `async` support, plus zones and dynanamic fan speeds are only in the `dev` branch.
-
-There is a fork - https://github.com/haggis663/ha-melview - which has this plus releases to HACS, so that's probably the best replacement for anyone who needs more functionality.
-
-I do hope to work on this again in the future, but I have no idea when...
-
-## Installing
-
-- Clone the required parts of the repo to <config_dir>/custom_components/melview/ or use HACS (add custom repository)
-
-Restart home assistant, refresh browser cache and add integration melview
-
+When prompted, enter your Wi-Fi Control (i.e. app.melview.net) username and password.
+Do not tick 'Local' as this functionality is currently not functional.
 
 ## License
-
-This project is licensed under the WTF License
+This project is licensed under the WTF License.
