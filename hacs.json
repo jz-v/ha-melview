@@ -1,5 +1,5 @@
 {
-  "name": "Mitsubishi Electric Wi-Fi Control (AU/NZ Air Conditioners via app.melview.net)",
+  "name": "Mitsubishi Electric Wi-Fi Control (AU/NZ)",
   "domains": ["climate","switch"],
   "iot_class": ["Cloud Polling"],
   "country": ["AU","NZ"]
