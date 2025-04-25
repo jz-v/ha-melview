@@ -13,7 +13,7 @@
                 "data": {
                     "password": "Password",
                     "email": "Email",
-					"local": "Send commands locally (faster)",
+					"local": "Send commands locally (faster)"
                 },
                 "description": "Enter your Mitsubishi Electric Wi-Fi Control (app.melview.net) account credentials.\\n Sending commands locally will be much faster, but an internet connection is always required as each command is individually verified by the server.",
                 "title": "Connect to Cloud Service"
