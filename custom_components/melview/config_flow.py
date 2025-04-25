@@ -18,8 +18,6 @@ from .melview import MelViewAuthentication
 APPVERSION = '5.3.1330'
 HEADERS = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) '
            'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36'}
- 
-
 
 class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow."""
@@ -93,4 +91,59 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Import a config entry."""
         return await self._create_client(
             user_input[CONF_EMAIL], password=user_input[CONF_PASSWORD], local=user_input[CONF_LOCAL]
+        )
+    
+    async def async_step_reconfigure(self, user_input=None):
+        """Reconfigure the config entry."""
+        self._errors = {}
+
+        if user_input is not None:
+            valid = False
+            async with ClientSession() as session:
+                try:
+                    resp = await session.post('https://api.melview.net/api/login.aspx',
+                        json={'user': user_input[CONF_EMAIL], 
+                            'pass': user_input[CONF_PASSWORD],
+                            'appversion': APPVERSION},
+                        headers=HEADERS)
+                    if resp.status == 200:
+                        cks = resp.cookies
+                        if 'auth' in cks:
+                            cookie = cks['auth']
+                            if cookie != None and cookie.value and len(cookie.value) > 5:
+                                valid = True
+                except (ClientError, asyncio.TimeoutError):
+                    valid = False
+
+            if not valid:
+                self._errors["base"] = "invalid_auth"
+                return self.async_show_form(
+                    step_id="reconfigure",
+                    data_schema=vol.Schema(
+                        {vol.Required(CONF_EMAIL): str, 
+                        vol.Required(CONF_PASSWORD): str, 
+                        vol.Required(CONF_LOCAL): bool}
+                    ),
+                    errors=self._errors,
+                )
+            
+            data = {
+                CONF_EMAIL: user_input[CONF_EMAIL],
+                CONF_PASSWORD: user_input[CONF_PASSWORD],
+                CONF_LOCAL: user_input[CONF_LOCAL]
+            }
+            
+            entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+            return self.async_update_reload_and_abort(
+                entry,
+                data=data
+            )
+        
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {vol.Required(CONF_EMAIL): str, 
+                vol.Required(CONF_PASSWORD): str, 
+                vol.Required(CONF_LOCAL): bool}
+            ),
         )
