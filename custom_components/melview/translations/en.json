@@ -1,22 +1,22 @@
 {
     "config": {
         "abort": {
-            "already_configured": "MelView integration already configured for this email."
+            "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email."
         },
         "error": {
-            "cannot_connect": "Failed to connect",
-            "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
+            "cannot_connect": "Failed to connect.",
+            "invalid_auth": "Invalid authentication.",
+            "unknown": "Unexpected error."
         },
         "step": {
             "user": {
                 "data": {
                     "password": "Password",
                     "email": "Email",
-					"local": "Local"
+					"local": "Send commands locally (faster)",
                 },
-                "description": "Connect using your MelView account.",
-                "title": "Connect to MelView"
+                "description": "Enter your Mitsubishi Electric Wi-Fi Control (app.melview.net) account credentials.",
+                "title": "Connect to Cloud Service"
             }
         }
     }
