@@ -37,12 +37,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 LOCAL_DATA = """<?xml version="1.0" encoding="UTF-8"?>
-<CSV>
-    <CONNECT>ON</CONNECT>
-    <CODE>
-        <VALUE>{}</VALUE>
-    </CODE>
-</CSV>"""
+<ESV>{}</ESV>"""
 
 
 # ---------------------------------------------------------------
@@ -335,7 +330,7 @@ class MelViewDevice:
             resp = await req.json()
             if self._localip:
                 if 'lc' in resp:
-                    local_command = req.json()['lc']
+                    local_command = resp['lc']
                     async with ClientSession() as session:
                         req = await session.post('http://{}/smart'.format(self._localip),
                                         data=LOCAL_DATA.format(local_command))
