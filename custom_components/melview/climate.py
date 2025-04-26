@@ -38,10 +38,10 @@ from homeassistant.const import (
 )
 
 from .melview import MelViewAuthentication, MelView, MODE
+from .const import DOMAIN, CONF_HALFSTEP
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'melview'
 REQUIREMENTS = ['requests']
 DEPENDENCIES = []
 
@@ -440,9 +440,11 @@ async def async_setup_entry(
     """Set up MelView device climate based on config_entry."""
     mel_devices = hass.data[DOMAIN][entry.entry_id]
     
+    halfstep = entry.data.get(CONF_HALFSTEP, False)
+
     async_add_entities(
         [   
-            MelViewClimate(mel_device)
+            MelViewClimate(mel_device, halfstep)
             for mel_device in mel_devices
         ],False
     )
