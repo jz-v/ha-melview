@@ -14,10 +14,29 @@
                     "password": "Password",
                     "email": "Email",
 					"local": "Send commands locally (faster)",
-                    "halfstep": "Use 0.5° temperature steps (must be enabled in app first)"
+                    "halfstep": "Use 0.5° temperature steps (must also be enabled on server)"
                 },
-                "description": "Enter your Mitsubishi Electric Wi-Fi Control (app.melview.net) account credentials. Note: sending commands locally will be much faster, but an internet connection is always required as each command is individually verified by the server.",
+                "description": "Enter your Mitsubishi Electric Wi-Fi Control (app.melview.net) account credentials.",
                 "title": "Connect to Cloud Service"
+            },
+            "reconfigure": {
+                "data": {
+                    "password": "New Password"
+                },
+                "description": "Update the password for {email}",
+                "title": "Update Password"
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "local": "Send commands locally",
+                    "halfstep": "Use 0.5° temperature steps"
+                },
+                "description": "Sending commands locally will result in a faster response, however, an internet connection is always required as each command is verified by the server prior to sending via LAN. For 0.5° temperature adjustments, ensure this option is also enabled for the adapter in the Wi-Fi Control app (or app.melview.net).",
+                "title": "Options"
             }
         }
     }
