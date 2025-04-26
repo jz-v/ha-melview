@@ -53,9 +53,10 @@ HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVA
 class MelViewClimate(ClimateEntity):
     """ Melview handler for HomeAssistants
     """
-    def __init__(self, device):
+    def __init__(self, device, halfstep=False):
         self._enable_turn_on_off_backwards_compatibility = False
         self._device = device
+        self._halfstep = halfstep
 
         self._name = 'MelView {}'.format(device.get_friendly_name())
         self._unique_id = device.get_id()
@@ -65,7 +66,7 @@ class MelViewClimate(ClimateEntity):
 
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
-        if self._device.get_precision_halves():
+        if self._device.get_precision_halves() and self._halfstep:
             self._precision = PRECISION_HALVES
             self._target_step = 0.5
 
@@ -88,7 +89,7 @@ class MelViewClimate(ClimateEntity):
 
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
-        if self._device.get_precision_halves():
+        if self._device.get_precision_halves() and self._halfstep:
             self._precision = PRECISION_HALVES
             self._target_step = 0.5
 
@@ -112,7 +113,7 @@ class MelViewClimate(ClimateEntity):
 
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
-        if self._device.get_precision_halves():
+        if self._device.get_precision_halves() and self._halfstep:
             self._precision = PRECISION_HALVES
             self._target_step = 0.5
 
@@ -346,12 +347,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     """
     _LOGGER.debug('adding component')
 
-    # email = config.get('email')
-    # password = config.get('password')
-    # local = config.get('local')
     email = config[DOMAIN][CONF_EMAIL]
     password = config[DOMAIN][CONF_PASSWORD]
     local = config[DOMAIN][CONF_LOCAL]
+    halfstep = config[DOMAIN][CONF_HALFSTEP]
 
     if email is None:
         _LOGGER.error('no email provided')
@@ -364,6 +363,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     if local is None:
         _LOGGER.warning('local unspecified, defaulting to false')
         local = False
+
+    if halfstep is None:
+        _LOGGER.warning('halfstep unspecified, defaulting to false')
+        halfstep = False
 
     mv_auth = MelViewAuthentication(email, password)
     if not mv_auth.login():
@@ -389,12 +392,10 @@ async def _async_setup_platform(hass, config, add_devices, discovery_info=None):
     """
     _LOGGER.debug('adding component')
 
-    # email = config.get('email')
-    # password = config.get('password')
-    # local = config.get('local')
     email = config[DOMAIN][CONF_EMAIL]
     password = config[DOMAIN][CONF_PASSWORD]
     local = config[DOMAIN][CONF_LOCAL]
+    halfstep = config[DOMAIN][CONF_HALFSTEP]
 
     if email is None:
         _LOGGER.error('no email provided')
@@ -407,6 +408,10 @@ async def _async_setup_platform(hass, config, add_devices, discovery_info=None):
     if local is None:
         _LOGGER.warning('local unspecified, defaulting to false')
         local = False
+
+    if halfstep is None:
+        _LOGGER.warning('halfstep unspecified, defaulting to false')
+        halfstep = False
 
     mv_auth = MelViewAuthentication(email, password)
     result= await mv_auth.asynclogin()

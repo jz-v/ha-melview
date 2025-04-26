@@ -7,7 +7,8 @@
         "data": {
           "email": "[%key:common::config_flow::data::email%]",
           "password": "[%key:common::config_flow::data::password%]",
-          "local": "[%key:common::config_flow::data::local%]"
+          "local": "[%key:common::config_flow::data::local%]",
+          "halfstep": "[%key:common::config_flow::data::halfstep%]"
         }
       }
     },

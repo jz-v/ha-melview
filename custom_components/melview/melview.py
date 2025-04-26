@@ -25,7 +25,6 @@ import time
 import requests
 import asyncio
 from aiohttp import ClientError, ClientResponseError, ClientSession
-
 from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, APIVERSION
 
 
