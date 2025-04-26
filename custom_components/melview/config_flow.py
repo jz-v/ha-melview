@@ -91,8 +91,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
     
     async def async_step_reconfigure(self, user_input=None):
-        """Reconfigure the config entry."""
+        """Reconfigure / change password."""
         self._errors = {}
+        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        email = entry.data[CONF_EMAIL]
 
         if user_input is not None:
             valid = False
@@ -117,33 +119,56 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_show_form(
                     step_id="reconfigure",
                     data_schema=vol.Schema(
-                        {vol.Required(CONF_EMAIL): str, 
-                        vol.Required(CONF_PASSWORD): str, 
-                        vol.Required(CONF_LOCAL): bool,
-                        vol.Required(CONF_HALFSTEP): bool}
+                        {vol.Required(CONF_PASSWORD): str}
                     ),
                     errors=self._errors,
+                    description_placeholders={"email": email}
                 )
             
-            data = {
-                CONF_EMAIL: user_input[CONF_EMAIL],
-                CONF_PASSWORD: user_input[CONF_PASSWORD],
-                CONF_LOCAL: user_input[CONF_LOCAL],
-                CONF_HALFSTEP: user_input[CONF_HALFSTEP]
-            }
-            
-            entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+            data = dict(entry)
+            data[CONF_PASSWORD] = user_input[CONF_PASSWORD]
+
             return self.async_update_reload_and_abort(
                 entry,
                 data=data
+                reason="password_change_success"
             )
         
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=vol.Schema(
-                {vol.Required(CONF_EMAIL): str, 
-                vol.Required(CONF_PASSWORD): str, 
-                vol.Required(CONF_LOCAL): bool,
-                vol.Required(CONF_HALFSTEP): bool}
+                {vol.Required(CONF_PASSWORD): str}
+            ),
+            description_placeholders={"email": email},
+        )
+    
+@staticmethod
+@callback
+def async_get_options_flow(config_entry:
+    """Get the options flow for this handler."""
+    return OptionsFlowHandler(config_entry)
+
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle options flow for melview."""
+
+    def __init__(self, config_entry):
+        """Initialize melview options flow."""
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        local = self.config_entry.options.get(CONF_LOCAL, False)
+        halfstep = self.config_entry.options.get(CONF_HALFSTEP, False)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_LOCAL, default=self.config_entry.options.get(CONF_LOCAL, False)): bool,
+                    vol.Required(CONF_HALFSTEP, default=self.config_entry.options.get(CONF_HALFSTEP, False)): bool
+                }
             ),
         )

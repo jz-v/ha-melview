@@ -69,6 +69,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Establish connection with MelView."""
+    await async_migrate_entry(hass, entry)
     conf = entry.data
     mv_auth = MelViewAuthentication(conf[CONF_EMAIL], conf[CONF_PASSWORD])
     result= await mv_auth.asynclogin()
@@ -104,3 +105,16 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     if not hass.data[DOMAIN]:
         hass.data.pop(DOMAIN)
     return unload_ok
+
+async def async_migrate_entry(hass, config_entry):
+    """Migrate old config entry."""
+    data = {**config_entry.data}
+    options = config_entry.options
+    
+    if CONF_LOCAL in options:
+        data[CONF_LOCAL] = options[CONF_LOCAL]
+    if CONF_HALFSTEP in options:
+        data[CONF_HALFSTEP] = options[CONF_HALFSTEP]
+    
+    hass.config_entries.async_update_entry(config_entry, data=data)
+    return True
