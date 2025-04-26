@@ -22,9 +22,10 @@ I have personally tested on the following combination:
 
 However, the compatibility is likely much greater than this.
 
-## History
+## Attributions
  - Forked from https://github.com/haggis663/ha-melview
  - Original repository https://github.com/zacharyrs/ha-melview
+ - Original reverse-engineering of API via https://github.com/NovaGL/diy-melview
 
 ## Installation
 Install via HACS, remember to restart Home Assistant after HACS install to allow this integration to be added from Settings/Integrations. 
