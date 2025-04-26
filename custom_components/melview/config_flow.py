@@ -64,7 +64,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_show_form(
                     step_id="user",
                     data_schema=vol.Schema(
-                    {vol.Required(CONF_EMAIL): str, vol.Required(CONF_PASSWORD): str, vol.Required(CONF_LOCAL) : bool}
+                    {vol.Required(CONF_EMAIL, default=email): str,
+                     vol.Required(CONF_PASSWORD): str,
+                     vol.Required(CONF_LOCAL, default=True) : bool,
+                     vol.Required(CONF_HALFSTEP, default=True): bool}
                     ),
                     errors=self._errors,
                 )
