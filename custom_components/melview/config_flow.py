@@ -92,58 +92,60 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     
     async def async_step_reconfigure(self, user_input=None):
         """Reconfigure the config entry."""
+        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        existing_data = entry.data
+
         self._errors = {}
 
         if user_input is not None:
             valid = False
             async with ClientSession() as session:
-                try:
-                    resp = await session.post('https://api.melview.net/api/login.aspx',
-                        json={'user': user_input[CONF_EMAIL], 
-                            'pass': user_input[CONF_PASSWORD],
-                            'appversion': APPVERSION},
-                        headers=HEADERS)
-                    if resp.status == 200:
-                        cks = resp.cookies
-                        if 'auth' in cks:
-                            cookie = cks['auth']
-                            if cookie != None and cookie.value and len(cookie.value) > 5:
-                                valid = True
-                except (ClientError, asyncio.TimeoutError):
-                    valid = False
+            try:
+                resp = await session.post('https://api.melview.net/api/login.aspx',
+                json={'user': user_input[CONF_EMAIL], 
+                    'pass': user_input[CONF_PASSWORD],
+                    'appversion': APPVERSION},
+                headers=HEADERS)
+                if resp.status == 200:
+                cks = resp.cookies
+                if 'auth' in cks:
+                    cookie = cks['auth']
+                    if cookie is not None and cookie.value and len(cookie.value) > 5:
+                    valid = True
+            except (ClientError, asyncio.TimeoutError):
+                valid = False
 
             if not valid:
-                self._errors["base"] = "invalid_auth"
-                return self.async_show_form(
-                    step_id="reconfigure",
-                    data_schema=vol.Schema(
-                        {vol.Required(CONF_EMAIL): str, 
-                        vol.Required(CONF_PASSWORD): str, 
-                        vol.Required(CONF_LOCAL): bool,
-                        vol.Required(CONF_HALFSTEP): bool}
-                    ),
-                    errors=self._errors,
-                )
+            self._errors["base"] = "invalid_auth"
+            return self.async_show_form(
+                step_id="reconfigure",
+                data_schema=vol.Schema(
+                {vol.Required(CONF_EMAIL, default=user_input.get(CONF_EMAIL, existing_data[CONF_EMAIL])): str, 
+                vol.Required(CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, existing_data[CONF_PASSWORD])): str, 
+                vol.Required(CONF_LOCAL, default=user_input.get(CONF_LOCAL, existing_data[CONF_LOCAL])): bool,
+                vol.Required(CONF_HALFSTEP, default=user_input.get(CONF_HALFSTEP, existing_data[CONF_HALFSTEP])): bool}
+                ),
+                errors=self._errors,
+            )
             
             data = {
-                CONF_EMAIL: user_input[CONF_EMAIL],
-                CONF_PASSWORD: user_input[CONF_PASSWORD],
-                CONF_LOCAL: user_input[CONF_LOCAL],
-                CONF_HALFSTEP: user_input[CONF_HALFSTEP]
+            CONF_EMAIL: user_input[CONF_EMAIL],
+            CONF_PASSWORD: user_input[CONF_PASSWORD],
+            CONF_LOCAL: user_input[CONF_LOCAL],
+            CONF_HALFSTEP: user_input[CONF_HALFSTEP]
             }
             
-            entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
             return self.async_update_reload_and_abort(
-                entry,
-                data=data
+            entry,
+            data=data
             )
         
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=vol.Schema(
-                {vol.Required(CONF_EMAIL): str, 
-                vol.Required(CONF_PASSWORD): str, 
-                vol.Required(CONF_LOCAL): bool,
-                vol.Required(CONF_HALFSTEP): bool}
+            {vol.Required(CONF_EMAIL, default=existing_data[CONF_EMAIL]): str, 
+            vol.Required(CONF_PASSWORD, default=existing_data[CONF_PASSWORD]): str, 
+            vol.Required(CONF_LOCAL, default=existing_data[CONF_LOCAL]): bool,
+            vol.Required(CONF_HALFSTEP, default=existing_data[CONF_HALFSTEP]): bool}
             ),
         )
