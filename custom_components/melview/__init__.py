@@ -21,7 +21,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import Throttle
 
-from .const import DOMAIN, CONF_LOCAL
+from .const import DOMAIN, CONF_LOCAL, CONF_HALFSTEP
 from .melview import MelViewAuthentication, MelView
 from .climate import MelViewClimate
 from .switch import MelViewZoneSwitch

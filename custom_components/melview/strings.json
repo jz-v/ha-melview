@@ -10,6 +10,13 @@
           "local": "[%key:common::config_flow::data::local%]",
           "halfstep": "[%key:common::config_flow::data::halfstep%]"
         }
+      },
+      "reconfigure": {
+        "title": "Update Password",
+        "description": "Update password for {email}",
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -18,7 +25,20 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email."
+      "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email.",
+      "password_change_success": "Password updated successfully"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "description": "Sending commands locally will result in a faster response, however, an internet connection is always required as each command is verified by the server prior to sending via LAN. For 0.5° temperature adjustments, ensure this option is also enabled for the adapter in the Wi-Fi Control app (or app.melview.net).",
+        "data": {
+          "local": "Send commands locally",
+          "halfstep": "Use 0.5° temperature steps"
+        }
+      }
     }
   }
 }
