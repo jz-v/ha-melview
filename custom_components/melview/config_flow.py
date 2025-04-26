@@ -167,8 +167,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
         
-        local = self.config_entry.options.get(CONF_LOCAL, False)
-        halfstep = self.config_entry.options.get(CONF_HALFSTEP, False)
+        local = self.config_entry.options.get(
+            CONF_LOCAL, 
+            self.config_entry.data.get(CONF_LOCAL, False)
+        )
+        
+        halfstep = self.config_entry.options.get(
+            CONF_HALFSTEP, 
+            self.config_entry.data.get(CONF_HALFSTEP, False)
+        )
         
         return self.async_show_form(
             step_id="init",
