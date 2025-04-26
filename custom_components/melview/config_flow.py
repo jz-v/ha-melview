@@ -12,7 +12,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_EMAIL
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS
+from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, CONF_HALFSTEP
 from .melview import MelViewAuthentication
 
 class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -119,7 +119,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     data_schema=vol.Schema(
                         {vol.Required(CONF_EMAIL): str, 
                         vol.Required(CONF_PASSWORD): str, 
-                        vol.Required(CONF_LOCAL): bool}
+                        vol.Required(CONF_LOCAL): bool,
+                        vol.Required(CONF_HALFSTEP): bool}
                     ),
                     errors=self._errors,
                 )
@@ -127,7 +128,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data = {
                 CONF_EMAIL: user_input[CONF_EMAIL],
                 CONF_PASSWORD: user_input[CONF_PASSWORD],
-                CONF_LOCAL: user_input[CONF_LOCAL]
+                CONF_LOCAL: user_input[CONF_LOCAL],
+                CONF_HALFSTEP: user_input[CONF_HALFSTEP]
             }
             
             entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
@@ -141,6 +143,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {vol.Required(CONF_EMAIL): str, 
                 vol.Required(CONF_PASSWORD): str, 
-                vol.Required(CONF_LOCAL): bool}
+                vol.Required(CONF_LOCAL): bool,
+                vol.Required(CONF_HALFSTEP): bool}
             ),
         )
