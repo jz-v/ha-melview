@@ -167,15 +167,29 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
         
-        local = self.config_entry.options.get(CONF_LOCAL, False)
-        halfstep = self.config_entry.options.get(CONF_HALFSTEP, False)
+        # Get values with explicit fallback
+        local = False
+        halfstep = False
+        
+        # First check in data (for initial values)
+        if CONF_LOCAL in self.config_entry.data:
+            local = self.config_entry.data[CONF_LOCAL]
+        if CONF_HALFSTEP in self.config_entry.data:
+            halfstep = self.config_entry.data[CONF_HALFSTEP]
+        
+        # Then override with options if they exist (for values that were already saved in options)
+        if self.config_entry.options:
+            if CONF_LOCAL in self.config_entry.options:
+                local = self.config_entry.options[CONF_LOCAL]
+            if CONF_HALFSTEP in self.config_entry.options:
+                halfstep = self.config_entry.options[CONF_HALFSTEP]
         
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_LOCAL, default=self.config_entry.options.get(CONF_LOCAL, False)): bool,
-                    vol.Required(CONF_HALFSTEP, default=self.config_entry.options.get(CONF_HALFSTEP, False)): bool
+                    vol.Required(CONF_LOCAL, default=local): bool,
+                    vol.Required(CONF_HALFSTEP, default=halfstep): bool
                 }
             ),
         )
