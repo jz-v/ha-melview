@@ -1,33 +1,8 @@
-#!/usr/local/bin/python3
-
-'''
-    Author: zacharyrs
-
-    How to install:
-        Refer to README.md
-
-    License:
-                DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-                        Version 2, December 2004
-
-        Everyone is permitted to copy and distribute verbatim or modified
-        copies of this license document, and changing it is allowed as long
-        as the name is changed.
-
-                  DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-          TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
-         0. You just DO WHAT THE FUCK YOU WANT TO.
-'''
-
 import logging
-
 from homeassistant.components.climate.const import (
     HVACMode,
     ClimateEntityFeature
 )
-
-
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.const import (
     UnitOfTemperature,
@@ -36,7 +11,6 @@ from homeassistant.const import (
     PRECISION_WHOLE,
     STATE_OFF
 )
-
 from .melview import MelViewAuthentication, MelView, MODE
 from .const import DOMAIN, CONF_HALFSTEP
 
