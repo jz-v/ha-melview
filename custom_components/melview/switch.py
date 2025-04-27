@@ -8,7 +8,7 @@ REQUIREMENTS = ['requests']
 DEPENDENCIES = []
 
 class MelViewZoneSwitch(SwitchEntity):
-    """ Melview zone switch handler for HomeAssistants
+    """ Melview zone switch handler for HomeAssistant
     """
     def __init__(self, zone, parentClimate):
         self._id = zone.id
@@ -32,7 +32,7 @@ class MelViewZoneSwitch(SwitchEntity):
     def name(self):
         """ Diplay name for HASS
         """
-        return f"{self._name} AC Zone"
+        return f"Zone {self._name}"
 
     @property
     def unique_id(self):
@@ -51,6 +51,12 @@ class MelViewZoneSwitch(SwitchEntity):
         """ Check zone is on
         """
         return self._status == 1
+    
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._climate.get_id())},
+        }
 
     def turn_on(self):
         """ Turn on the zone

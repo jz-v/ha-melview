@@ -58,7 +58,7 @@ class MelViewClimate(ClimateEntity):
         self._device = device
         self._halfstep = halfstep
 
-        self._name = 'MelView {}'.format(device.get_friendly_name())
+        self._name = device.get_friendly_name()
         self._unique_id = device.get_id()
 
         self._operations_list = [x for x in MODE] + [HVACMode.OFF]
@@ -199,6 +199,14 @@ class MelViewClimate(ClimateEntity):
         """
         return self._target_temp
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._device.get_id())},
+            "name": self._device.get_friendly_name(),
+            "manufacturer": "Mitsubishi Electric",
+            "model": "Wi-Fi Control",
+        }
 
     # TODO
     # @property
