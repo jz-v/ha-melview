@@ -16,7 +16,7 @@ Mitsubishi Wi-Fi adaptors in this region require an internet connection at all t
 However, it is possible for commands to be sent locally (i.e. from Home Assistant to the Wi-Fi adaptor over LAN):
  - First, the command must be sent to the melview server, requesting a local command key
  - Response received with local command key
- - Local command key is sent to the adapter.
+ - Local command key is sent to the adapter via LAN.
 
 In practice, this is still much quicker than having commands sent to adapter from the melview cloud server.
 
@@ -27,13 +27,26 @@ I have personally tested on the following combination:
 
 However, the compatibility is likely much greater than this.
 
+## Installation
+1. Set up HACS (hacs.xyz)
+2. Add this as a custom repository in HACS
+3. Install via HACS interface
+4. Restart Home Assistant after HACS install
+5. Add this integration from Settings > Devices & services > Add integrations.
+
+Currently working towards inclusion in HACS default repositories to make this easier.
+
+## Future improvements
+I would like to add the following features/ functionality in future:
+- Add interior temperature sensor entity
+- Choice of entity for Zone control (i.e. choose between switch or fan entity)
+- Support for HVAC action, e.g. report when unit is in defrosting, etc.
+
 ## Attributions
  - Forked from https://github.com/haggis663/ha-melview (WTFPL licensed)
  - Original repository https://github.com/zacharyrs/ha-melview (WTFPL licensed)
  - Original reverse-engineering of melview API via https://github.com/NovaGL/diy-melview licensed under the WTFPL
 
-## Installation
-Install via HACS, remember to restart Home Assistant after HACS install to allow this integration to be added from Settings/Integrations. 
-
 ## License
 This project is licensed under the MIT License.
+
