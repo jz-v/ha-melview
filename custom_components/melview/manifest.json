@@ -8,6 +8,5 @@
   "dependencies": [],
   "codeowners": ["@jz-v"],
   "requirements": ["requests"],
-  "license": "MIT",
   "iot_class": "cloud_polling"
 }
