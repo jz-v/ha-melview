@@ -1,9 +1,14 @@
 # Home Assistant - Mitsubishi Electric Wi-Fi Control
-
+## General
 This is a custom integration for Home Assistant for AU/NZ Mitsubishi Electric Air Conditioners with an app.melview.net Wi-Fi adapter.
 Supports climate entity and zone control via switch entities.
 
 https://www.mitsubishielectric.com.au/product/wi-fi-controller/
+
+Main benefits of this integration compared with others:
+ - local commands
+ - group entities into device(s)
+ - additional options UI (i.e. to toggle 0.5 deg temp step, local commands)
 
 ## About 'Local commands'
 Mitsubishi Wi-Fi adaptors in this region require an internet connection at all times to function.
@@ -23,15 +28,12 @@ I have personally tested on the following combination:
 However, the compatibility is likely much greater than this.
 
 ## Attributions
- - Forked from https://github.com/haggis663/ha-melview
- - Original repository https://github.com/zacharyrs/ha-melview
- - Original reverse-engineering of API via https://github.com/NovaGL/diy-melview
+ - Forked from https://github.com/haggis663/ha-melview (WTFPL licensed)
+ - Original repository https://github.com/zacharyrs/ha-melview (WTFPL licensed)
+ - Original reverse-engineering of melview API via https://github.com/NovaGL/diy-melview licensed under the WTFPL
 
 ## Installation
 Install via HACS, remember to restart Home Assistant after HACS install to allow this integration to be added from Settings/Integrations. 
 
-When prompted, enter your Wi-Fi Control (i.e. app.melview.net) username and password.
-Do not tick 'Local' as this functionality is currently not functional.
-
 ## License
-This project is licensed under the WTF License, as per the original repository.
+This project is licensed under the MIT License.

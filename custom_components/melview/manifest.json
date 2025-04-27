@@ -1,12 +1,13 @@
 {
   "domain": "melview",
   "name": "Mitsubishi Electric Wi-Fi Control",
-  "version": "2025.4.1",
+  "version": "2025.4.2",
   "config_flow": true,
   "documentation": "https://github.com/jz-v/ha-melview/",
   "issue_tracker": "https://github.com/jz-v/ha-melview/issues",
   "dependencies": [],
   "codeowners": ["@jz-v"],
   "requirements": ["requests"],
+  "license": "MIT",
   "iot_class": "cloud_polling"
 }
