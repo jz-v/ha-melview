@@ -1,9 +1,9 @@
 {
   "domain": "melview",
   "name": "Mitsubishi Electric Wi-Fi Control",
+  "codeowners": ["@jz-v"],
   "config_flow": true,
   "dependencies": [],
-  "codeowners": ["@jz-v"],
   "documentation": "https://github.com/jz-v/ha-melview/",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/jz-v/ha-melview/issues",
