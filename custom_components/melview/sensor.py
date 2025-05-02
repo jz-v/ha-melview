@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_SENSOR
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,9 +19,13 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up melview temperature sensors from a config entry."""
-    data = hass.data[DOMAIN][entry.entry_id]
-    devices = hass.data[DOMAIN][entry.entry_id] 
+    """Set up MelView temperature sensors from a config entry."""
+    if not entry.options.get(CONF_SENSOR, True):
+        _LOGGER.debug("Sensor option is disabled in config entry.")
+        return
+
+    devices = hass.data[DOMAIN][entry.entry_id]
+
     entities = [MelviewCurrentTempSensor(device) for device in devices]
     async_add_entities(entities, update_before_add=True)
 
