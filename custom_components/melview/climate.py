@@ -1,11 +1,8 @@
 import logging
-
 from homeassistant.components.climate.const import (
     HVACMode,
     ClimateEntityFeature
 )
-
-
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.const import (
     UnitOfTemperature,
@@ -14,7 +11,6 @@ from homeassistant.const import (
     PRECISION_WHOLE,
     STATE_OFF
 )
-
 from .melview import MelViewAuthentication, MelView, MODE
 from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD, CONF_LOCAL, CONF_HALFSTEP
 
@@ -34,7 +30,7 @@ class MelViewClimate(ClimateEntity):
         self._device = device
         self._halfstep = halfstep
 
-        self._name = 'MelView {}'.format(device.get_friendly_name())
+        self._name = device.get_friendly_name()
         self._unique_id = device.get_id()
 
         self._operations_list = [x for x in MODE] + [HVACMode.OFF]
@@ -170,7 +166,6 @@ class MelViewClimate(ClimateEntity):
             "manufacturer": "Mitsubishi Electric",
             "model": "Wi-Fi Control",
         }
-
 
     # TODO
     # @property

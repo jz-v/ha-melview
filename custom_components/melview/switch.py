@@ -42,6 +42,12 @@ class MelViewZoneSwitch(SwitchEntity):
     def is_on(self):
         """ Check zone is on"""
         return self._status == 1
+    
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._climate.get_id())},
+        }
 
     @property
     def device_info(self):
