@@ -1,5 +1,4 @@
 import logging
-# from .melview import MelViewAuthentication, MelView
 from homeassistant.components.switch import SwitchEntity
 
 _LOGGER = logging.getLogger(__name__)

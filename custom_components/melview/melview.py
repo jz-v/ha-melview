@@ -1,10 +1,7 @@
 import logging
 import time
-import requests
-import asyncio
-from aiohttp import ClientError, ClientResponseError, ClientSession
-from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, APIVERSION
-
+from aiohttp import ClientSession
+from .const import APPVERSION, HEADERS, APIVERSION
 
 from homeassistant.components.climate.const import (
     HVACMode
@@ -12,12 +9,8 @@ from homeassistant.components.climate.const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-
 LOCAL_DATA = """<?xml version="1.0" encoding="UTF-8"?>
 <ESV>{}</ESV>"""
-
-
-# ---------------------------------------------------------------
 
 MODE = {
     HVACMode.AUTO: 8,
@@ -34,9 +27,6 @@ FANSTAGES = {
     4: {2: "low", 3: "medium", 5: "high", 6: "Max"},
     5: {1: "low", 2: "medium", 3: "Medium High", 5: "high", 6: "Max"},
 }
-
-# ---------------------------------------------------------------
-
 
 class MelViewAuthentication:
     """Implementation to remember and refresh melview cookies."""
@@ -74,7 +64,6 @@ class MelViewAuthentication:
         """Return authentication cookie"""
         return {'auth': self._cookie}
 
-# ---------------------------------------------------------------
 
 class MelViewZone:
     def __init__(self, id, name, status):
@@ -82,7 +71,6 @@ class MelViewZone:
         self.name = name
         self.status = status
 
-# ---------------------------------------------------------------
 
 class MelViewDevice:
     """Handler class for a melview unit"""
@@ -383,8 +371,6 @@ class MelViewDevice:
     async def async_power_off(self):
         """Turn off the unit"""
         return await self.async_send_command('PW0')
-
-# ---------------------------------------------------------------
 
 
 class MelView:
