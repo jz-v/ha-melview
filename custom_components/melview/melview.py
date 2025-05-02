@@ -28,33 +28,29 @@ MODE = {
 }
 
 FANSTAGES = {
-    1: {5: "On"},
-    2: {2: "Low", 5: "High"},
-    3: {2: "Low", 3: "Medium", 5: "High"},
-    4: {2: "Low", 3: "Medium Low", 5: "Medium High", 6: "High"},
-    5: {1: "Low", 2: "Medium Low", 3: "Medium", 5: "Medium High", 6: "High"},
+    1: {5: "on"},
+    2: {2: "low", 5: "high"},
+    3: {2: "low", 3: "medium", 5: "high"},
+    4: {2: "low", 3: "medium", 5: "high", 6: "Max"},
+    5: {1: "low", 2: "medium", 3: "Medium High", 5: "high", 6: "Max"},
 }
 
 # ---------------------------------------------------------------
 
 
 class MelViewAuthentication:
-    """ Implementation to remember and refresh melview cookies.
-    """
-
+    """Implementation to remember and refresh melview cookies."""
     def __init__(self, email, password):
         self._email = email
         self._password = password
         self._cookie = None
 
     def is_login(self):
-        """ Return login status.
-        """
+        """Return login status"""
         return self._cookie is not None
 
     async def  asynclogin(self):
-        """ Generate a new login cookie.
-        """
+        """Generate a new login cookie"""
         _LOGGER.debug('trying to login')
 
         self._cookie = None
@@ -75,8 +71,7 @@ class MelViewAuthentication:
         return False
 
     def get_cookie(self):
-        """ Return authentication cookie.
-        """
+        """Return authentication cookie"""
         return {'auth': self._cookie}
 
 # ---------------------------------------------------------------
@@ -90,8 +85,7 @@ class MelViewZone:
 # ---------------------------------------------------------------
 
 class MelViewDevice:
-    """ Handler class for a melview unit.
-    """
+    """Handler class for a melview unit"""
 
     def __init__(self, deviceid, buildingid, friendlyname,
                  authentication, localcontrol=False):
@@ -233,39 +227,34 @@ class MelViewDevice:
         return False
 
     async def async_force_update(self):
-        """ Force info refresh
-        """
+        """Force info refresh"""
         return await self.async_refresh_device_info()
 
 
     def get_id(self):
-        """ Get device ID.
-        """
+        """Get device ID"""
         return self._deviceid
 
     def get_friendly_name(self):
-        """ Get customised device name.
-        """
+        """Get customised device name"""
         return self._friendlyname
 
     async def async_get_precision_halves(self) -> bool:
-        """Get unit support for half-degree steps."""
+        """Get unit support for half-degree steps"""
         if not await self.async_is_caps_valid():
             return False
 
         return self._caps.get("halfdeg") == 1
 
     async def async_get_temperature(self):
-        """ Get set temperature.
-        """
+        """Get set temperature"""
         if not await self.async_is_info_valid():
             return 0
 
         return float(self._json['settemp'])
 
     async def async_get_room_temperature(self):
-        """ Get current room temperature.
-        """
+        """Get current room temperature"""
         if not await self.async_is_info_valid():
             return 0
 
@@ -275,8 +264,7 @@ class MelViewDevice:
         return round(sum(self._rtemp_list) / len(self._rtemp_list), 1)
 
     def get_outside_temperature(self):
-        """ Get current outside temperature.
-        """
+        """Get current outside temperature"""
         if not 'hasoutdoortemp' in self._caps or self._caps['hasoutdoortemp'] == 0:
             _LOGGER.error('outdoor temperature not supported')
             return 0
@@ -290,20 +278,18 @@ class MelViewDevice:
         return round((sum(self._otemp_list) / len(self._otemp_list)), 1)
 
     async def async_get_speed(self):
-        """ Get the set fan speed.
-        """
+        """Get the set fan speed"""
         if not await self.async_is_info_valid():
-            return 'Auto'
+            return 'auto'
 
         for key, val in self.fan_keyed.items():
             if self._json['setfan'] == val:
                 return key
 
-        return 'Auto'
+        return 'auto'
 
     async def async_get_mode(self):
-        """ Get the set mode.
-        """
+        """Get the set mode"""
         if not await self.async_is_info_valid():
             return HVACMode.AUTO
 
@@ -322,16 +308,14 @@ class MelViewDevice:
         return self._zones.values()
 
     async def async_is_power_on(self):
-        """ Check unit is on.
-        """
+        """Check unit is on"""
         if not await self.async_is_info_valid():
             return False
 
         return self._json['power']
 
     async def async_set_temperature(self, temperature):
-        """ Set the target temperature.
-        """
+        """Set the target temperature"""
         mode = await self.async_get_mode()
         min_temp =19
         max_temp=28
@@ -352,8 +336,7 @@ class MelViewDevice:
         return await self.async_send_command('TS{:.2f}'.format(temperature))
 
     async def async_set_speed(self, speed):
-        """ Set the fan speed.
-        """
+        """Set the fan speed"""
         if not await self.async_is_power_on():
             # Try turn on the unit if off.
             if not await self.async_power_on():
@@ -365,8 +348,7 @@ class MelViewDevice:
         return await self.async_send_command('FS{:.2f}'.format(self.fan_keyed[speed]))
 
     async def async_set_mode(self, mode):
-        """ Set operating mode.
-        """
+        """Set operating mode"""
         if not await self.async_is_power_on():
             # Try turn on the unit if off.
             if not await self.async_power_on():
@@ -387,40 +369,33 @@ class MelViewDevice:
         return await self.async_send_command('MD{}'.format(MODE[mode]))
 
     async def async_enable_zone(self, zoneid):
-        """ Turn on a zone.
-        """
+        """Turn on a zone"""
         return await self.async_send_command(f"Z{zoneid}1")
 
     async def async_disable_zone(self, zoneid):
-        """ Turn off a zone.
-        """
+        """Turn off a zone"""
         return await self.async_send_command(f"Z{zoneid}0")
 
     async def async_power_on(self):
-        """ Turn on the unit.
-        """
+        """Turn on the unit"""
         return await self.async_send_command('PW1')
         
     async def async_power_off(self):
-        """ Turn off the unit.
-        """
+        """Turn off the unit"""
         return await self.async_send_command('PW0')
 
 # ---------------------------------------------------------------
 
 
 class MelView:
-    """ Handler for multiple melview devices under one user.
-    """
-
+    """Handler for multiple melview devices under one user"""
     def __init__(self, authentication, localcontrol=False):
         self._authentication = authentication
         self._unitcount = 0
         self._localcontrol = localcontrol
 
     async def async_get_devices_list(self, retry=True):
-        """ Return all the devices found, as handlers.
-        """
+        """Return all the devices found, as handlers"""
         devices = []
 
         async with ClientSession() as session:
