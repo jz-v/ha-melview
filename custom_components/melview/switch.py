@@ -1,10 +1,9 @@
 import logging
-from .melview import MelViewAuthentication, MelView
+# from .melview import MelViewAuthentication, MelView
 from homeassistant.components.switch import SwitchEntity
 
 _LOGGER = logging.getLogger(__name__)
 DOMAIN = 'melview'
-# REQUIREMENTS = ['requests']
 DEPENDENCIES = []
 
 class MelViewZoneSwitch(SwitchEntity):
@@ -23,24 +22,22 @@ class MelViewZoneSwitch(SwitchEntity):
 
     @property
     def name(self):
-        """ Diplay name for HASS
-        """
+        """Diplay name for HASS"""
         return f"Zone {self._name}"
 
     @property
     def unique_id(self):
-        """ Get unique_id for HASS
-        """
+        """Get unique_id for HASS"""
         return f"{self._climate.get_id()}-{self._id}"
 
     @property
     def should_poll(self):
-        """ Ensure HASS polls the zone"""
+        """Ensure HASS polls the zone"""
         return True
 
     @property
     def is_on(self):
-        """ Check zone is on"""
+        """Check zone is on"""
         return self._status == 1
     
     @property
@@ -49,20 +46,14 @@ class MelViewZoneSwitch(SwitchEntity):
             "identifiers": {(DOMAIN, self._climate.get_id())},
         }
 
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._climate.get_id())},
-        }
-
     async def async_turn_on(self):
-        """ Turn on the zone"""
+        """Turn on the zone"""
         _LOGGER.debug('power on zone')
         if await self._climate.async_enable_zone(self._id):
             self._status = 1
 
     async def async_turn_off(self):
-        """ Turn off the zone"""
+        """Turn off the zone"""
         _LOGGER.debug('power off zone')
         if await self._climate.async_disable_zone(self._id):
             self._status = 0

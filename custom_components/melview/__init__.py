@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, CONF_LOCAL, CONF_HALFSTEP
+from .const import DOMAIN, CONF_LOCAL, CONF_HALFSTEP, CONF_SENSOR
 from .melview import MelViewAuthentication, MelView
 from .climate import MelViewClimate
 from .switch import MelViewZoneSwitch
@@ -23,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
 
-PLATFORMS = [Platform.CLIMATE, Platform.SWITCH]
+PLATFORMS = [Platform.CLIMATE, Platform.SWITCH, Platform.SENSOR]
 
 CONF_LANGUAGE = "language"
 CONFIG_SCHEMA = vol.Schema(
@@ -36,6 +36,7 @@ CONFIG_SCHEMA = vol.Schema(
                     vol.Required(CONF_PASSWORD): cv.string,
                     vol.Required(CONF_LOCAL): cv.boolean,
                     vol.Required(CONF_HALFSTEP): cv.boolean,
+                    vol.Required(CONF_SENSOR): cv.boolean,
                 }
             )
         },
@@ -52,11 +53,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     email = config[DOMAIN][CONF_EMAIL]
     password = config[DOMAIN][CONF_PASSWORD]
     local = config[DOMAIN][CONF_LOCAL]
+    sensor = config[DOMAIN][CONF_SENSOR]
     hass.async_create_task(
         hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": SOURCE_IMPORT},
-            data={CONF_EMAIL: email, CONF_PASSWORD: password, CONF_LOCAL: local},
+            data={CONF_EMAIL: email, CONF_PASSWORD: password, CONF_LOCAL: local, CONF_SENSOR: sensor}
         )
     )
     return True
@@ -80,12 +82,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await device.async_refresh()
         _LOGGER.debug("Device: "+ device.get_friendly_name())
         device_list.append(device)
-        # for zone in device.get_zones():
-            # device_list.append(MelViewZoneSwitch(zone, device))
     _LOGGER.debug('Got data')
 
     hass.data.setdefault(DOMAIN, {}).update({entry.entry_id: device_list})
-    # hass.config_entries.async_setup_platforms(entry, PLATFORMS)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -109,6 +108,8 @@ async def async_migrate_entry(hass, config_entry):
         data[CONF_LOCAL] = options[CONF_LOCAL]
     if CONF_HALFSTEP in options:
         data[CONF_HALFSTEP] = options[CONF_HALFSTEP]
+    if CONF_SENSOR in options:
+        data[CONF_SENSOR] = options[CONF_SENSOR]
     
     hass.config_entries.async_update_entry(config_entry, data=data)
     return True

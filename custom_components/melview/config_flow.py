@@ -13,7 +13,7 @@ from homeassistant.const import CONF_PASSWORD, CONF_EMAIL
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, CONF_HALFSTEP
+from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, CONF_HALFSTEP, CONF_SENSOR
 from .melview import MelViewAuthentication
 
 class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -25,12 +25,17 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize."""
         self._errors = {}
 
-    async def _create_entry(self, email: str, password: str, local: bool, halfstep: bool):
+    async def _create_entry(self, email: str, password: str, local: bool, halfstep: bool, sensor: bool):
         """Register new entry."""
         await self.async_set_unique_id(email)
         self._abort_if_unique_id_configured({CONF_EMAIL: email})
         return self.async_create_entry(
-            title=email, data={CONF_EMAIL: email, CONF_PASSWORD: password, CONF_LOCAL: local, CONF_HALFSTEP: halfstep}
+            title=email, data={
+                CONF_EMAIL: email,
+                CONF_PASSWORD: password,
+                CONF_LOCAL: local,
+                CONF_HALFSTEP: halfstep,
+                CONF_SENSOR: sensor}
         )
 
     async def _create_client(
@@ -39,7 +44,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         *,
         password: str,
         local: bool,
-        halfstep: bool 
+        halfstep: bool,
+        sensor: bool
     ):
         """Create client."""
         if password is None and email is None:
@@ -67,12 +73,13 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     {vol.Required(CONF_EMAIL, default=email): str,
                      vol.Required(CONF_PASSWORD): str,
                      vol.Required(CONF_LOCAL, default=True) : bool,
-                     vol.Required(CONF_HALFSTEP, default=True): bool}
+                     vol.Required(CONF_HALFSTEP, default=True): bool,
+                     vol.Required(CONF_SENSOR, default=True): bool}
                     ),
                     errors=self._errors,
                 )
 
-        return await self._create_entry(email, password, local, halfstep)
+        return await self._create_entry(email, password, local, halfstep, sensor)
 
     async def async_step_user(self, user_input=None):
         """User initiated config flow."""
@@ -85,16 +92,26 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     {vol.Required(CONF_EMAIL): str,
                     vol.Required(CONF_PASSWORD): str,
                     vol.Required(CONF_LOCAL, default=True) : bool,
-                    vol.Required(CONF_HALFSTEP, default=True): bool}
+                    vol.Required(CONF_HALFSTEP, default=True): bool,
+                    vol.Required(CONF_SENSOR, default=True): bool}
                 ),
             )
         email = user_input[CONF_EMAIL]
-        return await self._create_client(user_input[CONF_EMAIL], password=user_input[CONF_PASSWORD], local=user_input[CONF_LOCAL], halfstep=user_input[CONF_HALFSTEP])
+        return await self._create_client(
+            user_input[CONF_EMAIL],
+            password=user_input[CONF_PASSWORD],
+            local=user_input[CONF_LOCAL],
+            halfstep=user_input[CONF_HALFSTEP],
+            sensor=user_input[CONF_SENSOR])
 
     async def async_step_import(self, user_input):
         """Import a config entry."""
         return await self._create_client(
-            user_input[CONF_EMAIL], password=user_input[CONF_PASSWORD], local=user_input[CONF_LOCAL], halfstep=user_input[CONF_HALFSTEP]
+            user_input[CONF_EMAIL],
+            password=user_input[CONF_PASSWORD],
+            local=user_input[CONF_LOCAL],
+            halfstep=user_input[CONF_HALFSTEP],
+            sensor=user_input[CONF_SENSOR]
         )
     
     async def async_step_reconfigure(self, user_input=None):
@@ -167,29 +184,32 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
         
-        # Get values with explicit fallback
-        local = False
-        halfstep = False
+        local = True
+        halfstep = True
+        sensor = True
         
-        # First check in data (for initial values)
         if CONF_LOCAL in self.config_entry.data:
             local = self.config_entry.data[CONF_LOCAL]
         if CONF_HALFSTEP in self.config_entry.data:
             halfstep = self.config_entry.data[CONF_HALFSTEP]
+        if CONF_SENSOR in self.config_entry.data:
+            sensor = self.config_entry.data[CONF_SENSOR]
         
-        # Then override with options if they exist (for values that were already saved in options)
         if self.config_entry.options:
             if CONF_LOCAL in self.config_entry.options:
                 local = self.config_entry.options[CONF_LOCAL]
             if CONF_HALFSTEP in self.config_entry.options:
                 halfstep = self.config_entry.options[CONF_HALFSTEP]
+            if CONF_SENSOR in self.config_entry.options:
+                sensor = self.config_entry.options[CONF_SENSOR]
         
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_LOCAL, default=local): bool,
-                    vol.Required(CONF_HALFSTEP, default=halfstep): bool
+                    vol.Required(CONF_HALFSTEP, default=halfstep): bool,
+                    vol.Required(CONF_SENSOR, default=sensor): bool
                 }
             ),
         )
