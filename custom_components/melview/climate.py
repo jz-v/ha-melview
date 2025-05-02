@@ -162,6 +162,15 @@ class MelViewClimate(ClimateEntity):
         """
         return self._target_temp
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._device.get_id())},
+            "name": self._device.get_friendly_name(),
+            "manufacturer": "Mitsubishi Electric",
+            "model": "Wi-Fi Control",
+        }
+
 
     # TODO
     # @property

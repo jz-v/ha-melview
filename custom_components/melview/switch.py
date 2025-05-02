@@ -23,12 +23,14 @@ class MelViewZoneSwitch(SwitchEntity):
 
     @property
     def name(self):
-        """ Diplay name for HASS"""
-        return f"{self._name} AC Zone"
+        """ Diplay name for HASS
+        """
+        return f"Zone {self._name}"
 
     @property
     def unique_id(self):
-        """ Get unique_id for HASS"""
+        """ Get unique_id for HASS
+        """
         return f"{self._climate.get_id()}-{self._id}"
 
     @property
@@ -40,6 +42,12 @@ class MelViewZoneSwitch(SwitchEntity):
     def is_on(self):
         """ Check zone is on"""
         return self._status == 1
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._climate.get_id())},
+        }
 
     async def async_turn_on(self):
         """ Turn on the zone"""
