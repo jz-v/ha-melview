@@ -1,4 +1,4 @@
-"""Config flow for the MELCloud platform."""
+"""Config flow for the Melview platform."""
 from __future__ import annotations
 
 import asyncio

@@ -6,20 +6,13 @@ from datetime import timedelta
 import logging
 from typing import Any
 
-from aiohttp import ClientConnectionError
-from async_timeout import timeout
 import voluptuous as vol
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.util import Throttle
 
 from .const import DOMAIN, CONF_LOCAL, CONF_HALFSTEP
 from .melview import MelViewAuthentication, MelView
@@ -42,6 +35,7 @@ CONFIG_SCHEMA = vol.Schema(
                     vol.Required(CONF_EMAIL): cv.string,
                     vol.Required(CONF_PASSWORD): cv.string,
                     vol.Required(CONF_LOCAL): cv.boolean,
+                    vol.Required(CONF_HALFSTEP): cv.boolean,
                 }
             )
         },
@@ -72,7 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_migrate_entry(hass, entry)
     conf = entry.data
     mv_auth = MelViewAuthentication(conf[CONF_EMAIL], conf[CONF_PASSWORD])
-    result= await mv_auth.asynclogin()
+    result = await mv_auth.asynclogin()
     if not result:
         _LOGGER.error('login combination')
         return False
@@ -84,7 +78,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     devices = await melview.async_get_devices_list()
     for device in devices:
         await device.async_refresh()
-        _LOGGER.debug("Device"+ device.get_friendly_name())
+        _LOGGER.debug("Device: "+ device.get_friendly_name())
         device_list.append(device)
         # for zone in device.get_zones():
             # device_list.append(MelViewZoneSwitch(zone, device))
