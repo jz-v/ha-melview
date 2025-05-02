@@ -1,25 +1,3 @@
-#!/usr/local/bin/python3
-
-'''
-    Author: zacharyrs
-
-    How to install:
-        Refer to README.md
-
-    License:
-                DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-                        Version 2, December 2004
-
-        Everyone is permitted to copy and distribute verbatim or modified
-        copies of this license document, and changing it is allowed as long
-        as the name is changed.
-
-                  DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-          TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
-         0. You just DO WHAT THE FUCK YOU WANT TO.
-'''
-
 import logging
 import time
 import requests
@@ -702,7 +680,6 @@ class MelView:
     def __init__(self, authentication, localcontrol=False):
         self._authentication = authentication
         self._unitcount = 0
-
         self._localcontrol = localcontrol
 
     def get_devices_list(self, retry=True):
