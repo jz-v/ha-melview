@@ -1,6 +1,9 @@
 """Constants for the Mitsubishi Electric Wi-Fi Control integration."""
 
 DOMAIN = "melview"
+
+CONF_EMAIL = "email"
+CONF_PASSWORD = "password"
 CONF_LOCAL = "local"
 CONF_HALFSTEP = "halfstep"
 
