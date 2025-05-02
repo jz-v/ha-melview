@@ -1,4 +1,4 @@
-"""Config flow for the MELCloud platform."""
+"""Config flow for the Melview platform."""
 from __future__ import annotations
 
 import asyncio
@@ -151,7 +151,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     
     @staticmethod
     @callback
-    async def async_get_options_flow(config_entry):
+    def async_get_options_flow(config_entry):
         """Get the options flow for this handler."""
         return OptionsFlowHandler(config_entry)
 
