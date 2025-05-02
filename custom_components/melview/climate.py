@@ -24,7 +24,7 @@ HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVA
 # ---------------------------------------------------------------
 
 class MelViewClimate(ClimateEntity):
-    """ Melview handler for Home Assistant"""
+    """Melview handler for Home Assistant"""
     def __init__(self, device, halfstep=False):
         self._enable_turn_on_off_backwards_compatibility = False
         self._device = device
@@ -36,7 +36,7 @@ class MelViewClimate(ClimateEntity):
         self._operations_list = [x for x in MODE] + [HVACMode.OFF]
         self._speeds_list = [x for x in self._device.fan_keyed]
 
-        # Placeholder for state
+        # Placeholders for state
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
         self._current_temp = None
@@ -66,7 +66,7 @@ class MelViewClimate(ClimateEntity):
         self.async_write_ha_state()
 
     async def async_update(self):
-        """ Update device properties"""
+        """Update device properties"""
         _LOGGER.debug('updating state')
         await self._device.async_force_update()
 
@@ -90,15 +90,13 @@ class MelViewClimate(ClimateEntity):
 
     @property
     def name(self):
-        """ Diplay name for HASS
-        """
+        """ Diplay name for HASS"""
         return self._name
 
 
     @property
     def unique_id(self):
-        """ Get unique_id for HASS
-        """
+        """ Get unique_id for HASS"""
         return self._unique_id
 
 
@@ -112,54 +110,48 @@ class MelViewClimate(ClimateEntity):
 
     @property
     def should_poll(self):
-        """ Ensure HASS polls the unit
-        """
+        """ Ensure HASS polls the unit"""
         return True
 
 
     @property
     def state(self):
-        """ Return the current state.
-        """
+        """Return the current state"""
         return self._state
 
 
     @property
     def is_on(self):
-        """ Check unit is on
-        """
+        """ Check unit is on"""
         return self._state != STATE_OFF
 
 
     @property
     def precision(self):
-        """ Return the precision of the system.
-        """
+        """ Return the precision of the system"""
         return self._precision
 
 
     @property
     def temperature_unit(self):
-        """ Define unit for temperature
-        """
+        """ Define unit for temperature"""
         return UnitOfTemperature.CELSIUS
 
 
     @property
     def current_temperature(self):
-        """ Get the current room temperature
-        """
+        """ Get the current room temperature"""
         return self._current_temp
 
 
     @property
     def target_temperature(self):
-        """ Get the target temperature
-        """
+        """ Get the target temperature"""
         return self._target_temp
 
     @property
     def device_info(self):
+        """Create device"""
         return {
             "identifiers": {(DOMAIN, self._device.get_id())},
             "name": self._device.get_friendly_name(),
@@ -186,41 +178,35 @@ class MelViewClimate(ClimateEntity):
 
     @property
     def target_temperature_step(self):
-        """ Return the supported step of target temperature
-        """
+        """Return the supported step of target temperature"""
         return self._target_step
 
 
     @property
     def hvac_mode(self):
-        """ Get the current operating mode
-        """
+        """Get the current operating mode"""
         return self._mode
 
 
     @property
     def hvac_modes(self):
-        """ Get possible operating modes
-        """
+        """Get possible operating modes"""
         return self._operations_list
 
 
     @property
     def fan_mode(self):
-        """ Check the unit fan speed
-        """
+        """Check the unit fan speed"""
         return self._speed
 
 
     @property
     def fan_modes(self):
-        """ Get the possible fan speeds
-        """
+        """Get the possible fan speeds"""
         return self._speeds_list
 
     async def async_set_temperature(self, **kwargs) -> None:
-        """ Set the target temperature
-        """
+        """Set the target temperature"""
         temp = kwargs.get(ATTR_TEMPERATURE)
         if temp is not None:
             _LOGGER.debug('setting temp %d', temp)
@@ -229,8 +215,7 @@ class MelViewClimate(ClimateEntity):
                 self.async_write_ha_state()
 
     async def async_set_fan_mode(self, fan_mode) -> None:
-        """ Set the fan speed
-        """
+        """Set the fan speed"""
         speed = fan_mode
         _LOGGER.debug('set fan mode: %s', speed)
         if await self._device.async_set_speed(speed):
@@ -249,8 +234,7 @@ class MelViewClimate(ClimateEntity):
         self.async_write_ha_state()
 
     async def async_turn_on(self) ->None:
-        """ Turn on the unit
-        """
+        """Turn on the unit"""
         _LOGGER.debug('power on')
         if await self._device.async_power_on():
             self._mode = await self._device.async_get_mode()
@@ -258,8 +242,7 @@ class MelViewClimate(ClimateEntity):
             self.async_write_ha_state()
 
     async def async_turn_off(self) -> None:
-        """ Turn off the unit
-        """
+        """Turn off the unit"""
         _LOGGER.debug('power off')
         if await self._device.async_power_off():
             self._mode = 'off'
@@ -270,7 +253,7 @@ class MelViewClimate(ClimateEntity):
 # ---------------------------------------------------------------
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
-    """ Set up the HASS component"""
+    """Set up the HASS component"""
     _LOGGER.debug('adding component')
 
     email = config[DOMAIN][CONF_EMAIL]
@@ -315,9 +298,7 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     _LOGGER.debug('component successfully added')
     return True
 
-async def async_setup_entry(
-    hass, entry, async_add_entities
-) -> None:
+async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView device climate based on config_entry."""
     mel_devices = hass.data[DOMAIN][entry.entry_id]
     
