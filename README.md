@@ -8,7 +8,9 @@ https://www.mitsubishielectric.com.au/product/wi-fi-controller/
 Main benefits of this integration compared with others:
  - local commands
  - group entities into device(s)
- - additional options UI (i.e. to toggle 0.5 deg temp step, local commands)
+ - create 'current temperature' sensor entity
+ - read min/max temp ranges from device
+ - configure options UI, e.g. to toggle 0.5 deg temp step, local commands, and sensor entity
 
 ## About 'Local commands'
 Mitsubishi Wi-Fi adaptors in this region require an internet connection at all times to function.
@@ -38,7 +40,6 @@ Currently working towards inclusion in HACS default repositories to make this ea
 
 ## Future improvements
 I would like to add the following features/ functionality in future:
-- Add interior temperature sensor entity
 - Choice of entity for Zone control (i.e. choose between switch or fan entity)
 - Support for HVAC action, e.g. report when unit is in defrosting, etc.
 
