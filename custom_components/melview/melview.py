@@ -74,7 +74,6 @@ class MelViewZone:
 
 class MelViewDevice:
     """Handler class for a melview unit"""
-
     def __init__(self, deviceid, buildingid, friendlyname,
                  authentication, localcontrol=False):
         self._deviceid = deviceid
@@ -93,6 +92,7 @@ class MelViewDevice:
 
         self.fan = FANSTAGES[3]
         self.temp_ranges = {}
+        self.model = None
     
     async def async_refresh(self):
         await self.async_refresh_device_caps()
@@ -127,6 +127,8 @@ class MelViewDevice:
                             "min": caps_range["min"],
                             "max": caps_range["max"],
                         }
+            if 'modelname' in self._caps:
+                self.model = self._caps['modelname']
             return True
         if req.status == 401 and retry:
             _LOGGER.error('caps error 401 (trying to re-login)')
