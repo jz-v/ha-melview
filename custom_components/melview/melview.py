@@ -74,7 +74,6 @@ class MelViewZone:
 
 class MelViewDevice:
     """Handler class for a melview unit"""
-
     def __init__(self, deviceid, buildingid, friendlyname,
                  authentication, localcontrol=False):
         self._deviceid = deviceid
@@ -92,6 +91,8 @@ class MelViewDevice:
         self._zones = {}
 
         self.fan = FANSTAGES[3]
+        self.temp_ranges = {}
+        self.model = None
     
     async def async_refresh(self):
         await self.async_refresh_device_caps()
@@ -118,6 +119,16 @@ class MelViewDevice:
             if 'hasautofan' in self._caps and self._caps['hasautofan'] == 1:
                 self.fan[0] = 'auto'
             self.fan_keyed = {value: key for key, value in self.fan.items()}
+            if "max" in self._caps:
+                for hvac_mode, mode_id in MODE.items():
+                    caps_range = self._caps["max"].get(str(mode_id))
+                    if caps_range and "min" in caps_range and "max" in caps_range:
+                        self.temp_ranges[hvac_mode] = {
+                            "min": caps_range["min"],
+                            "max": caps_range["max"],
+                        }
+            if 'modelname' in self._caps:
+                self.model = self._caps['modelname']
             return True
         if req.status == 401 and retry:
             _LOGGER.error('caps error 401 (trying to re-login)')
@@ -305,20 +316,18 @@ class MelViewDevice:
     async def async_set_temperature(self, temperature):
         """Set the target temperature"""
         mode = await self.async_get_mode()
-        min_temp =19
-        max_temp=28
-        if str(MODE[mode]) in self._caps['max']:
-            min_temp = self._caps['max'][str(MODE[mode])]['min']
-            max_temp = self._caps['max'][str(MODE[mode])]['max']
-        else:
-            min_temp = self._caps['max']['8']['min']
-            max_temp = self._caps['max']['8']['max']
+        temp_range = self.temp_ranges.get(mode)
+        if not temp_range:
+            _LOGGER.warning("No temp range available for mode %s", mode.value)
+            return await self.async_send_command('TS{:.2f}'.format(temperature))
+        min_temp = temp_range["min"]
+        max_temp = temp_range["max"]
         if temperature < min_temp:
-            _LOGGER.error('temp %.1f lower than min %d for mode %d',
+            _LOGGER.error('temp %.1f lower than min %d for mode %s',
                           temperature, min_temp, mode)
             return False
         if temperature > max_temp:
-            _LOGGER.error('temp %.1f greater than max %d for mode %d',
+            _LOGGER.error('temp %.1f greater than max %d for mode %s',
                           temperature, max_temp, mode)
             return False
         return await self.async_send_command('TS{:.2f}'.format(temperature))

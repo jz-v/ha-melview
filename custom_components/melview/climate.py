@@ -156,25 +156,22 @@ class MelViewClimate(ClimateEntity):
             "identifiers": {(DOMAIN, self._device.get_id())},
             "name": self._device.get_friendly_name(),
             "manufacturer": "Mitsubishi Electric",
-            "model": "Wi-Fi Control",
+            "model": self._device.model,
         }
 
-    # TODO
-    # @property
-    # def min_temp(self):
-    #     """ Return the minimum temperature
-    #     """
-    #     return convert_temperature(DEFAULT_MIN_TEMP, TEMP_CELSIUS,
-    #                                self.temperature_unit)
+    @property
+    def min_temp(self) -> float:
+        """Return the minimum temperature for the current HVAC mode."""
+        if self._mode in self._device.temp_ranges:
+            return self._device.temp_ranges[self._mode]["min"]
+        return super().min_temp
 
-
-    # @property
-    # def max_temp(self):
-    #     """ Return the maximum temperature
-    #     """
-    #     return convert_temperature(DEFAULT_MAX_TEMP, TEMP_CELSIUS,
-    #                                self.temperature_unit)
-
+    @property
+    def max_temp(self) -> float:
+        """Return the maximum temperature for the current HVAC mode."""
+        if self._mode in self._device.temp_ranges:
+            return self._device.temp_ranges[self._mode]["max"]
+        return super().max_temp
 
     @property
     def target_temperature_step(self):
