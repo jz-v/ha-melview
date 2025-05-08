@@ -1,7 +1,6 @@
 # Home Assistant - Mitsubishi Electric Wi-Fi Control
 ## General
-This is a custom integration for Home Assistant for AU/NZ Mitsubishi Electric Air Conditioners with an app.melview.net Wi-Fi adapter.
-Supports climate entity and zone control via switch entities.
+This is a custom integration for Home Assistant for AU/NZ Mitsubishi Electric Air Conditioners with a Wi-Fi adapter (see below).
 
 https://www.mitsubishielectric.com.au/product/wi-fi-controller/
 
@@ -9,8 +8,8 @@ Main benefits of this integration compared with others:
  - local commands
  - group entities into device(s)
  - create 'current temperature' sensor entity
- - read min/max temp ranges from device
- - configure options UI, e.g. to toggle 0.5 deg temp step, local commands, and sensor entity
+ - per device/mode min-max temperature ranges
+ - options UI to toggle 0.5 deg temp step, local commands, and sensor entity.
 
 ## About 'Local commands'
 Mitsubishi Wi-Fi adaptors in this region require an internet connection at all times to function.
@@ -22,12 +21,14 @@ However, it is possible for commands to be sent locally (i.e. from Home Assistan
 
 In practice, this is still much quicker than having commands sent to adapter from the melview cloud server.
 
-## Tested Devices
-I have personally tested on the following combination:
- - PEA-M140HAA ducted air conditioning unit
- - MAC-568IF-E wi-fi adapter
+## Compatible Devices
+This integration is intended to work with any AU/NZ region Wi-Fi adapter connecting to the melview API:
+ - MAC-568IF-E
+ - MAC-568IF-E.
 
-However, the compatibility is likely much greater than this.
+Personally tested on the following combination:
+ - PEA-M140HAA ducted air conditioning unit
+ - MAC-568IF-E Wi-Fi adapter.
 
 ## Installation
 1. Set up HACS (hacs.xyz)
@@ -46,7 +47,7 @@ I would like to add the following features/ functionality in future:
 ## Attributions
  - Forked from https://github.com/haggis663/ha-melview (WTFPL licensed)
  - Original repository https://github.com/zacharyrs/ha-melview (WTFPL licensed)
- - Original reverse-engineering of melview API via https://github.com/NovaGL/diy-melview licensed under the WTFPL
+ - Original reverse-engineering of melview API via https://github.com/NovaGL/diy-melview
 
 ## License
 This project is licensed under the MIT License.
