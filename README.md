@@ -11,7 +11,7 @@ Main benefits of this integration compared with others:
  - per device/mode min-max temperature ranges
  - options UI to toggle 0.5 deg temp step, local commands, and sensor entity.
 
-## About 'Local commands'
+## About 'local commands'
 Mitsubishi Wi-Fi adaptors in this region require an internet connection at all times to function.
 
 However, it is possible for commands to be sent locally (i.e. from Home Assistant to the Wi-Fi adaptor over LAN):
@@ -19,12 +19,13 @@ However, it is possible for commands to be sent locally (i.e. from Home Assistan
  - Response received with local command key
  - Local command key is sent to the adapter via LAN.
 
-In practice, this is still much quicker than having commands sent to adapter from the melview cloud server.
+In practice, this is still much quicker than having commands sent to adapter from the melview server.
 
-## Compatible Devices
+## Compatible devices
 This integration is intended to work with any AU/NZ region Wi-Fi adapter connecting to the melview API:
  - MAC-568IF-E
- - MAC-568IF-E.
+ - MAC-578IF-E
+ - MAC-588IF-E.
 
 Personally tested on the following combination:
  - PEA-M140HAA ducted air conditioning unit
