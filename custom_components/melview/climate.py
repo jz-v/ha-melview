@@ -21,8 +21,6 @@ DEPENDENCIES = []
 HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVACMode.HEAT, HVACMode.OFF]
 
 
-# ---------------------------------------------------------------
-
 class MelViewClimate(ClimateEntity):
     """Melview handler for Home Assistant"""
     def __init__(self, device, halfstep=False):
@@ -44,7 +42,6 @@ class MelViewClimate(ClimateEntity):
         self._mode = HVACMode.OFF
         self._speed = None
         self._state = STATE_OFF
-
 
     async def async_added_to_hass(self):
         """Perform async operations when entity is added to hass."""
@@ -90,63 +87,52 @@ class MelViewClimate(ClimateEntity):
 
     @property
     def name(self):
-        """ Diplay name for HASS"""
+        """Diplay name for HASS"""
         return self._name
-
 
     @property
     def unique_id(self):
-        """ Get unique_id for HASS"""
+        """Get unique_id for HASS"""
         return self._unique_id
-
 
     @property
     def supported_features(self):
-        """ Let HASS know feature support
-            TODO: Handle looking at the device features?
-        """
+        """Let HASS know feature support"""
         return (ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF)
-
 
     @property
     def should_poll(self):
-        """ Ensure HASS polls the unit"""
+        """Ensure HASS polls the unit"""
         return True
-
 
     @property
     def state(self):
         """Return the current state"""
         return self._state
 
-
     @property
     def is_on(self):
-        """ Check unit is on"""
+        """Check unit is on"""
         return self._state != STATE_OFF
-
 
     @property
     def precision(self):
-        """ Return the precision of the system"""
+        """Return the precision of the system"""
         return self._precision
-
 
     @property
     def temperature_unit(self):
-        """ Define unit for temperature"""
+        """Define unit for temperature"""
         return UnitOfTemperature.CELSIUS
-
 
     @property
     def current_temperature(self):
-        """ Get the current room temperature"""
+        """Get the current room temperature"""
         return self._current_temp
-
 
     @property
     def target_temperature(self):
-        """ Get the target temperature"""
+        """Get the target temperature"""
         return self._target_temp
 
     @property
@@ -178,24 +164,20 @@ class MelViewClimate(ClimateEntity):
         """Return the supported step of target temperature"""
         return self._target_step
 
-
     @property
     def hvac_mode(self):
         """Get the current operating mode"""
         return self._mode
-
 
     @property
     def hvac_modes(self):
         """Get possible operating modes"""
         return self._operations_list
 
-
     @property
     def fan_mode(self):
         """Check the unit fan speed"""
         return self._speed
-
 
     @property
     def fan_modes(self):
@@ -208,7 +190,6 @@ class MelViewClimate(ClimateEntity):
         if temp is not None:
             _LOGGER.debug('setting temp %d', temp)
             if await self._device.async_set_temperature(temp):
-                self._current_temp = temp
                 self.async_write_ha_state()
 
     async def async_set_fan_mode(self, fan_mode) -> None:
@@ -245,9 +226,6 @@ class MelViewClimate(ClimateEntity):
             self._mode = 'off'
             self._state = STATE_OFF
             self.async_write_ha_state()
-
-
-# ---------------------------------------------------------------
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the HASS component"""
@@ -307,6 +285,3 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
             for mel_device in mel_devices
         ],False
     )
-
- 
-# ---------------------------------------------------------------
