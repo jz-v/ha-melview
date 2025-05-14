@@ -51,14 +51,12 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
         _LOGGER.debug('Switch on zone %s', self._name)
         if await self.coordinator.async_enable_zone(self._id):
             await self.coordinator.async_request_refresh()
-            self.async_write_ha_state()
 
     async def async_turn_off(self):
         """Turn off the zone"""
         _LOGGER.debug('Switch off zone %s', self._name)
         if await self.coordinator.async_disable_zone(self._id):
             await self.coordinator.async_request_refresh()
-            self.async_write_ha_state()
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up Melview device climate based on config_entry."""

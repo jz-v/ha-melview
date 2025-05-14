@@ -218,7 +218,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             _LOGGER.debug('Set temperature %d', temp)
             if await self._device.async_set_temperature(temp):
                 await self.coordinator.async_request_refresh()
-                self.async_write_ha_state()
 
     async def async_set_fan_mode(self, fan_mode) -> None:
         """Set the fan speed"""
@@ -226,7 +225,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         _LOGGER.debug('Set fan: %s', speed)
         if await self._device.async_set_speed(speed):
             await self.coordinator.async_request_refresh()
-            self.async_write_ha_state()
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
         _LOGGER.debug('Set mode: %s', hvac_mode)
@@ -241,14 +239,12 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         _LOGGER.debug('Power on')
         if await self._device.async_power_on():
             await self.coordinator.async_request_refresh()
-            self.async_write_ha_state()
 
     async def async_turn_off(self) -> None:
         """Turn off the unit"""
         _LOGGER.debug('Power off')
         if await self._device.async_power_off():
             await self.coordinator.async_request_refresh()
-            self.async_write_ha_state()
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the HASS component"""
