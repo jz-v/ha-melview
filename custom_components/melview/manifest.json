@@ -7,5 +7,5 @@
   "documentation": "https://github.com/jz-v/ha-melview/",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/jz-v/ha-melview/issues",
-  "version": "2025.5.4"
+  "version": "2025.5.5b1"
 }
