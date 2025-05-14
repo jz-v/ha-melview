@@ -17,14 +17,12 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
         device = coordinator.device
         self._id = zone.id
         self._name = zone.name
-        self._status = zone.status
 
     async def async_update(self):
         """Update the switch state."""
         await self.coordinator.async_request_refresh()
         zone = self.coordinator.get_zone(self._id)
         self._name = zone.name
-        self._status = zone.status
 
     @property
     def name(self):
@@ -35,11 +33,6 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
     def unique_id(self):
         """Get unique_id for HASS"""
         return f"{self.coordinator.get_id()}-{self._id}"
-
-    @property
-    def should_poll(self):
-        """Ensure HASS polls the zone"""
-        return True
 
     @property
     def is_on(self) -> bool:
@@ -57,13 +50,15 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
         """Turn on the zone"""
         _LOGGER.debug('Switch on zone %s', self._name)
         if await self.coordinator.async_enable_zone(self._id):
-            self._status = 1
+            await self.coordinator.async_request_refresh()
+            self.async_write_ha_state()
 
     async def async_turn_off(self):
         """Turn off the zone"""
         _LOGGER.debug('Switch off zone %s', self._name)
         if await self.coordinator.async_disable_zone(self._id):
-            self._status = 0
+            await self.coordinator.async_request_refresh()
+            self.async_write_ha_state()
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up Melview device climate based on config_entry."""
