@@ -44,14 +44,10 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         # Placeholders for state
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
-        self._current_temp = None
-        self._target_temp = None
-        self._mode = HVACMode.OFF
-        self._speed = None
-        self._state = STATE_OFF
 
     async def async_added_to_hass(self):
         """Perform async operations when entity is added to hass."""
+        await super().async_added_to_hass()
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
         if self._halfstep and await self._device.async_get_precision_halves():
@@ -59,13 +55,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             self._target_step = 0.5
 
         await self._device.async_force_update()
-        self._current_temp = await self._device.async_get_room_temperature()
-        self._target_temp = await self._device.async_get_temperature()
-        self._mode = await self._device.async_get_mode()
-        self._speed = await self._device.async_get_speed()
-        self._state = STATE_OFF
-        if await self._device.async_is_power_on():
-            self._state = self._mode
 
         self.async_write_ha_state()
 
@@ -79,18 +68,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         if self._halfstep and await self._device.async_get_precision_halves():
             self._precision = PRECISION_HALVES
             self._target_step = 0.5
-
-        self._current_temp = await self._device.async_get_room_temperature()
-        self._target_temp = await self._device.async_get_temperature()
-
-        self._mode = await self._device.async_get_mode()
-        self._speed = await self._device.async_get_speed()
-
-        self._state = self._mode
-        
-        if not await self._device.async_is_power_on():
-            self._mode = 'off'
-            self._state = STATE_OFF
 
     @property
     def name(self):
@@ -110,12 +87,16 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     @property
     def state(self):
         """Return the current state"""
-        return self._state
+        power = self.coordinator.data.get("power", 0)
+        if power == 0:
+            return STATE_OFF
+        # Device is on—reflect its current HVAC mode
+        return self.hvac_mode
 
     @property
     def is_on(self):
         """Check unit is on"""
-        return self._state != STATE_OFF
+        return self.state != STATE_OFF
 
     @property
     def precision(self):
@@ -138,9 +119,14 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             return 0.0
 
     @property
-    def target_temperature(self):
+    def target_temperature(self) -> float | None:
         """Get the target temperature"""
-        return self._target_temp
+        val = self.coordinator.data.get("settemp")
+        try:
+            return float(val)
+        except (TypeError, ValueError):
+            _LOGGER.error("Invalid target temperature value: %s", val)
+            return None
 
     @property
     def device_info(self):
@@ -155,15 +141,17 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     @property
     def min_temp(self) -> float:
         """Return the minimum temperature for the current HVAC mode."""
-        if self._mode in self._device.temp_ranges:
-            return self._device.temp_ranges[self._mode]["min"]
+        mode = self.hvac_mode
+        if mode in self._device.temp_ranges:
+            return self._device.temp_ranges[mode]["min"]
         return super().min_temp
 
     @property
     def max_temp(self) -> float:
         """Return the maximum temperature for the current HVAC mode."""
-        if self._mode in self._device.temp_ranges:
-            return self._device.temp_ranges[self._mode]["max"]
+        mode = self.hvac_mode
+        if mode in self._device.temp_ranges:
+            return self._device.temp_ranges[mode]["max"]
         return super().max_temp
 
     @property
@@ -174,7 +162,15 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     @property
     def hvac_mode(self):
         """Get the current operating mode"""
-        return self._mode
+        # If powered off, report OFF
+        if self.coordinator.data.get("power", 0) == 0:
+            return HVACMode.OFF
+        mode_index = self.coordinator.data.get("setmode")
+        try:
+            return self._operations_list[mode_index]
+        except (TypeError, IndexError):
+            _LOGGER.error("Unknown mode index: %s", mode_index)
+            return HVACMode.AUTO
 
     @property
     def hvac_modes(self):
@@ -183,8 +179,8 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
 
     @property
     def fan_mode(self):
-        """Check the unit fan speed"""
-        return self._speed
+        """Get the current fan speed"""
+        return self.coordinator.data.get("setfan")
 
     @property
     def fan_modes(self):
@@ -194,21 +190,24 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     @property
     def hvac_action(self):
         """Get the current action."""
-        if self._state == STATE_OFF:
+        if self.state == STATE_OFF:
             return HVACAction.OFF
-        if self._mode == HVACMode.COOL:
-            if self._target_temp > self._current_temp:
-                return HVACAction.IDLE
-            return HVACAction.COOLING
-        if self._mode == HVACMode.HEAT:
+        current = self.current_temperature
+        target = self.target_temperature
+        mode = self.hvac_mode
+        if mode == HVACMode.COOL:
+            if target is None or current is None:
+                return None
+            return HVACAction.IDLE if target > current else HVACAction.COOLING
+        if mode == HVACMode.HEAT:
             if self._device._standby:
                 return HVACAction.PREHEATING
-            if self._target_temp < self._current_temp:
-                return HVACAction.IDLE
-            return HVACAction.HEATING
-        if self._mode == HVACMode.DRY:
+            if target is None or current is None:
+                return None
+            return HVACAction.IDLE if target < current else HVACAction.HEATING
+        if mode == HVACMode.DRY:
             return HVACAction.DRYING
-        if self._mode == HVACMode.FAN_ONLY:
+        if mode == HVACMode.FAN_ONLY:
             return HVACAction.FAN
         return None
 
@@ -226,9 +225,7 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         speed = fan_mode
         _LOGGER.debug('Set fan: %s', speed)
         if await self._device.async_set_speed(speed):
-            self._speed = speed
-            self._mode = await self._device.async_get_mode()
-            self._state = self._mode
+            await self.coordinator.async_request_refresh()
             self.async_write_ha_state()
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
@@ -236,24 +233,21 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         if hvac_mode == 'off':
             await self.async_turn_off()
         elif await self._device.async_set_mode(hvac_mode):
-            self._mode = hvac_mode
-            self._state = hvac_mode
+            await self.coordinator.async_request_refresh()
         self.async_write_ha_state()
 
     async def async_turn_on(self) ->None:
         """Turn on the unit"""
         _LOGGER.debug('Power on')
         if await self._device.async_power_on():
-            self._mode = await self._device.async_get_mode()
-            self._state = self._mode
+            await self.coordinator.async_request_refresh()
             self.async_write_ha_state()
 
     async def async_turn_off(self) -> None:
         """Turn off the unit"""
         _LOGGER.debug('Power off')
         if await self._device.async_power_off():
-            self._mode = 'off'
-            self._state = STATE_OFF
+            await self.coordinator.async_request_refresh()
             self.async_write_ha_state()
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
