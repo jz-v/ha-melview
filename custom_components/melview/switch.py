@@ -55,13 +55,13 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
 
     async def async_turn_on(self):
         """Turn on the zone"""
-        _LOGGER.debug('power on zone')
+        _LOGGER.debug('Switch on zone %s', self._name)
         if await self.coordinator.async_enable_zone(self._id):
             self._status = 1
 
     async def async_turn_off(self):
         """Turn off the zone"""
-        _LOGGER.debug('power off zone')
+        _LOGGER.debug('Switch off zone %s', self._name)
         if await self.coordinator.async_disable_zone(self._id):
             self._status = 0
 

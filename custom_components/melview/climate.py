@@ -199,15 +199,15 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         """Set the target temperature"""
         temp = kwargs.get(ATTR_TEMPERATURE)
         if temp is not None:
-            _LOGGER.debug('setting temp %d', temp)
-            if await self.device.async_set_temperature(temp):
+            _LOGGER.debug('Set temperature %d', temp)
+            if await self._device.async_set_temperature(temp):
                 await self.coordinator.async_request_refresh()
                 self.async_write_ha_state()
 
     async def async_set_fan_mode(self, fan_mode) -> None:
         """Set the fan speed"""
         speed = fan_mode
-        _LOGGER.debug('set fan mode: %s', speed)
+        _LOGGER.debug('Set fan: %s', speed)
         if await self._device.async_set_speed(speed):
             self._speed = speed
             self._mode = await self._device.async_get_mode()
@@ -215,7 +215,7 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             self.async_write_ha_state()
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
-        _LOGGER.debug('set mode: %s', hvac_mode)
+        _LOGGER.debug('Set mode: %s', hvac_mode)
         if hvac_mode == 'off':
             await self.async_turn_off()
         elif await self._device.async_set_mode(hvac_mode):
@@ -225,7 +225,7 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
 
     async def async_turn_on(self) ->None:
         """Turn on the unit"""
-        _LOGGER.debug('power on')
+        _LOGGER.debug('Power on')
         if await self._device.async_power_on():
             self._mode = await self._device.async_get_mode()
             self._state = self._mode
@@ -233,7 +233,7 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
 
     async def async_turn_off(self) -> None:
         """Turn off the unit"""
-        _LOGGER.debug('power off')
+        _LOGGER.debug('Power off')
         if await self._device.async_power_off():
             self._mode = 'off'
             self._state = STATE_OFF
@@ -241,7 +241,7 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the HASS component"""
-    _LOGGER.debug('adding component')
+    _LOGGER.debug('Adding component')
 
     email = config[DOMAIN][CONF_EMAIL]
     password = config[DOMAIN][CONF_PASSWORD]
@@ -249,25 +249,25 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     halfstep = config[DOMAIN][CONF_HALFSTEP]
 
     if email is None:
-        _LOGGER.error('no email provided')
+        _LOGGER.error('No email provided')
         return False
 
     if password is None:
-        _LOGGER.error('no password provided')
+        _LOGGER.error('No password provided')
         return False
 
     if local is None:
-        _LOGGER.warning('local unspecified, defaulting to false')
+        _LOGGER.warning('Var local unspecified, defaulting to false')
         local = False
 
     if halfstep is None:
-        _LOGGER.warning('halfstep unspecified, defaulting to false')
+        _LOGGER.warning('Var halfstep unspecified, defaulting to false')
         halfstep = False
 
     mv_auth = MelViewAuthentication(email, password)
     result= await mv_auth.asynclogin()
     if not result:
-        _LOGGER.error('login combination')
+        _LOGGER.error('Login combination')
         return False
 
     melview = MelView(mv_auth, localcontrol=local)
@@ -277,12 +277,12 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     devices = await melview.async_get_devices_list()
     for device in devices:
         await device.async_refresh()
-        _LOGGER.debug('new device: %s', device.get_friendly_name())
+        _LOGGER.debug('New device: %s', device.get_friendly_name())
         device_list.append(MelViewClimate(device, halfstep))
 
     add_devices(device_list)
 
-    _LOGGER.debug('component successfully added')
+    _LOGGER.debug('Component successfully added')
     return True
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:

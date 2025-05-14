@@ -71,9 +71,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     mv_auth = MelViewAuthentication(conf[CONF_EMAIL], conf[CONF_PASSWORD])
     result = await mv_auth.asynclogin()
     if not result:
-        _LOGGER.error('login combination')
+        _LOGGER.error('Login combination')
         return False
-    _LOGGER.debug('Got auth')
+    _LOGGER.debug('Authentication successful')
     melview = MelView(mv_auth,localcontrol=conf[CONF_LOCAL])
     device_list = []
     _LOGGER.debug('Getting data')
@@ -86,16 +86,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await coordinator.async_config_entry_first_refresh()
         _LOGGER.debug("Device: " + device.get_friendly_name())
         device_list.append(coordinator)
-    
-    # Store coordinators by entry_id
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = device_list
-
-    # Set up sensor, climate, and switch platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
   
     _LOGGER.debug('Set up coordinator(s)')
-    # hass.data.setdefault(DOMAIN, {}).update({entry.entry_id: device_list})
-    # await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 
