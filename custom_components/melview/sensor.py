@@ -26,12 +26,12 @@ async def async_setup_entry(
 
     devices = hass.data[DOMAIN][entry.entry_id]
 
-    entities = [MelviewCurrentTempSensor(coordinator) for coordinator in devices]
+    entities = [MelViewCurrentTempSensor(coordinator) for coordinator in devices]
     async_add_entities(entities, update_before_add=True)
 
 
-class MelviewCurrentTempSensor(CoordinatorEntity, SensorEntity):
-    """Sensor representing the current room temperature for a Melview device."""
+class MelViewCurrentTempSensor(CoordinatorEntity, SensorEntity):
+    """Sensor representing the current room temperature for a MelView device."""
 
     def __init__(self, coordinator):
         """Initialize sensor, tied to a DataUpdateCoordinator."""

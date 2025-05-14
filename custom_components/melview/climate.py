@@ -24,7 +24,7 @@ HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVA
 
 
 class MelViewClimate(CoordinatorEntity, ClimateEntity):
-    """Melview handler for Home Assistant"""
+    """MelView handler for Home Assistant"""
     def __init__(self, coordinator: MelViewCoordinator, halfstep: bool = False):
         super().__init__(coordinator)
         self.coordinator = coordinator

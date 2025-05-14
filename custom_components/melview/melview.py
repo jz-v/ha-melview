@@ -29,7 +29,7 @@ FANSTAGES = {
 }
 
 class MelViewAuthentication:
-    """Implementation to remember and refresh melview cookies."""
+    """Implementation to remember and refresh MelView cookies."""
     def __init__(self, email, password):
         self._email = email
         self._password = password
@@ -73,7 +73,7 @@ class MelViewZone:
 
 
 class MelViewDevice:
-    """Handler class for a melview unit"""
+    """Handler class for a MelView unit"""
     def __init__(self, deviceid, buildingid, friendlyname,
                  authentication, localcontrol=False):
         self._deviceid = deviceid
@@ -384,7 +384,7 @@ class MelViewDevice:
 
 
 class MelView:
-    """Handler for multiple melview devices under one user"""
+    """Handler for multiple MelView devices under one user"""
     def __init__(self, authentication, localcontrol=False):
         self._authentication = authentication
         self._unitcount = 0

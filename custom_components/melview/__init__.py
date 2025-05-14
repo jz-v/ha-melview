@@ -47,7 +47,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Establish connection with Melview."""
+    """Establish connection with MelView."""
     if DOMAIN not in config:
         return True
 
