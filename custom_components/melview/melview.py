@@ -89,6 +89,7 @@ class MelViewDevice:
         self._rtemp_list = []
         self._otemp_list = []
         self._zones = {}
+        self._standby = 0
 
         self.fan = FANSTAGES[3]
         self.temp_ranges = {}
@@ -96,8 +97,7 @@ class MelViewDevice:
     
     async def async_refresh(self):
         await self.async_refresh_device_caps()
-        await self.async_refresh_device_info()
-        
+        await self.async_refresh_device_info()    
 
     def __str__(self):
         return str(self._json)
@@ -159,6 +159,8 @@ class MelViewDevice:
                 self._otemp_list = self._otemp_list[-10:]
             if 'zones' in self._json:
                 self._zones = {z['zoneid'] : MelViewZone(z['zoneid'], z['name'], z['status']) for z in self._json['zones']}
+            if 'standby' in self._json:
+                self._standby = self._json['standby']
             return True
         if req.status == 401 and retry:
             _LOGGER.error('Info error 401 (trying to re-login)')
@@ -229,7 +231,6 @@ class MelViewDevice:
         """Force info refresh"""
         return await self.async_refresh_device_info()
 
-
     def get_id(self):
         """Get device ID"""
         return self._deviceid
@@ -298,7 +299,6 @@ class MelViewDevice:
                     return key
 
         return HVACMode.AUTO
-
 
     def get_zone(self, zoneid):
         return self._zones.get(zoneid)

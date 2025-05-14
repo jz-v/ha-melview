@@ -1,6 +1,7 @@
 import logging
 from homeassistant.components.climate.const import (
     HVACMode,
+    HVACAction,
     ClimateEntityFeature
 )
 from homeassistant.components.climate import ClimateEntity
@@ -106,11 +107,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         """Let HASS know feature support"""
         return (ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF)
 
-    # @property
-    # def should_poll(self):
-    #     """Ensure HASS polls the unit"""
-    #     return True
-
     @property
     def state(self):
         """Return the current state"""
@@ -194,6 +190,27 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     def fan_modes(self):
         """Get the possible fan speeds"""
         return self._speeds_list
+
+    @property
+    def hvac_action(self):
+        """Get the current action."""
+        if self._state == STATE_OFF:
+            return HVACAction.OFF
+        if self._mode == HVACMode.COOL:
+            if self._target_temp > self._current_temp:
+                return HVACAction.IDLE
+            return HVACAction.COOLING
+        if self._mode == HVACMode.HEAT:
+            if self._device._standby:
+                return HVACAction.PREHEATING
+            if self._target_temp < self._current_temp:
+                return HVACAction.IDLE
+            return HVACAction.HEATING
+        if self._mode == HVACMode.DRY:
+            return HVACAction.DRYING
+        if self._mode == HVACMode.FAN_ONLY:
+            return HVACAction.FAN
+        return None
 
     async def async_set_temperature(self, **kwargs) -> None:
         """Set the target temperature"""
