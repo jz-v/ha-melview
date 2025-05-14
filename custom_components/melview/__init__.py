@@ -82,7 +82,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     for device in devices:
         await device.async_refresh()
         coordinator = MelViewCoordinator(hass, entry, device)
-        # Prime the coordinator’s data cache
         await coordinator.async_config_entry_first_refresh()
         _LOGGER.debug("Device: " + device.get_friendly_name())
         device_list.append(coordinator)
