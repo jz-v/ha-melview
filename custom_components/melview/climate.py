@@ -56,8 +56,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
 
         await self._device.async_force_update()
 
-        self.async_write_ha_state()
-
     async def async_update(self):
         """Update device properties"""
         _LOGGER.debug('Update climate entity')
@@ -178,9 +176,13 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         return self._operations_list
 
     @property
-    def fan_mode(self):
-        """Get the current fan speed"""
-        return self.coordinator.data.get("setfan")
+    def fan_mode(self) -> str | None:
+        """Return the current fan speed label."""
+        code = self.coordinator.data.get("setfan")
+        label = self._device.fan.get(code)
+        if label is None:
+            _LOGGER.error("Fan code %s not present in available modes", code)
+        return label
 
     @property
     def fan_modes(self):
@@ -232,7 +234,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             await self.async_turn_off()
         elif await self._device.async_set_mode(hvac_mode):
             await self.coordinator.async_request_refresh()
-        self.async_write_ha_state()
 
     async def async_turn_on(self) ->None:
         """Turn on the unit"""
