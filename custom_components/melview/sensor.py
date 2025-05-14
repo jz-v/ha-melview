@@ -7,6 +7,7 @@ from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, CONF_SENSOR
 
@@ -25,40 +26,32 @@ async def async_setup_entry(
 
     devices = hass.data[DOMAIN][entry.entry_id]
 
-    entities = [MelviewCurrentTempSensor(device) for device in devices]
+    entities = [MelViewCurrentTempSensor(coordinator) for coordinator in devices]
     async_add_entities(entities, update_before_add=True)
 
 
-class MelviewCurrentTempSensor(SensorEntity):
-    """Sensor representing the current room temperature for a Melview device."""
+class MelViewCurrentTempSensor(CoordinatorEntity, SensorEntity):
+    """Sensor representing the current room temperature for a MelView device."""
 
-    def __init__(self, device):
-        self._device = device
-        self._attr_name = f"{device.get_friendly_name()} Current Temperature"
+    def __init__(self, coordinator):
+        """Initialize sensor, tied to a DataUpdateCoordinator."""
+        super().__init__(coordinator)
+        self.coordinator = coordinator
+        api = coordinator.device
+        self._attr_name = f"{api.get_friendly_name()} Current Temperature"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_device_class = SensorDeviceClass.TEMPERATURE
-        self._attr_entity_category = None
-        self._attr_should_poll = True
-        self._attr_unique_id = f"{device._deviceid}_current_temp"
+        self._attr_unique_id = f"{api.get_id()}_current_temp"
         self._attr_extra_state_attributes = {"source": "melview.py cache"}
-        self._current_temp = None
-
-    async def async_added_to_hass(self):
-        self._current_temp = await self._device.async_get_room_temperature()
-        self.async_write_ha_state()
-
-    async def async_update(self):
-        """Fetch updated data from the device."""
-        await self._device.async_refresh_device_info()
-        self._current_temp = await self._device.async_get_room_temperature()
 
     @property
     def native_value(self):
-        """Return the averaged room temperature."""
-        return self._current_temp
+        """Return the current room temperature from cached data."""
+        data = self.coordinator.data or {}
+        return float(data.get("roomtemp", 0))
     
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, self._device.get_id())},
+            "identifiers": {(DOMAIN, self.coordinator.device.get_id())},
         }

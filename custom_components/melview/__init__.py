@@ -18,6 +18,7 @@ from .const import DOMAIN, CONF_LOCAL, CONF_HALFSTEP, CONF_SENSOR
 from .melview import MelViewAuthentication, MelView
 from .climate import MelViewClimate
 from .switch import MelViewZoneSwitch
+from .coordinator import MelViewCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Establish connection with Melview."""
+    """Establish connection with MelView."""
     if DOMAIN not in config:
         return True
 
@@ -70,9 +71,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     mv_auth = MelViewAuthentication(conf[CONF_EMAIL], conf[CONF_PASSWORD])
     result = await mv_auth.asynclogin()
     if not result:
-        _LOGGER.error('login combination')
+        _LOGGER.error('Login combination')
         return False
-    _LOGGER.debug('Got auth')
+    _LOGGER.debug('Authentication successful')
     melview = MelView(mv_auth,localcontrol=conf[CONF_LOCAL])
     device_list = []
     _LOGGER.debug('Getting data')
@@ -80,12 +81,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     devices = await melview.async_get_devices_list()
     for device in devices:
         await device.async_refresh()
-        _LOGGER.debug("Device: "+ device.get_friendly_name())
-        device_list.append(device)
-    _LOGGER.debug('Got data')
-
-    hass.data.setdefault(DOMAIN, {}).update({entry.entry_id: device_list})
+        coordinator = MelViewCoordinator(hass, entry, device)
+        await coordinator.async_config_entry_first_refresh()
+        _LOGGER.debug("Device: " + device.get_friendly_name())
+        device_list.append(coordinator)
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = device_list
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+  
+    _LOGGER.debug('Set up coordinator(s)')
     return True
 
 

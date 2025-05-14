@@ -1,21 +1,28 @@
 import logging
 from homeassistant.components.switch import SwitchEntity
 
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .coordinator import MelViewCoordinator
+
 _LOGGER = logging.getLogger(__name__)
 DOMAIN = 'melview'
 DEPENDENCIES = []
 
-class MelViewZoneSwitch(SwitchEntity):
+class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
     """Melview zone switch handler for Home Assistant"""
-    def __init__(self, zone, parentClimate):
+    def __init__(self, coordinator: MelViewCoordinator, zone):
+        super().__init__(coordinator)
+        self.coordinator = coordinator
+        self._zone = zone.id
+        device = coordinator.device
         self._id = zone.id
         self._name = zone.name
         self._status = zone.status
-        self._climate = parentClimate
 
     async def async_update(self):
-        await self._climate.async_force_update()
-        zone = self._climate.get_zone(self._id)
+        """Update the switch state."""
+        await self.coordinator.async_request_refresh()
+        zone = self.coordinator.get_zone(self._id)
         self._name = zone.name
         self._status = zone.status
 
@@ -27,7 +34,7 @@ class MelViewZoneSwitch(SwitchEntity):
     @property
     def unique_id(self):
         """Get unique_id for HASS"""
-        return f"{self._climate.get_id()}-{self._id}"
+        return f"{self.coordinator.get_id()}-{self._id}"
 
     @property
     def should_poll(self):
@@ -35,38 +42,37 @@ class MelViewZoneSwitch(SwitchEntity):
         return True
 
     @property
-    def is_on(self):
-        """Check zone is on"""
-        return self._status == 1
+    def is_on(self) -> bool:
+        """Check if the zone is currently on."""
+        zone = self.coordinator.get_zone(self._id)
+        return bool(zone.status)
     
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, self._climate.get_id())},
+            "identifiers": {(DOMAIN, self.coordinator.get_id())},
         }
 
     async def async_turn_on(self):
         """Turn on the zone"""
-        _LOGGER.debug('power on zone')
-        if await self._climate.async_enable_zone(self._id):
+        _LOGGER.debug('Switch on zone %s', self._name)
+        if await self.coordinator.async_enable_zone(self._id):
             self._status = 1
 
     async def async_turn_off(self):
         """Turn off the zone"""
-        _LOGGER.debug('power off zone')
-        if await self._climate.async_disable_zone(self._id):
+        _LOGGER.debug('Switch off zone %s', self._name)
+        if await self.coordinator.async_disable_zone(self._id):
             self._status = 0
 
-async def async_setup_entry(
-    hass, entry, async_add_entities
-) -> None:
+async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up Melview device climate based on config_entry."""
-    mel_devices = hass.data[DOMAIN][entry.entry_id]
+    coordinators = hass.data[DOMAIN][entry.entry_id]
     
-    async_add_entities(
-        [   
-            MelViewZoneSwitch(zone,mel_device)
-            for mel_device in mel_devices
-            for zone in mel_device.get_zones()
-        ],False
-    )
+    entities = [
+        MelViewZoneSwitch(coordinator, zone)
+        for coordinator in coordinators
+        for zone in coordinator.get_zones()
+    ]
+
+    async_add_entities(entities, update_before_add=True)

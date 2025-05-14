@@ -173,10 +173,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return OptionsFlowHandler(config_entry)
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle options flow for melview."""
+    """Handle options flow for MelView."""
     
     def __init__(self, config_entry):
-        """Initialize melview options flow."""
+        """Initialize MelView options flow."""
         self.config_entry = config_entry
         
     async def async_step_init(self, user_input=None):

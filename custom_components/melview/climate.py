@@ -13,6 +13,8 @@ from homeassistant.const import (
 )
 from .melview import MelViewAuthentication, MelView, MODE
 from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD, CONF_LOCAL, CONF_HALFSTEP
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .coordinator import MelViewCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,11 +23,15 @@ DEPENDENCIES = []
 HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVACMode.HEAT, HVACMode.OFF]
 
 
-class MelViewClimate(ClimateEntity):
-    """Melview handler for Home Assistant"""
-    def __init__(self, device, halfstep=False):
+class MelViewClimate(CoordinatorEntity, ClimateEntity):
+    """MelView handler for Home Assistant"""
+    def __init__(self, coordinator: MelViewCoordinator, halfstep: bool = False):
+        super().__init__(coordinator)
+        self.coordinator = coordinator
+        self._device = coordinator.device
+        device = coordinator.device
+
         self._enable_turn_on_off_backwards_compatibility = False
-        self._device = device
         self._halfstep = halfstep
 
         self._name = device.get_friendly_name()
@@ -64,7 +70,7 @@ class MelViewClimate(ClimateEntity):
 
     async def async_update(self):
         """Update device properties"""
-        _LOGGER.debug('updating state')
+        _LOGGER.debug('Update climate entity')
         await self._device.async_force_update()
 
         self._precision = PRECISION_WHOLE
@@ -100,10 +106,10 @@ class MelViewClimate(ClimateEntity):
         """Let HASS know feature support"""
         return (ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF)
 
-    @property
-    def should_poll(self):
-        """Ensure HASS polls the unit"""
-        return True
+    # @property
+    # def should_poll(self):
+    #     """Ensure HASS polls the unit"""
+    #     return True
 
     @property
     def state(self):
@@ -126,9 +132,14 @@ class MelViewClimate(ClimateEntity):
         return UnitOfTemperature.CELSIUS
 
     @property
-    def current_temperature(self):
+    def current_temperature(self) -> float:
         """Get the current room temperature"""
-        return self._current_temp
+        val = self.coordinator.data.get("roomtemp", 0)
+        try:
+            return float(val)
+        except (TypeError, ValueError):
+            _LOGGER.error("Invalid temperature value: %s", val)
+            return 0.0
 
     @property
     def target_temperature(self):
@@ -188,14 +199,15 @@ class MelViewClimate(ClimateEntity):
         """Set the target temperature"""
         temp = kwargs.get(ATTR_TEMPERATURE)
         if temp is not None:
-            _LOGGER.debug('setting temp %d', temp)
+            _LOGGER.debug('Set temperature %d', temp)
             if await self._device.async_set_temperature(temp):
+                await self.coordinator.async_request_refresh()
                 self.async_write_ha_state()
 
     async def async_set_fan_mode(self, fan_mode) -> None:
         """Set the fan speed"""
         speed = fan_mode
-        _LOGGER.debug('set fan mode: %s', speed)
+        _LOGGER.debug('Set fan: %s', speed)
         if await self._device.async_set_speed(speed):
             self._speed = speed
             self._mode = await self._device.async_get_mode()
@@ -203,7 +215,7 @@ class MelViewClimate(ClimateEntity):
             self.async_write_ha_state()
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
-        _LOGGER.debug('set mode: %s', hvac_mode)
+        _LOGGER.debug('Set mode: %s', hvac_mode)
         if hvac_mode == 'off':
             await self.async_turn_off()
         elif await self._device.async_set_mode(hvac_mode):
@@ -213,7 +225,7 @@ class MelViewClimate(ClimateEntity):
 
     async def async_turn_on(self) ->None:
         """Turn on the unit"""
-        _LOGGER.debug('power on')
+        _LOGGER.debug('Power on')
         if await self._device.async_power_on():
             self._mode = await self._device.async_get_mode()
             self._state = self._mode
@@ -221,7 +233,7 @@ class MelViewClimate(ClimateEntity):
 
     async def async_turn_off(self) -> None:
         """Turn off the unit"""
-        _LOGGER.debug('power off')
+        _LOGGER.debug('Power off')
         if await self._device.async_power_off():
             self._mode = 'off'
             self._state = STATE_OFF
@@ -229,7 +241,7 @@ class MelViewClimate(ClimateEntity):
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the HASS component"""
-    _LOGGER.debug('adding component')
+    _LOGGER.debug('Adding component')
 
     email = config[DOMAIN][CONF_EMAIL]
     password = config[DOMAIN][CONF_PASSWORD]
@@ -237,25 +249,25 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     halfstep = config[DOMAIN][CONF_HALFSTEP]
 
     if email is None:
-        _LOGGER.error('no email provided')
+        _LOGGER.error('No email provided')
         return False
 
     if password is None:
-        _LOGGER.error('no password provided')
+        _LOGGER.error('No password provided')
         return False
 
     if local is None:
-        _LOGGER.warning('local unspecified, defaulting to false')
+        _LOGGER.warning('Var local unspecified, defaulting to false')
         local = False
 
     if halfstep is None:
-        _LOGGER.warning('halfstep unspecified, defaulting to false')
+        _LOGGER.warning('Var halfstep unspecified, defaulting to false')
         halfstep = False
 
     mv_auth = MelViewAuthentication(email, password)
     result= await mv_auth.asynclogin()
     if not result:
-        _LOGGER.error('login combination')
+        _LOGGER.error('Login combination')
         return False
 
     melview = MelView(mv_auth, localcontrol=local)
@@ -265,23 +277,20 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     devices = await melview.async_get_devices_list()
     for device in devices:
         await device.async_refresh()
-        _LOGGER.debug('new device: %s', device.get_friendly_name())
+        _LOGGER.debug('New device: %s', device.get_friendly_name())
         device_list.append(MelViewClimate(device, halfstep))
 
     add_devices(device_list)
 
-    _LOGGER.debug('component successfully added')
+    _LOGGER.debug('Component successfully added')
     return True
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView device climate based on config_entry."""
-    mel_devices = hass.data[DOMAIN][entry.entry_id]
-    
+    coordinators = hass.data[DOMAIN][entry.entry_id]
     halfstep = entry.data.get(CONF_HALFSTEP, False)
-
-    async_add_entities(
-        [   
-            MelViewClimate(mel_device, halfstep)
-            for mel_device in mel_devices
-        ],False
-    )
+    entities = [
+        MelViewClimate(coordinator, halfstep)
+        for coordinator in coordinators
+    ]
+    async_add_entities(entities, update_before_add=True)
