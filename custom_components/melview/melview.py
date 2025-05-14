@@ -149,6 +149,7 @@ class MelViewDevice:
                             json={'unitid': self._deviceid, 'v': APIVERSION})
         if req.status == 200:
             self._json = await req.json()
+            _LOGGER.debug('polling unitcommand.aspx')
             if 'roomtemp' in self._json:
                 self._rtemp_list.append(float(self._json['roomtemp']))
                 # Keep only last 10 temperature values.

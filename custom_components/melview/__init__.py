@@ -18,6 +18,7 @@ from .const import DOMAIN, CONF_LOCAL, CONF_HALFSTEP, CONF_SENSOR
 from .melview import MelViewAuthentication, MelView
 from .climate import MelViewClimate
 from .switch import MelViewZoneSwitch
+from .coordinator import MelViewCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,12 +81,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     devices = await melview.async_get_devices_list()
     for device in devices:
         await device.async_refresh()
-        _LOGGER.debug("Device: "+ device.get_friendly_name())
-        device_list.append(device)
-    _LOGGER.debug('Got data')
+        coordinator = MelViewCoordinator(hass, entry, device)
+        # Prime the coordinator’s data cache
+        await coordinator.async_config_entry_first_refresh()
+        _LOGGER.debug("Device: " + device.get_friendly_name())
+        device_list.append(coordinator)
+    
+    # Store coordinators by entry_id
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = device_list
 
-    hass.data.setdefault(DOMAIN, {}).update({entry.entry_id: device_list})
+    # Set up sensor, climate, and switch platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+  
+    _LOGGER.debug('Set up coordinator(s)')
+    # hass.data.setdefault(DOMAIN, {}).update({entry.entry_id: device_list})
+    # await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 
