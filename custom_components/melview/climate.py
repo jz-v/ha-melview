@@ -189,25 +189,14 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
 
     @property
     def hvac_action(self):
-        """Get the current action."""
+        """Get the current action, returns None unless explicitly known."""
         if self.state == STATE_OFF:
             return HVACAction.OFF
-        current = self.current_temperature
-        target = self.target_temperature
-        mode = self.hvac_mode
-        if mode == HVACMode.COOL:
-            if target is None or current is None:
-                return None
-            return HVACAction.IDLE if target > current else HVACAction.COOLING
-        if mode == HVACMode.HEAT:
+        if self.hvac_mode == HVACMode.HEAT:
             if self._device._standby:
                 return HVACAction.PREHEATING
-            if target is None or current is None:
-                return None
-            return HVACAction.IDLE if target < current else HVACAction.HEATING
-        if mode == HVACMode.DRY:
-            return HVACAction.DRYING
-        if mode == HVACMode.FAN_ONLY:
+            return None
+        if self.hvac_mode == HVACMode.FAN_ONLY:
             return HVACAction.FAN
         return None
 
