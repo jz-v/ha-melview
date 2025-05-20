@@ -41,7 +41,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         self._operations_list = [x for x in MODE] + [HVACMode.OFF]
         self._speeds_list = [x for x in self._device.fan_keyed]
 
-        # Placeholders for state
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
 
@@ -90,7 +89,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         power = self.coordinator.data.get("power", 0)
         if power == 0:
             return STATE_OFF
-        # Device is on—reflect its current HVAC mode
         return self.hvac_mode
 
     @property
@@ -162,7 +160,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     @property
     def hvac_mode(self):
         """Get the current operating mode"""
-        # If powered off, report OFF
         if self.coordinator.data.get("power", 0) == 0:
             return HVACMode.OFF
         mode_index = self.coordinator.data.get("setmode")
