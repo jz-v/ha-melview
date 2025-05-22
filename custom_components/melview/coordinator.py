@@ -32,7 +32,7 @@ class MelViewCoordinator(DataUpdateCoordinator):
         try:
             if self._caps is None:
                 self._caps = await self.device.async_refresh_device_caps()
-                _LOGGER.debug("MelView capabilities: %s", self.device._caps)
+                _LOGGER.debug("Unit capabilities: %s", self.device._caps)
             ok = await self.device.async_refresh_device_info()
             if not ok or self.device._json is None:
                 raise UpdateFailed("Failed to refresh MelView info")

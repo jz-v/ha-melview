@@ -41,7 +41,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         self._operations_list = [x for x in MODE] + [HVACMode.OFF]
         self._speeds_list = [x for x in self._device.fan_keyed]
 
-        # Placeholders for state
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
 
@@ -88,7 +87,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         power = self.coordinator.data.get("power", 0)
         if power == 0:
             return STATE_OFF
-        # Device is on—reflect its current HVAC mode
         return self.hvac_mode
 
     @property
@@ -160,7 +158,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     @property
     def hvac_mode(self):
         """Get the current operating mode"""
-        # If powered off, report OFF
         if self.coordinator.data.get("power", 0) == 0:
             return HVACMode.OFF
         mode_index = self.coordinator.data.get("setmode")
@@ -191,25 +188,14 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
 
     @property
     def hvac_action(self):
-        """Get the current action."""
+        """Get the current action, returns None unless explicitly known."""
         if self.state == STATE_OFF:
             return HVACAction.OFF
-        current = self.current_temperature
-        target = self.target_temperature
-        mode = self.hvac_mode
-        if mode == HVACMode.COOL:
-            if target is None or current is None:
-                return None
-            return HVACAction.IDLE if target > current else HVACAction.COOLING
-        if mode == HVACMode.HEAT:
+        if self.hvac_mode == HVACMode.HEAT:
             if self._device._standby:
                 return HVACAction.PREHEATING
-            if target is None or current is None:
-                return None
-            return HVACAction.IDLE if target < current else HVACAction.HEATING
-        if mode == HVACMode.DRY:
-            return HVACAction.DRYING
-        if mode == HVACMode.FAN_ONLY:
+            return None
+        if self.hvac_mode == HVACMode.FAN_ONLY:
             return HVACAction.FAN
         return None
 
