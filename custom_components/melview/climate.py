@@ -21,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = []
 
-HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVACMode.HEAT, HVACMode.OFF]
+# HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVACMode.HEAT, HVACMode.OFF]
 
 
 class MelViewClimate(CoordinatorEntity, ClimateEntity):
@@ -161,11 +161,11 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         if self.coordinator.data.get("power", 0) == 0:
             return HVACMode.OFF
         mode_index = self.coordinator.data.get("setmode")
-        try:
-            return self._operations_list[mode_index]
-        except (TypeError, IndexError):
-            _LOGGER.error("Unknown mode index: %s", mode_index)
-            return HVACMode.AUTO
+        mode = next(
+            (mode for mode, val in MODE.items() if val == mode_index),
+            HVACMode.AUTO
+        )
+        return mode
 
     @property
     def hvac_modes(self):
