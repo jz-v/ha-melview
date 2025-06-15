@@ -36,6 +36,7 @@ Personally tested on the following combination:
  - PEA-M140HAA ducted air conditioning unit
  - MAC-568IF-E Wi-Fi adapter.
 
+
 ## About 'local commands'
 Mitsubishi Wi-Fi adaptors in this region require an internet connection at all times to function.
 
@@ -46,9 +47,7 @@ However, it is possible for commands to be sent locally (i.e. from Home Assistan
 
 In practice, this is still much quicker than waiting up to 30 seconds for the adapter to check in with the melview server to receive commands.
 
-## Future improvements
-I am hoping to add the following features/ functionality in future:
-- Choice of entity for Zone control (i.e. choose between switch or fan entity)
+For truly local control, these adapters are also compatible with the ECHONETLite protocol, which has a [very well maintained HACS integration](https://github.com/scottyphillips/echonetlite_homeassistant). However, be aware that the ECHONETLite protocol does not support ZONES in any way, nor 0.5 deg temperature steps.
 
 ## Attributions
  - Forked from https://github.com/haggis663/ha-melview (WTFPL licensed)
