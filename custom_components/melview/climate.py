@@ -1,4 +1,5 @@
 import logging
+from homeassistant.components import logbook
 from homeassistant.components.climate.const import (
     HVACMode,
     HVACAction,
@@ -210,6 +211,13 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         _LOGGER.debug('Set fan: %s', speed)
         if await self._device.async_set_speed(speed):
             await self.coordinator.async_request_refresh()
+            parsed_speed = fan_mode.title()
+            logbook.log_entry(
+                hass=self.hass,
+                name=self.name,
+                message=f"Fan speed set to {parsed_speed}",
+                entity_id=self.entity_id,
+            )
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
         _LOGGER.debug('Set mode: %s', hvac_mode)
