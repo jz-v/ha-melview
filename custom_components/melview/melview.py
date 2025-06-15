@@ -151,6 +151,12 @@ class MelViewDevice:
                 self._zones = {z['zoneid'] : MelViewZone(z['zoneid'], z['name'], z['status']) for z in self._json['zones']}
             if 'standby' in self._json:
                 self._standby = self._json['standby']
+            if 'error' in self._json:
+                if self._json['error'] != 'ok':
+                    _LOGGER.error('Unit error: %s', self._json['error'])
+            if 'fault' in self._json:
+                if self._json['fault'] != '':
+                    _LOGGER.error('Unit fault: %s', self._json['fault'])
             return True
         if req.status == 401 and retry:
             _LOGGER.error('Info error 401 (trying to re-login)')
