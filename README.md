@@ -5,7 +5,7 @@ This is a custom integration for Home Assistant for AU/NZ Mitsubishi Electric Ai
 https://www.mitsubishielectric.com.au/product/wi-fi-controller/
 
 Benefits of this integration compared with others:
- - faster local commands
+ - faster (local) commands
  - group entities into HA devices (useful for ducted systems with zone switches)
  - optional 'current temperature' sensor entity
  - per device/mode min-max temperature ranges
