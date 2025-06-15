@@ -1,4 +1,10 @@
 # Home Assistant - Mitsubishi Electric Wi-Fi Control
+
+<p align="left">
+  <img src="logo.png" alt="Mitsubishi Electric Logo" height="256" />
+  <img src="adapter.png" alt="Adapter" height="256" />
+</p>
+
 ## General
 This is a custom integration for Home Assistant for AU/NZ Mitsubishi Electric Air Conditioners with a Wi-Fi adapter (see below).
 
