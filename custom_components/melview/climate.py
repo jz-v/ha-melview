@@ -21,9 +21,6 @@ _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = []
 
-# HVAC_MODES = [HVACMode.AUTO, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY, HVACMode.HEAT, HVACMode.OFF]
-
-
 class MelViewClimate(CoordinatorEntity, ClimateEntity):
     """MelView handler for Home Assistant"""
     def __init__(self, coordinator: MelViewCoordinator, halfstep: bool = False):

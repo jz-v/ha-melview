@@ -86,8 +86,6 @@ class MelViewDevice:
 
         self._info_lease_seconds = 30  # Data lasts for 30s.
         self._json = None
-        self._rtemp_list = []
-        self._otemp_list = []
         self._zones = {}
         self._standby = 0
 
@@ -149,14 +147,6 @@ class MelViewDevice:
                             json={'unitid': self._deviceid, 'v': APIVERSION})
         if req.status == 200:
             self._json = await req.json()
-            if 'roomtemp' in self._json:
-                self._rtemp_list.append(float(self._json['roomtemp']))
-                # Keep only last 10 temperature values.
-                self._rtemp_list = self._rtemp_list[-10:]
-            if 'outdoortemp' in self._json:
-                self._otemp_list.append(float(self._json['outdoortemp']))
-                # Keep only last 10 temperature values.
-                self._otemp_list = self._otemp_list[-10:]
             if 'zones' in self._json:
                 self._zones = {z['zoneid'] : MelViewZone(z['zoneid'], z['name'], z['status']) for z in self._json['zones']}
             if 'standby' in self._json:
@@ -257,25 +247,14 @@ class MelViewDevice:
         """Get current room temperature"""
         if not await self.async_is_info_valid():
             return 0
-
-        if not self._rtemp_list:
-            return 0  # Avoid div 0.
-
-        return round(sum(self._rtemp_list) / len(self._rtemp_list), 1)
+        return self._json.get('roomtemp', 0)
 
     def get_outside_temperature(self):
         """Get current outside temperature"""
         if not 'hasoutdoortemp' in self._caps or self._caps['hasoutdoortemp'] == 0:
             _LOGGER.error('Outdoor temperature not supported')
             return 0
-
-        if not self._is_info_valid():
-            return 0
-
-        if not self._otemp_list:
-            return 0  # Avoid div 0.
-
-        return round((sum(self._otemp_list) / len(self._otemp_list)), 1)
+        return self._json.get('outdoortemp', 0)
 
     async def async_get_speed(self):
         """Get the set fan speed"""
