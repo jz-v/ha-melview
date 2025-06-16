@@ -1,8 +1,8 @@
 # Home Assistant - Mitsubishi Electric Wi-Fi Control
 
 <p align="left">
-  <img src="logo.png" alt="Mitsubishi Electric Logo" height="75" align="middle" />
-  <img src="adapter.png" alt="Adapter" height="192" align="middle" />
+  <img src="https://github.com/jz-v/ha-melview/blob/master/logo.png" alt="Mitsubishi Electric Logo" height="75" align="middle" />
+  <img src="https://github.com/jz-v/ha-melview/blob/master/adapter.png" alt="Adapter" height="192" align="middle" />
 </p>
 
 ## General
