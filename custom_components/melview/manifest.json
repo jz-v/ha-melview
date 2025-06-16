@@ -1,6 +1,7 @@
 {
   "domain": "melview",
   "name": "Mitsubishi Electric Wi-Fi Control",
+  "after_dependencies": ["logbook"],
   "codeowners": ["@jz-v"],
   "config_flow": true,
   "dependencies": [],
