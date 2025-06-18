@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
+from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -40,6 +40,7 @@ class MelViewCurrentTempSensor(CoordinatorEntity, SensorEntity):
         api = coordinator.device
         self._attr_name = f"{api.get_friendly_name()} Current Temperature"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+        self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_device_class = SensorDeviceClass.TEMPERATURE
         self._attr_unique_id = f"{api.get_id()}_current_temp"
         self._attr_extra_state_attributes = {"source": "melview.py cache"}
