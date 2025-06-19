@@ -24,6 +24,9 @@ DEPENDENCIES = []
 
 class MelViewClimate(CoordinatorEntity, ClimateEntity):
     """MelView handler for Home Assistant"""
+    _attr_has_entity_name = True
+    _attr_name = None
+    
     def __init__(self, coordinator: MelViewCoordinator, halfstep: bool = False):
         super().__init__(coordinator)
         self.coordinator = coordinator
@@ -64,10 +67,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             self._precision = PRECISION_HALVES
             self._target_step = 0.5
 
-    @property
-    def name(self):
-        """Diplay name for HASS"""
-        return self._name
 
     @property
     def unique_id(self):
