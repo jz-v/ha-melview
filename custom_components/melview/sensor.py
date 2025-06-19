@@ -32,13 +32,15 @@ async def async_setup_entry(
 
 class MelViewCurrentTempSensor(CoordinatorEntity, SensorEntity):
     """Sensor representing the current room temperature for a MelView device."""
+    _attr_has_entity_name = True
+    _attr_name = None
 
     def __init__(self, coordinator):
         """Initialize sensor, tied to a DataUpdateCoordinator."""
         super().__init__(coordinator)
         self.coordinator = coordinator
         api = coordinator.device
-        self._attr_name = f"{api.get_friendly_name()} Current Temperature"
+        # self._attr_name = f"{api.get_friendly_name()} Current Temperature"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_device_class = SensorDeviceClass.TEMPERATURE

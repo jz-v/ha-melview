@@ -13,21 +13,14 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
     def __init__(self, coordinator: MelViewCoordinator, zone):
         super().__init__(coordinator)
         self.coordinator = coordinator
-        self._zone = zone.id
-        device = coordinator.device
         self._id = zone.id
-        self._name = zone.name
+        self._attr_name = f"Zone {zone.name}"
 
     async def async_update(self):
         """Update the switch state."""
         await self.coordinator.async_request_refresh()
         zone = self.coordinator.get_zone(self._id)
-        self._name = zone.name
-
-    @property
-    def name(self):
-        """Diplay name for HASS"""
-        return f"Zone {self._name}"
+        self._attr_name = f"Zone {zone.name}"
 
     @property
     def unique_id(self):
@@ -48,13 +41,13 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
 
     async def async_turn_on(self):
         """Turn on the zone"""
-        _LOGGER.debug('Switch on zone %s', self._name)
+        _LOGGER.debug('Switch on zone %s', self._attr_name)
         if await self.coordinator.async_enable_zone(self._id):
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self):
         """Turn off the zone"""
-        _LOGGER.debug('Switch off zone %s', self._name)
+        _LOGGER.debug('Switch off zone %s', self._attr_name)
         if await self.coordinator.async_disable_zone(self._id):
             await self.coordinator.async_request_refresh()
 
