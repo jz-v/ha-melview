@@ -6,9 +6,7 @@
 </p>
 
 ## General
-This is a custom integration for Home Assistant for AU/NZ Mitsubishi Electric Air Conditioners with a Wi-Fi adapter (see below).
-
-https://www.mitsubishielectric.com.au/product/wi-fi-controller/
+This is a Home Assistant integration for [AU/NZ Mitsubishi Electric Air Conditioners with a Wi-Fi adapter](https://www.mitsubishielectric.com.au/product/wi-fi-controller/).
 
 Benefits of this integration compared with others:
  - faster (local) commands
@@ -20,6 +18,8 @@ Benefits of this integration compared with others:
  - far fewer API calls, particularly with multiple zones or devices.
 
 ## Installation
+Note: please completely remove any existing custom components for melview prior to installing this.
+
 1. Install and set up HACS (hacs.xyz)
 2. Click this button to open in HACS:
 
