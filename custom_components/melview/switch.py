@@ -34,6 +34,14 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
         return bool(zone.status)
     
     @property
+    def extra_state_attributes(self):
+        """Return spill status as attribute."""
+        zone = self.coordinator.get_zone(self._id)
+        return {
+            "Spill active": zone.status == 2,
+        }
+    
+    @property
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self.coordinator.get_id())},
