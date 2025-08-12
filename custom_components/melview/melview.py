@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 from aiohttp import ClientSession
@@ -49,6 +50,15 @@ class MelViewAuthentication:
                     json={'user': self._email, 'pass': self._password,
                           'appversion': APPVERSION},
                     headers=HEADERS) 
+        _LOGGER.debug('Login response status: %d', req.status)
+        _LOGGER.debug(
+            "Login response json:\n%s",
+            json.dumps(await req.json(), indent=2)
+        )
+        _LOGGER.debug(
+            "Login response headers:\n%s",
+            json.dumps(dict(req.headers), indent=2, sort_keys=True)
+        )
         if req.status == 200:
             cks = req.cookies
             if 'auth' in cks:
