@@ -16,6 +16,7 @@ Benefits of this integration compared with others:
  - detect and show standy/preheating operation
  - options UI to toggle 0.5 deg temp step, local commands, and sensor entity
  - far fewer API calls, particularly with multiple zones or devices.
+ - Lossnay ERV units exposed as fan entities with additional sensors
 
 ## Installation
 Note: please completely remove any existing custom components for melview prior to installing this.

@@ -262,6 +262,12 @@ class MelViewDevice:
             return 0
         return self._json.get('outdoortemp', 0)
 
+    def get_unit_type(self):
+        """Return the unit type from capabilities if available."""
+        if self._caps is None:
+            return None
+        return self._caps.get('unittype')
+
     async def async_get_speed(self):
         """Get the set fan speed"""
         if not await self.async_is_info_valid():

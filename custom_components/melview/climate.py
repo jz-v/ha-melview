@@ -290,5 +290,6 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     entities = [
         MelViewClimate(coordinator, halfstep)
         for coordinator in coordinators
+        if coordinator.device.get_unit_type() != "ERV"
     ]
     async_add_entities(entities, update_before_add=True)
