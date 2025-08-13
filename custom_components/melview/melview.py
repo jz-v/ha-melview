@@ -60,11 +60,17 @@ class MelViewAuthentication:
                     self._cookie = auth_value
                     return True
                 else:
-                    _LOGGER.error("Auth cookie value is empty or None")
+                    _LOGGER.error("Invalid auth cookie")
+                    _LOGGER.error("Login status code: %d", req.status)
+                    _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
+                    _LOGGER.error("Login response json:\n%s", json.dumps(await req.json(), indent=2))                    
                     return False
             _LOGGER.error("Missing auth cookie")
+            _LOGGER.error("Login status code: %d", req.status)
             _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
+            _LOGGER.error("Login response json:\n%s", json.dumps(await req.json(), indent=2))
         else:
+            _LOGGER.error("Invalid response status")            
             _LOGGER.error("Login status code: %d", req.status)
             _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
             _LOGGER.error("Login response json:\n%s", json.dumps(await req.json(), indent=2))
