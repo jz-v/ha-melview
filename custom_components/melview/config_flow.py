@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from aiohttp import ClientError, ClientResponseError, ClientSession
 from async_timeout import timeout
@@ -14,6 +15,8 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, CONF_HALFSTEP, CONF_SENSOR
 from .melview import MelViewAuthentication
+
+_LOGGER = logging.getLogger(__name__)
 
 class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow."""
