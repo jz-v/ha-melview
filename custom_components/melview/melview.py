@@ -43,7 +43,6 @@ class MelViewAuthentication:
     async def  asynclogin(self):
         """Generate a new login cookie"""
         _LOGGER.debug('Trying to login')
-
         self._cookie = None
         async with ClientSession() as session:
             req = await session.post('https://api.melview.net/api/login.aspx',
@@ -52,13 +51,9 @@ class MelViewAuthentication:
                     headers=HEADERS) 
         _LOGGER.debug('Login response status: %d', req.status)
         _LOGGER.debug(
-            "Login response json:\n%s",
-            json.dumps(await req.json(), indent=2)
-        )
+            "Login response json:\n%s", json.dumps(await req.json(), indent=2))
         _LOGGER.debug(
-            "Login response headers:\n%s",
-            json.dumps(dict(req.headers), indent=2, sort_keys=True)
-        )
+            "Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
         if req.status == 200:
             cks = req.cookies
             if 'auth' in cks:
