@@ -42,27 +42,27 @@ class MelViewAuthentication:
 
     async def  asynclogin(self):
         """Generate a new login cookie"""
-        _LOGGER.debug('Trying to login')
+        _LOGGER.debug("Trying to login")
         self._cookie = None
         async with ClientSession() as session:
             req = await session.post('https://api.melview.net/api/login.aspx',
                     json={'user': self._email, 'pass': self._password,
                           'appversion': APPVERSION},
                     headers=HEADERS) 
-        _LOGGER.debug('Login response status: %d', req.status)
-        _LOGGER.debug(
-            "Login response json:\n%s", json.dumps(await req.json(), indent=2))
-        _LOGGER.debug(
-            "Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
+        _LOGGER.debug("Login status code: %d", req.status)
+        _LOGGER.debug("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
+        _LOGGER.debug("Login response json:\n%s", json.dumps(await req.json(), indent=2))
         if req.status == 200:
             cks = req.cookies
             if 'auth' in cks:
                 self._cookie = cks['auth'].value
                 return True
-            _LOGGER.error('Missing auth cookie -> cookies: %s', cks)
+            _LOGGER.error("Missing auth cookie")
+            _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
         else:
-            _LOGGER.error('Login status code: %d', req.status)
-
+            _LOGGER.error("Login status code: %d", req.status)
+            _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
+            _LOGGER.error("Login response json:\n%s", json.dumps(await req.json(), indent=2))
         return False
 
     def get_cookie(self):
@@ -134,12 +134,12 @@ class MelViewDevice:
                 self.model = self._caps['modelname']
             return True
         if req.status == 401 and retry:
-            _LOGGER.error('Unit capabilities error 401 (trying to re-login)')
+            _LOGGER.error("Unit capabilities error 401 (trying to re-login)")
             if await self._authentication.asynclogin():
                 return await self.async_refresh_device_caps(retry=False)
         else:
-            _LOGGER.error('Unable to retrieve unit capabilities'
-                          '(Invalid status code: %d)', req.status)
+            _LOGGER.error("Unable to retrieve unit capabilities"
+                          "(Invalid status code: %d)", req.status)
         return False
    
     async def async_refresh_device_info(self, retry=True):
@@ -158,17 +158,17 @@ class MelViewDevice:
                 self._standby = self._json['standby']
             if 'error' in self._json:
                 if self._json['error'] != 'ok':
-                    _LOGGER.error('Unit error: %s', self._json['error'])
+                    _LOGGER.error("Unit error: %s", self._json['error'])
             if 'fault' in self._json:
                 if self._json['fault'] != '':
-                    _LOGGER.error('Unit fault: %s', self._json['fault'])
+                    _LOGGER.error("Unit fault: %s", self._json['fault'])
             return True
         if req.status == 401 and retry:
-            _LOGGER.error('Info error 401 (trying to re-login)')
+            _LOGGER.error("Info error 401 (trying to re-login)")
             if await self._authentication.asynclogin():
                 return await self.async_refresh_device_info(retry=False)
         else:
-            _LOGGER.error('Unable to retrieve info (invalid status code: %d)',
+            _LOGGER.error("Unable to retrieve info (invalid status code: %d)",
                           req.status)
         return False
 
@@ -177,7 +177,7 @@ class MelViewDevice:
             return await self.async_refresh_device_info()
 
         if (time.time() - self._last_info_time_s) >= self._info_lease_seconds:
-            _LOGGER.debug('Current settings out of date, refreshing')
+            _LOGGER.debug("Current settings out of date, refreshing")
             return await self.async_refresh_device_info()
 
         return True
@@ -189,10 +189,10 @@ class MelViewDevice:
         return True
         
     async def async_send_command(self, command, retry=True):
-        _LOGGER.debug('Command issued: %s', command)
+        _LOGGER.debug("Command issued: %s", command)
 
         if not await self.async_is_info_valid():
-            _LOGGER.error('Data outdated, command %s failed', command)
+            _LOGGER.error("Data outdated, command %s failed", command)
             return False
 
         async with ClientSession() as session:
@@ -201,7 +201,7 @@ class MelViewDevice:
                             json={'unitid': self._deviceid, 'v': APIVERSION,
                                   'commands': command, 'lc': 1})
         if req.status == 200:
-            _LOGGER.debug('Command sent to server')
+            _LOGGER.debug("Command sent to server")
 
             resp = await req.json()
             if self._localip:
@@ -211,19 +211,19 @@ class MelViewDevice:
                         req = await session.post('http://{}/smart'.format(self._localip),
                                         data=LOCAL_DATA.format(local_command))
                     if req.status == 200:
-                        _LOGGER.debug('Command sent locally')
+                        _LOGGER.debug("Command sent locally")
                     else:
-                        _LOGGER.error('Local command failed')
+                        _LOGGER.error("Local command failed")
                 else:
-                    _LOGGER.error('Missing local command key')
+                    _LOGGER.error("Missing local command key")
 
             return True
         if req.status == 401 and retry:
-            _LOGGER.error('Command send error 401 (trying to relogin)')
+            _LOGGER.error("Command send error 401 (trying to relogin)")
             if await self._authentication.asynclogin():
                 return await self.async_send_command(command, retry=False)
         else:
-            _LOGGER.error('Unable to send command (invalid status code: %d',
+            _LOGGER.error("Unable to send command (invalid status code: %d",
                           req.status)
 
         return False
@@ -263,20 +263,20 @@ class MelViewDevice:
     def get_outside_temperature(self):
         """Get current outside temperature"""
         if not 'hasoutdoortemp' in self._caps or self._caps['hasoutdoortemp'] == 0:
-            _LOGGER.error('Outdoor temperature not supported')
+            _LOGGER.error("Outdoor temperature not supported")
             return 0
         return self._json.get('outdoortemp', 0)
 
     async def async_get_speed(self):
         """Get the set fan speed"""
         if not await self.async_is_info_valid():
-            return 'auto'
+            return "auto"
 
         for key, val in self.fan_keyed.items():
             if self._json['setfan'] == val:
                 return key
 
-        return 'auto'
+        return "auto"
 
     async def async_get_mode(self):
         """Get the set mode"""
@@ -313,11 +313,11 @@ class MelViewDevice:
         min_temp = temp_range["min"]
         max_temp = temp_range["max"]
         if temperature < min_temp:
-            _LOGGER.error('Temperature %.1f lower than min %d for mode %s',
+            _LOGGER.error("Temperature %.1f lower than min %d for mode %s",
                           temperature, min_temp, mode)
             return False
         if temperature > max_temp:
-            _LOGGER.error('Temperature %.1f greater than max %d for mode %s',
+            _LOGGER.error("Temperature %.1f greater than max %d for mode %s",
                           temperature, max_temp, mode)
             return False
         return await self.async_send_command('TS{:.2f}'.format(temperature))
@@ -330,7 +330,7 @@ class MelViewDevice:
                 return False
 
         if speed not in self.fan_keyed.keys():
-            _LOGGER.error('Fan speed %d not supported', speed)
+            _LOGGER.error("Fan speed %d not supported", speed)
             return False
         return await self.async_send_command('FS{:.2f}'.format(self.fan_keyed[speed]))
 
@@ -341,17 +341,17 @@ class MelViewDevice:
             if not await self.async_power_on():
                 return False
 
-        if mode == 'Auto' and (not 'hasautomode' in self._caps or self._caps['hasautomode'] == 0):
-            _LOGGER.error('Auto mode not supported')
+        if mode == "Auto" and (not 'hasautomode' in self._caps or self._caps['hasautomode'] == 0):
+            _LOGGER.error("Auto mode not supported")
             return False
-        if mode == 'Dry' and (not 'hasdrymode' in self._caps or self._caps['hasdrymode'] == 0):
-            _LOGGER.error('Dry mode not supported')
+        if mode == "Dry" and (not 'hasdrymode' in self._caps or self._caps['hasdrymode'] == 0):
+            _LOGGER.error("Dry mode not supported")
             return False
-        if mode != 'Cool' and ('hascoolonly' in self._caps and self._caps['hascoolonly'] == 1):
-            _LOGGER.error('Only cool mode supported')
+        if mode != "Cool" and ('hascoolonly' in self._caps and self._caps['hascoolonly'] == 1):
+            _LOGGER.error("Only cool mode supported")
             return False
         if mode not in MODE.keys():
-            _LOGGER.error('Mode %d not supported', mode)
+            _LOGGER.error("Mode %d not supported", mode)
             return False
         return await self.async_send_command('MD{}'.format(MODE[mode]))
 
@@ -401,11 +401,11 @@ class MelView:
                     devices.append(melViewDevice)
 
         elif req.status == 401 and retry:
-            _LOGGER.error('Device list error 401 (trying to re-login)')
+            _LOGGER.error("Device list error 401 (trying to re-login)")
             if await self._authentication.asynclogin():
                 return await self.async_get_devices_list(retry=False)
         else:
-            _LOGGER.error('Failed to get device list (status code invalid: %d)',
+            _LOGGER.error("Failed to get device list (status code invalid: %d)",
                           req.status)
 
         return devices
