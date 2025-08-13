@@ -55,8 +55,13 @@ class MelViewAuthentication:
         if req.status == 200:
             cks = req.cookies
             if 'auth' in cks:
-                self._cookie = cks['auth'].value
-                return True
+                auth_value = cks['auth'].value
+                if auth_value:
+                    self._cookie = auth_value
+                    return True
+                else:
+                    _LOGGER.error("Auth cookie value is empty or None")
+                    return False
             _LOGGER.error("Missing auth cookie")
             _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
         else:

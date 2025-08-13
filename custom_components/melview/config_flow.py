@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-from http import HTTPStatus
 
 from aiohttp import ClientError, ClientResponseError, ClientSession
 from async_timeout import timeout
@@ -53,18 +52,14 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 "Invalid internal state. Called without either password or email"
             )
 
-        valid=False
-        async with ClientSession() as session:
-            resp = await session.post('https://api.melview.net/api/login.aspx',
-                    json={'user': email, 'pass': password,
-                          'appversion': APPVERSION},
-                    headers=HEADERS) 
-            if resp.status == 200:
-                cks = resp.cookies
-                if 'auth' in cks:
-                    cookie = cks['auth']
-                    if cookie != None  and cookie.value and len(cookie.value)>5:
-                        valid=True
+        valid = False
+        try:
+            auth = MelViewAuthentication(email, password)
+            valid = await auth.asynclogin()
+        except Exception as e:
+            _LOGGER.error("MelView auth error during config flow: %r", e)
+            valid = False
+
         if not valid:
             self._errors = {"base": "invalid_auth"}
             return self.async_show_form(
@@ -122,21 +117,12 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             valid = False
-            async with ClientSession() as session:
-                try:
-                    resp = await session.post('https://api.melview.net/api/login.aspx',
-                        json={'user': email, 
-                            'pass': user_input[CONF_PASSWORD],
-                            'appversion': APPVERSION},
-                        headers=HEADERS)
-                    if resp.status == 200:
-                        cks = resp.cookies
-                        if 'auth' in cks:
-                            cookie = cks['auth']
-                            if cookie != None and cookie.value and len(cookie.value) > 5:
-                                valid = True
-                except (ClientError, asyncio.TimeoutError):
-                    valid = False
+            try:
+                auth = MelViewAuthentication(email, user_input[CONF_PASSWORD])
+                valid = await auth.asynclogin()
+            except (ClientError, asyncio.TimeoutError) as e:
+                _LOGGER.error("MelView auth error during reconfigure: %r", e)
+                valid = False
 
             if not valid:
                 self._errors["base"] = "invalid_auth"
