@@ -4,6 +4,10 @@ import logging
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util.percentage import (
+    ordered_list_item_to_percentage,
+    percentage_to_ordered_list_item,
+)
 
 from .const import DOMAIN
 from .coordinator import MelViewCoordinator
@@ -22,6 +26,7 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
         FanEntityFeature.TURN_ON
         | FanEntityFeature.TURN_OFF
         | FanEntityFeature.PRESET_MODE
+        | FanEntityFeature.SET_SPEED
     )
 
     def __init__(self, coordinator: MelViewCoordinator):
@@ -29,6 +34,7 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
         self.coordinator = coordinator
         self._attr_unique_id = f"{coordinator.get_id()}_lossnay"
         self._last_preset: str = "Lossnay"
+        self._speed_codes = sorted(k for k in coordinator.fan if k != 0)
 
     @property
     def is_on(self) -> bool:
@@ -58,12 +64,31 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
     ) -> None:
         if preset_mode:
             await self.async_set_preset_mode(preset_mode)
+        elif percentage is not None:
+            await self.async_set_percentage(percentage)
         else:
             if await self.coordinator.async_power_on():
                 await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
         if await self.coordinator.async_power_off():
+            await self.coordinator.async_request_refresh()
+
+    @property
+    def percentage(self) -> int | None:
+        code = self.coordinator.data.get("setfan")
+        if code in self._speed_codes:
+            return ordered_list_item_to_percentage(self._speed_codes, code)
+        return None
+
+    @property
+    def speed_count(self) -> int:
+        return len(self._speed_codes)
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        code = percentage_to_ordered_list_item(self._speed_codes, percentage)
+        label = self.coordinator.fan.get(code)
+        if label and await self.coordinator.async_set_speed(label):
             await self.coordinator.async_request_refresh()
 
     @property
