@@ -29,6 +29,12 @@ FANSTAGES = {
     5: {1: "low", 2: "medium", 3: "Medium High", 5: "high", 6: "Max"},
 }
 
+LOSSNAY_PRESETS = {
+    "Lossnay": 1,
+    "Bypass": 7,
+    "Auto Lossnay": 3,
+}
+
 class MelViewAuthentication:
     """Implementation to remember and refresh MelView cookies."""
     def __init__(self, email, password):
@@ -388,6 +394,13 @@ class MelViewDevice:
         """Turn off the unit"""
         return await self.async_send_command('PW0')
 
+    async def async_set_lossnay_preset(self, preset_name: str) -> bool:
+        """Set Lossnay ERV preset mode."""
+        code = LOSSNAY_PRESETS.get(preset_name)
+        if code is None:
+            _LOGGER.error("Unknown Lossnay preset: %s", preset_name)
+            return False
+        return await self.async_send_command(f"MD{code}")
 
 class MelView:
     """Handler for multiple MelView devices under one user"""

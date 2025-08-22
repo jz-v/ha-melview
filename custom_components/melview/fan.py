@@ -11,16 +11,9 @@ from homeassistant.util.percentage import (
 
 from .const import DOMAIN
 from .coordinator import MelViewCoordinator
+from .melview import LOSSNAY_PRESETS
 
 _LOGGER = logging.getLogger(__name__)
-
-LOSSNAY_PRESETS = {
-    "Lossnay": "MD1",
-    "Bypass": "MD7",
-    "Auto Lossnay": "MD3",
-}
-
-PRESET_BY_CODE = {1: "Lossnay", 7: "Bypass", 3: "Auto Lossnay"}
 
 
 class MelViewLossnayFan(CoordinatorEntity, FanEntity):
@@ -50,7 +43,7 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
     @property
     def preset_mode(self) -> str | None:
         code = self.coordinator.data.get("setmode")
-        return PRESET_BY_CODE.get(code)
+        return next((name for name, val in LOSSNAY_PRESETS.items() if val == code), None)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         if preset_mode not in LOSSNAY_PRESETS:
@@ -59,8 +52,7 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
         if not self.is_on:
             if not await self.coordinator.async_power_on():
                 return
-        command = LOSSNAY_PRESETS[preset_mode]
-        if await self.coordinator.async_send_command(command):
+        if await self.coordinator.async_set_lossnay_preset(preset_mode):
             self._last_preset = preset_mode
             await self.coordinator.async_request_refresh()
 
