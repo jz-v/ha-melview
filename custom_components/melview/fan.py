@@ -93,15 +93,13 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
 
     async def async_set_percentage(self, percentage: int) -> None:
         code = percentage_to_ordered_list_item(self._speed_codes, percentage)
-        label = self.coordinator.fan.get(code)
         _LOGGER.debug(
-            "Lossnay fan set speed with percentage=%d, mapped code=%s, label=%s, is_on=%s",
+            "Lossnay fan set speed with percentage=%d, mapped code=%s, is_on=%s",
             percentage,
             code,
-            label,
             self.is_on,
         )
-        if label and await self.coordinator.async_set_speed(label):
+        if await self.coordinator.async_set_speed_code(code):
             await self.coordinator.async_request_refresh()
 
     @property
