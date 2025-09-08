@@ -27,7 +27,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize."""
         self._errors = {}
 
-    async def _create_entry(self, email: str, password: str, local: bool, halfstep: bool, sensor: bool):
+    async def _create_entry(self, email: str, password: str, local: bool, sensor: bool):
         """Register new entry."""
         await self.async_set_unique_id(email)
         self._abort_if_unique_id_configured({CONF_EMAIL: email})
@@ -45,7 +45,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         *,
         password: str,
         local: bool,
-        halfstep: bool,
         sensor: bool
     ):
         """Create client."""
@@ -75,7 +74,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     errors=self._errors,
                 )
 
-        return await self._create_entry(email, password, local, halfstep, sensor)
+        return await self._create_entry(email, password, local, sensor)
 
     async def async_step_user(self, user_input=None):
         """User initiated config flow."""
@@ -169,7 +168,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             return self.async_create_entry(title="", data=user_input)
         
         local = True
-        halfstep = True
         sensor = True
         
         if CONF_LOCAL in self.config_entry.data:
