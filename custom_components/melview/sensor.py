@@ -40,7 +40,6 @@ class MelViewCurrentTempSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         api = coordinator.device
-        # self._attr_name = f"{api.get_friendly_name()} Current Temperature"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_device_class = SensorDeviceClass.TEMPERATURE
