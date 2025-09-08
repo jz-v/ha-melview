@@ -13,7 +13,7 @@ from homeassistant.const import CONF_PASSWORD, CONF_EMAIL
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, CONF_HALFSTEP, CONF_SENSOR
+from .const import DOMAIN, CONF_LOCAL, APPVERSION, HEADERS, CONF_SENSOR
 from .melview import MelViewAuthentication
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,7 +36,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_EMAIL: email,
                 CONF_PASSWORD: password,
                 CONF_LOCAL: local,
-                CONF_HALFSTEP: halfstep,
                 CONF_SENSOR: sensor}
         )
 
@@ -71,7 +70,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     {vol.Required(CONF_EMAIL, default=email): str,
                      vol.Required(CONF_PASSWORD): str,
                      vol.Required(CONF_LOCAL, default=True) : bool,
-                     vol.Required(CONF_HALFSTEP, default=True): bool,
                      vol.Required(CONF_SENSOR, default=True): bool}
                     ),
                     errors=self._errors,
@@ -90,7 +88,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     {vol.Required(CONF_EMAIL): str,
                     vol.Required(CONF_PASSWORD): str,
                     vol.Required(CONF_LOCAL, default=True) : bool,
-                    vol.Required(CONF_HALFSTEP, default=True): bool,
                     vol.Required(CONF_SENSOR, default=True): bool}
                 ),
             )
@@ -99,7 +96,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_EMAIL],
             password=user_input[CONF_PASSWORD],
             local=user_input[CONF_LOCAL],
-            halfstep=user_input[CONF_HALFSTEP],
             sensor=user_input[CONF_SENSOR])
 
     async def async_step_import(self, user_input):
@@ -108,7 +104,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_EMAIL],
             password=user_input[CONF_PASSWORD],
             local=user_input[CONF_LOCAL],
-            halfstep=user_input[CONF_HALFSTEP],
             sensor=user_input[CONF_SENSOR]
         )
     
@@ -179,16 +174,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         
         if CONF_LOCAL in self.config_entry.data:
             local = self.config_entry.data[CONF_LOCAL]
-        if CONF_HALFSTEP in self.config_entry.data:
-            halfstep = self.config_entry.data[CONF_HALFSTEP]
         if CONF_SENSOR in self.config_entry.data:
             sensor = self.config_entry.data[CONF_SENSOR]
         
         if self.config_entry.options:
             if CONF_LOCAL in self.config_entry.options:
                 local = self.config_entry.options[CONF_LOCAL]
-            if CONF_HALFSTEP in self.config_entry.options:
-                halfstep = self.config_entry.options[CONF_HALFSTEP]
             if CONF_SENSOR in self.config_entry.options:
                 sensor = self.config_entry.options[CONF_SENSOR]
         
@@ -197,7 +188,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_LOCAL, default=local): bool,
-                    vol.Required(CONF_HALFSTEP, default=halfstep): bool,
                     vol.Required(CONF_SENSOR, default=sensor): bool
                 }
             ),

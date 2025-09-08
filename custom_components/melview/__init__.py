@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, CONF_LOCAL, CONF_HALFSTEP, CONF_SENSOR
+from .const import DOMAIN, CONF_LOCAL, CONF_SENSOR
 from .melview import MelViewAuthentication, MelView
 from .climate import MelViewClimate
 from .switch import MelViewZoneSwitch
@@ -36,7 +36,6 @@ CONFIG_SCHEMA = vol.Schema(
                     vol.Required(CONF_EMAIL): cv.string,
                     vol.Required(CONF_PASSWORD): cv.string,
                     vol.Required(CONF_LOCAL): cv.boolean,
-                    vol.Required(CONF_HALFSTEP): cv.boolean,
                     vol.Required(CONF_SENSOR): cv.boolean,
                 }
             )
@@ -109,8 +108,6 @@ async def async_migrate_entry(hass, config_entry):
     
     if CONF_LOCAL in options:
         data[CONF_LOCAL] = options[CONF_LOCAL]
-    if CONF_HALFSTEP in options:
-        data[CONF_HALFSTEP] = options[CONF_HALFSTEP]
     if CONF_SENSOR in options:
         data[CONF_SENSOR] = options[CONF_SENSOR]
     

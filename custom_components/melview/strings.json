@@ -8,7 +8,6 @@
           "email": "[%key:common::config_flow::data::email%]",
           "password": "[%key:common::config_flow::data::password%]",
           "local": "[%key:common::config_flow::data::local%]",
-          "halfstep": "[%key:common::config_flow::data::halfstep%]",
           "sensor": "[%key:common::config_flow::data::sensor%]"
         }
       },
@@ -37,7 +36,6 @@
         "description": "Sending commands locally will result in a faster response, however, an internet connection is always required as each command is verified by the server prior to sending via LAN. For 0.5° temperature adjustments, ensure this option is also enabled for the adapter in the Wi-Fi Control app (or app.melview.net).",
         "data": {
           "local": "Send commands locally",
-          "halfstep": "Use 0.5° temperature steps",
           "sensor": "Create 'current temperature' sensor entity"
         }
       }

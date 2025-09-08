@@ -98,16 +98,17 @@ class MelViewDevice:
         self._authentication = authentication
 
         self._caps = None
-        self._localip = localcontrol
-
         self._info_lease_seconds = 30  # Data lasts for 30s.
         self._json = None
-        self._zones = {}
+        self._localip = localcontrol
         self._standby = 0
+        self._zones = {}
 
         self.fan = FANSTAGES[3]
-        self.temp_ranges = {}
+        self.halfdeg = False
         self.model = None
+        self.temp_ranges = {}
+
     
     async def async_refresh(self):
         await self.async_refresh_device_caps()
@@ -143,6 +144,8 @@ class MelViewDevice:
                         }
             if 'modelname' in self._caps:
                 self.model = self._caps['modelname']
+            if 'halfdeg' in self._caps and self._caps['halfdeg'] == 1:
+                self.halfdeg = True
             return True
         if req.status == 401 and retry:
             _LOGGER.error("Unit capabilities error 401 (trying to re-login)")
