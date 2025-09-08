@@ -37,7 +37,7 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         self._halfstep = halfstep
 
         self._name = device.get_friendly_name()
-        self._unique_id = device.get_id()
+        self._attr_unique_id = device.get_id()
 
         self._operations_list = [x for x in MODE] + [HVACMode.OFF]
         self._speeds_list = [x for x in self._device.fan_keyed]
@@ -67,11 +67,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             self._precision = PRECISION_HALVES
             self._target_step = 0.5
 
-
-    @property
-    def unique_id(self):
-        """Get unique_id for HASS"""
-        return self._unique_id
 
     @property
     def supported_features(self):
