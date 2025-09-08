@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email."
+            "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email.",
+            "password_change_success": "Password updated successfully."
         },
         "error": {
             "cannot_connect": "Failed to connect.",
