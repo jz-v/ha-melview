@@ -35,7 +35,7 @@
                     "local": "Send commands locally",
                     "sensor": "Create 'current temperature' sensor entity"
                 },
-                "description": "Sending commands locally will result in a faster response, however, an internet connection is always required as each command is verified by the server prior to sending via LAN. For 0.5° temperature adjustments, ensure this option is also enabled for the adapter in the Wi-Fi Control app (or app.melview.net). Integration must be reloaded for changes to take effect.",
+                "description": "Sending commands locally will result in a faster response, however, an internet connection is always required as each command is verified by the server prior to sending via LAN. For 0.5° temperature adjustments, enable/disable this in the Wi-Fi Control app (or app.melview.net). Integration must be reloaded for changes to take effect.",
                 "title": "Options"
             }
         }
