@@ -1,18 +1,11 @@
 """The MelView integration."""
 from __future__ import annotations
 
-import asyncio
-from datetime import timedelta
 import logging
-from typing import Any
 
-import voluptuous as vol
-
-from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN, CONF_LOCAL, CONF_SENSOR
 from .melview import MelViewAuthentication, MelView
@@ -22,46 +15,22 @@ from .coordinator import MelViewCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=60)
-
 PLATFORMS = [Platform.CLIMATE, Platform.SWITCH, Platform.SENSOR]
 
-CONF_LANGUAGE = "language"
-CONFIG_SCHEMA = vol.Schema(
-    vol.All(
-        cv.deprecated(DOMAIN),
-        {
-            DOMAIN: vol.Schema(
-                {
-                    vol.Required(CONF_EMAIL): cv.string,
-                    vol.Required(CONF_PASSWORD): cv.string,
-                    vol.Required(CONF_LOCAL): cv.boolean,
-                    vol.Required(CONF_SENSOR): cv.boolean,
-                }
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up MelView; YAML is no longer supported (warn once if present)."""
+    if DOMAIN in config:
+        hass.data.setdefault(DOMAIN, {})
+        if not hass.data[DOMAIN].get("_yaml_warned"):
+            _LOGGER.warning(
+                "YAML configuration for %s is no longer supported and will be ignored. "
+                "Please remove the 'melview:' section from configuration.yaml and use the UI.",
+                DOMAIN,
             )
-        },
-    ),
-    extra=vol.ALLOW_EXTRA,
-)
-
-
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Establish connection with MelView."""
-    if DOMAIN not in config:
-        return True
-
-    email = config[DOMAIN][CONF_EMAIL]
-    password = config[DOMAIN][CONF_PASSWORD]
-    local = config[DOMAIN][CONF_LOCAL]
-    sensor = config[DOMAIN][CONF_SENSOR]
-    hass.async_create_task(
-        hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": SOURCE_IMPORT},
-            data={CONF_EMAIL: email, CONF_PASSWORD: password, CONF_LOCAL: local, CONF_SENSOR: sensor}
-        )
-    )
+            hass.data[DOMAIN]["_yaml_warned"] = True
     return True
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Establish connection with MelView."""
@@ -70,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     mv_auth = MelViewAuthentication(conf[CONF_EMAIL], conf[CONF_PASSWORD])
     result = await mv_auth.asynclogin()
     if not result:
-        _LOGGER.error('Login combination')
+        _LOGGER.error("MelView authentication failed for %s", conf[CONF_EMAIL])
         return False
     _LOGGER.debug('Authentication successful')
     melview = MelView(mv_auth,localcontrol=conf[CONF_LOCAL])
@@ -93,12 +62,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        config_entry, PLATFORMS
-    )
-    hass.data[DOMAIN].pop(config_entry.entry_id)
-    if not hass.data[DOMAIN]:
-        hass.data.pop(DOMAIN)
+    unload_ok = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
+
+    domain_data = hass.data.get(DOMAIN, {})
+    domain_data.pop(config_entry.entry_id, None)
+    # If the domain bucket is now empty, remove it to keep hass.data tidy
+    if DOMAIN in hass.data and not hass.data[DOMAIN]:
+        hass.data.pop(DOMAIN, None)
+
     return unload_ok
 
 async def async_migrate_entry(hass, config_entry):
