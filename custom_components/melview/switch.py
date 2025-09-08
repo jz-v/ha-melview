@@ -17,12 +17,6 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
         self._attr_unique_id = f"{self.coordinator.get_id()}-{self._id}"
         self._attr_name = f"Zone {zone.name}"
 
-    async def async_update(self):
-        """Update the switch state."""
-        await self.coordinator.async_request_refresh()
-        zone = self.coordinator.get_zone(self._id)
-        self._attr_name = f"Zone {zone.name}"
-
     @property
     def is_on(self) -> bool:
         """Check if the zone is currently on."""

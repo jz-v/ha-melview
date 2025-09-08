@@ -56,18 +56,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
 
         await self._device.async_force_update()
 
-    async def async_update(self):
-        """Update device properties"""
-        _LOGGER.debug('Update climate entity')
-        await self._device.async_force_update()
-
-        self._precision = PRECISION_WHOLE
-        self._target_step = 1.0
-        if self._halfstep and await self._device.async_get_precision_halves():
-            self._precision = PRECISION_HALVES
-            self._target_step = 0.5
-
-
     @property
     def supported_features(self):
         """Let HASS know feature support"""
