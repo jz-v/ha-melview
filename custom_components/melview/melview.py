@@ -348,10 +348,8 @@ class MelViewDevice:
     async def async_set_speed(self, speed):
         """Set the fan speed by label (fan stage name)."""
         if not await self.async_is_power_on():
-            # Try turn on the unit if off.
             if not await self.async_power_on():
                 return False
-
         if speed not in self.fan_keyed.keys():
             _LOGGER.error("Fan speed %d not supported", speed)
             return False
@@ -362,7 +360,7 @@ class MelViewDevice:
         if not await self.async_is_power_on():
             if not await self.async_power_on():
                 return False
-        if speed_code not in self.fan.values():
+        if speed_code not in self.fan.keys():
             _LOGGER.error("Fan speed code %d not supported", speed_code)
             return False
         return await self.async_send_command('FS{:.2f}'.format(speed_code))
@@ -370,7 +368,6 @@ class MelViewDevice:
     async def async_set_mode(self, mode):
         """Set operating mode"""
         if not await self.async_is_power_on():
-            # Try turn on the unit if off.
             if not await self.async_power_on():
                 return False
 
