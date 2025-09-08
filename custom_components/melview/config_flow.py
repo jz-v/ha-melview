@@ -147,6 +147,48 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={"email": email},
         )
 
+    async def async_step_reauth(self, user_input=None):
+        """Handle re-authentication when credentials are invalid."""
+        self._errors = {}
+
+        entry = None
+        if self.context.get("entry_id"):
+            entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        if entry is None:
+            return self.async_abort(reason="unknown")
+
+        email = entry.data.get(CONF_EMAIL, "")
+
+        if user_input is not None:
+            try:
+                async with timeout(15):
+                    auth = MelViewAuthentication(email, user_input[CONF_PASSWORD])
+                    valid = await auth.asynclogin()
+            except (ClientError, asyncio.TimeoutError) as e:
+                _LOGGER.error("MelView auth error during reauth: %r", e)
+                valid = False
+
+            if not valid:
+                self._errors["base"] = "invalid_auth"
+                return self.async_show_form(
+                    step_id="reauth",
+                    data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+                    errors=self._errors,
+                    description_placeholders={"email": email},
+                )
+
+            new_data = dict(entry.data)
+            new_data[CONF_PASSWORD] = user_input[CONF_PASSWORD]
+            self.hass.config_entries.async_update_entry(entry, data=new_data)
+            await self.hass.config_entries.async_reload(entry.entry_id)
+            return self.async_abort(reason="reauth_successful")
+
+        return self.async_show_form(
+            step_id="reauth",
+            data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+            description_placeholders={"email": email},
+        )
+
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
@@ -159,7 +201,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry):
         """Initialize MelView options flow."""
-        # Avoid deprecated assignment to `config_entry`; store privately
         self._config_entry = config_entry
 
     async def async_step_init(self, user_input=None):

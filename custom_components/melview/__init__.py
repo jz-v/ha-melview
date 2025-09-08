@@ -4,6 +4,8 @@ from __future__ import annotations
 import logging
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
 
@@ -40,7 +42,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     result = await mv_auth.asynclogin()
     if not result:
         _LOGGER.error("MelView authentication failed for %s", conf[CONF_EMAIL])
-        return False
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            f"reauth_{entry.entry_id}",
+            is_fixable=True,
+            breaks_in_ha_version=None,
+            severity=ir.IssueSeverity.ERROR,
+            translation_key="reauth",
+            translation_placeholders={"email": conf[CONF_EMAIL]},
+        )
+        raise ConfigEntryAuthFailed
     _LOGGER.debug('Authentication successful')
     melview = MelView(mv_auth,localcontrol=conf[CONF_LOCAL])
     device_list = []
@@ -66,7 +78,6 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
     domain_data = hass.data.get(DOMAIN, {})
     domain_data.pop(config_entry.entry_id, None)
-    # If the domain bucket is now empty, remove it to keep hass.data tidy
     if DOMAIN in hass.data and not hass.data[DOMAIN]:
         hass.data.pop(DOMAIN, None)
 

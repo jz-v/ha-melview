@@ -1,4 +1,5 @@
 {
+  "title": "Mitsubishi Electric Wi-Fi Control",
   "config": {
     "step": {
       "user": {
@@ -26,7 +27,8 @@
     },
     "abort": {
       "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email.",
-      "password_change_success": "Password updated successfully"
+      "password_change_success": "Reauthentication successful.",
+      "reauth_successful": "Reauthentication successful."
     }
   },
   "options": {
@@ -39,6 +41,15 @@
           "sensor": "Create 'current temperature' sensor entity"
         }
       }
+    },
+    "abort": {
+      "reauth_successful": "Reauthentication successful."
+    }
+  },
+  "issues": {
+    "reauth": {
+      "title": "Reauthenticate Mitsubishi Electric Wi-Fi Control",
+      "description": "Authentication failed for {email}. Please re-enter your password."
     }
   }
 }
