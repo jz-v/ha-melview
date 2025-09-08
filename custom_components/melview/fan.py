@@ -33,6 +33,7 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self._attr_unique_id = f"{coordinator.get_id()}_lossnay"
+        self._device = coordinator.device
         self._last_preset: str = "Lossnay"
         self._speed_codes = sorted(k for k in coordinator.fan if k != 0)
         _LOGGER.debug("Initialised Lossnay fan with speed codes: %s", self._speed_codes)
@@ -103,8 +104,13 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
 
     @property
     def device_info(self):
-        return {"identifiers": {(DOMAIN, self.coordinator.get_id())}}
-
+        """Create device"""
+        return {
+            "identifiers": {(DOMAIN, self._device.get_id())},
+            "name": self._device.get_friendly_name(),
+            "manufacturer": "Mitsubishi Electric",
+            "model": self._device.model,
+        }
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView Lossnay fans based on a config entry."""
