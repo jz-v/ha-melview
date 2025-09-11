@@ -1,7 +1,5 @@
-import asyncio
 import json
 from datetime import timedelta
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from .melview import MelViewDevice
 

@@ -1,7 +1,8 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email."
+            "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email.",
+            "password_change_success": "Password updated successfully."
         },
         "error": {
             "cannot_connect": "Failed to connect.",
@@ -14,7 +15,6 @@
                     "password": "Password",
                     "email": "Email",
 					"local": "Send commands locally (faster)",
-                    "halfstep": "Use 0.5° temperature steps (must also be enabled on server)",
                     "sensor": "Create 'current temperature' sensor entity"
                 },
                 "description": "Enter your Mitsubishi Electric Wi-Fi Control (app.melview.net) account credentials.",
@@ -34,10 +34,9 @@
             "init": {
                 "data": {
                     "local": "Send commands locally",
-                    "halfstep": "Use 0.5° temperature steps",
                     "sensor": "Create 'current temperature' sensor entity"
                 },
-                "description": "Sending commands locally will result in a faster response, however, an internet connection is always required as each command is verified by the server prior to sending via LAN. For 0.5° temperature adjustments, ensure this option is also enabled for the adapter in the Wi-Fi Control app (or app.melview.net). Integration must be reloaded for changes to take effect.",
+                "description": "Sending commands locally will result in a faster response, however, an internet connection is always required as each command is verified by the server prior to sending via LAN. For 0.5° temperature adjustments, enable/disable this in the Wi-Fi Control app (or app.melview.net). Integration must be reloaded for changes to take effect.",
                 "title": "Options"
             }
         }

@@ -14,7 +14,7 @@ from homeassistant.const import (
     STATE_OFF
 )
 from .melview import MelViewAuthentication, MelView, MODE
-from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD, CONF_LOCAL, CONF_HALFSTEP
+from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD, CONF_LOCAL
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .coordinator import MelViewCoordinator
 
@@ -27,17 +27,16 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     _attr_has_entity_name = True
     _attr_name = None
     
-    def __init__(self, coordinator: MelViewCoordinator, halfstep: bool = False):
+    def __init__(self, coordinator: MelViewCoordinator):
         super().__init__(coordinator)
         self.coordinator = coordinator
         self._device = coordinator.device
         device = coordinator.device
 
         self._enable_turn_on_off_backwards_compatibility = False
-        self._halfstep = halfstep
 
         self._name = device.get_friendly_name()
-        self._unique_id = device.get_id()
+        self._attr_unique_id = device.get_id()
 
         self._operations_list = [x for x in MODE] + [HVACMode.OFF]
         self._speeds_list = [x for x in self._device.fan_keyed]
@@ -50,28 +49,11 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         await super().async_added_to_hass()
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
-        if self._halfstep and await self._device.async_get_precision_halves():
+        if getattr(self._device, "halfdeg", False):
             self._precision = PRECISION_HALVES
             self._target_step = 0.5
 
         await self._device.async_force_update()
-
-    async def async_update(self):
-        """Update device properties"""
-        _LOGGER.debug('Update climate entity')
-        await self._device.async_force_update()
-
-        self._precision = PRECISION_WHOLE
-        self._target_step = 1.0
-        if self._halfstep and await self._device.async_get_precision_halves():
-            self._precision = PRECISION_HALVES
-            self._target_step = 0.5
-
-
-    @property
-    def unique_id(self):
-        """Get unique_id for HASS"""
-        return self._unique_id
 
     @property
     def supported_features(self):
@@ -244,7 +226,6 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     email = config[DOMAIN][CONF_EMAIL]
     password = config[DOMAIN][CONF_PASSWORD]
     local = config[DOMAIN][CONF_LOCAL]
-    halfstep = config[DOMAIN][CONF_HALFSTEP]
 
     if email is None:
         _LOGGER.error('No email provided')
@@ -257,10 +238,6 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     if local is None:
         _LOGGER.warning('Var local unspecified, defaulting to false')
         local = False
-
-    if halfstep is None:
-        _LOGGER.warning('Var halfstep unspecified, defaulting to false')
-        halfstep = False
 
     mv_auth = MelViewAuthentication(email, password)
     result= await mv_auth.asynclogin()
@@ -276,7 +253,7 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     for device in devices:
         await device.async_refresh()
         _LOGGER.debug('New device: %s', device.get_friendly_name())
-        device_list.append(MelViewClimate(device, halfstep))
+        device_list.append(MelViewClimate(device))
 
     add_devices(device_list)
 
@@ -286,7 +263,6 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView device climate based on config_entry."""
     coordinators = hass.data[DOMAIN][entry.entry_id]
-    halfstep = entry.data.get(CONF_HALFSTEP, False)
     entities = [
         MelViewClimate(coordinator, halfstep)
         for coordinator in coordinators

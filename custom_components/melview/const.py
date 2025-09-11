@@ -5,7 +5,6 @@ DOMAIN = "melview"
 CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
 CONF_LOCAL = "local"
-CONF_HALFSTEP = "halfstep"
 CONF_SENSOR = "sensor"
 
 APPVERSION = '6.5.2090'
