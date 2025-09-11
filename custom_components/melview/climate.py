@@ -264,7 +264,7 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView device climate based on config_entry."""
     coordinators = hass.data[DOMAIN][entry.entry_id]
     entities = [
-        MelViewClimate(coordinator, halfstep)
+        MelViewClimate(coordinator)
         for coordinator in coordinators
         if coordinator.device.get_unit_type() != "ERV"
     ]

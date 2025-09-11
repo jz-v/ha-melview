@@ -6,20 +6,18 @@
 </p>
 
 ## General
-This is a Home Assistant integration for [AU/NZ Mitsubishi Electric Air Conditioners with a Wi-Fi adapter](https://www.mitsubishielectric.com.au/product/wi-fi-controller/).
+Home Assistant integration for [AU/NZ Mitsubishi Electric Air Conditioners with a Wi-Fi adapter](https://www.mitsubishielectric.com.au/product/wi-fi-controller/).
 
-Benefits of this integration compared with others:
- - faster (local) commands
- - group entities into HA devices (useful for ducted systems with zone switches)
+Features:
+ - fast (local) commands
+ - zone control support (for ducted systems)
+ - standby/preheating detection
  - optional 'current temperature' sensor entity
- - per device/mode min-max temperature ranges
- - detect and show standy/preheating operation
- - options UI to toggle 0.5 deg temp step, local commands, and sensor entity
- - far fewer API calls, particularly with multiple zones or devices.
- - Lossnay ERV units exposed as fan entities with additional sensors
+ - Lossnay ERV support (experimental, see below)
+
 
 ## Installation
-Note: please completely remove any existing custom components for melview prior to installing this.
+Please completely remove any existing custom components for melview prior to installing this one.
 
 1. Install and set up HACS (hacs.xyz)
 2. Click this button to open in HACS:
@@ -45,16 +43,24 @@ Personally tested on the following combination:
 
 
 ## About 'local commands'
-Mitsubishi Wi-Fi adaptors in this region require an internet connection at all times to function.
-
-However, it is possible for commands to be sent locally (i.e. from Home Assistant to the Wi-Fi adaptor over LAN):
- - First, the command must be sent to the melview server, requesting a local command key
+These Wi-Fi adapters require an internet connection, however, it is possible for commands to be 'pushed' locally over LAN:
+ - First, command is sent to the melview server, requesting a local command key
  - Response received with local command key
  - Local command key is sent to the adapter via LAN.
 
 In practice, this is still much quicker than waiting up to 30 seconds for the adapter to check in with the melview server to receive commands.
 
-For truly local control, these adapters are also compatible with the ECHONETLite protocol, which has a [very well maintained HACS integration](https://github.com/scottyphillips/echonetlite_homeassistant). However, be aware that the ECHONETLite protocol does not support ZONES in any way, nor 0.5 deg temperature steps.
+For truly local control, these adapters are also compatible with the ECHONETLite protocol, which has a [very well maintained HACS integration](https://github.com/scottyphillips/echonetlite_homeassistant). However, the ECHONETLite protocol does not support zones, nor 0.5 deg temperature steps.
+
+## Lossnay support
+Lossnay ERV units with Wi-Fi Control can now be added as a unique device.
+Devices include a **fan entity** with adjustable speed and presets, as well as additional sensors for:  
+- Outdoor temperature  
+- Supply temperature  
+- Exhaust temperature  
+- Core efficiency.
+
+Support is experimental due to limited testing. If you encounter a problem please open an Issue and include debug logs.
 
 ## Attributions
  - Forked from https://github.com/haggis663/ha-melview (WTFPL licensed)
