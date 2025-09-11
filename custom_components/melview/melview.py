@@ -29,6 +29,12 @@ FANSTAGES = {
     5: {1: "low", 2: "medium", 3: "Medium High", 5: "high", 6: "Max"},
 }
 
+LOSSNAY_PRESETS = {
+    "Lossnay": 1,
+    "Bypass": 7,
+    "Auto Lossnay": 3,
+}
+
 class MelViewAuthentication:
     """Implementation to remember and refresh MelView cookies."""
     def __init__(self, email, password):
@@ -281,6 +287,12 @@ class MelViewDevice:
             return 0
         return self._json.get('outdoortemp', 0)
 
+    def get_unit_type(self):
+        """Return the unit type from capabilities if available."""
+        if self._caps is None:
+            return None
+        return self._caps.get('unittype')
+
     async def async_get_speed(self):
         """Get the set fan speed"""
         if not await self.async_is_info_valid():
@@ -337,21 +349,28 @@ class MelViewDevice:
         return await self.async_send_command('TS{:.2f}'.format(temperature))
 
     async def async_set_speed(self, speed):
-        """Set the fan speed"""
+        """Set the fan speed by label (fan stage name)."""
         if not await self.async_is_power_on():
-            # Try turn on the unit if off.
             if not await self.async_power_on():
                 return False
-
         if speed not in self.fan_keyed.keys():
             _LOGGER.error("Fan speed %d not supported", speed)
             return False
         return await self.async_send_command('FS{:.2f}'.format(self.fan_keyed[speed]))
 
+    async def async_set_speed_code(self, speed_code):
+        """Set the fan speed by code (fan stage integer)."""
+        if not await self.async_is_power_on():
+            if not await self.async_power_on():
+                return False
+        if speed_code not in self.fan.keys():
+            _LOGGER.error("Fan speed code %d not supported", speed_code)
+            return False
+        return await self.async_send_command('FS{:.2f}'.format(speed_code))
+
     async def async_set_mode(self, mode):
         """Set operating mode"""
         if not await self.async_is_power_on():
-            # Try turn on the unit if off.
             if not await self.async_power_on():
                 return False
 
@@ -385,6 +404,13 @@ class MelViewDevice:
         """Turn off the unit"""
         return await self.async_send_command('PW0')
 
+    async def async_set_lossnay_preset(self, preset_name: str) -> bool:
+        """Set Lossnay ERV preset mode."""
+        code = LOSSNAY_PRESETS.get(preset_name)
+        if code is None:
+            _LOGGER.error("Unknown Lossnay preset: %s", preset_name)
+            return False
+        return await self.async_send_command(f"MD{code}")
 
 class MelView:
     """Handler for multiple MelView devices under one user"""

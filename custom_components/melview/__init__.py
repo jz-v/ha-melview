@@ -17,8 +17,7 @@ from .coordinator import MelViewCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.CLIMATE, Platform.SWITCH, Platform.SENSOR]
-
+PLATFORMS = [Platform.CLIMATE, Platform.SWITCH, Platform.SENSOR, Platform.FAN]
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up MelView; YAML is no longer supported (warn once if present)."""
