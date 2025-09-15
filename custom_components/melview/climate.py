@@ -184,14 +184,14 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         if temp is not None:
             _LOGGER.debug('Set temperature %d', temp)
             if await self._device.async_set_temperature(temp):
-                await self.coordinator.async_request_refresh()
+                await self.coordinator.async_refresh()
 
     async def async_set_fan_mode(self, fan_mode) -> None:
         """Set the fan speed"""
         speed = fan_mode
         _LOGGER.debug('Set fan: %s', speed)
         if await self._device.async_set_speed(speed):
-            await self.coordinator.async_request_refresh()
+            await self.coordinator.async_refresh()
             parsed_speed = fan_mode.title()
             logbook.log_entry(
                 hass=self.hass,
@@ -205,19 +205,19 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         if hvac_mode == 'off':
             await self.async_turn_off()
         elif await self._device.async_set_mode(hvac_mode):
-            await self.coordinator.async_request_refresh()
+            await self.coordinator.async_refresh()
 
     async def async_turn_on(self) ->None:
         """Turn on the unit"""
         _LOGGER.debug('Power on')
         if await self._device.async_power_on():
-            await self.coordinator.async_request_refresh()
+            await self.coordinator.async_refresh()
 
     async def async_turn_off(self) -> None:
         """Turn off the unit"""
         _LOGGER.debug('Power off')
         if await self._device.async_power_off():
-            await self.coordinator.async_request_refresh()
+            await self.coordinator.async_refresh()
 
 async def async_setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the HASS component"""
