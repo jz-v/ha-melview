@@ -51,7 +51,7 @@ class MelViewZoneSwitch(CoordinatorEntity, SwitchEntity):
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up Melview device climate based on config_entry."""
-    coordinators = hass.data[DOMAIN][entry.entry_id]
+    coordinators = entry.runtime_data
     
     entities = [
         MelViewZoneSwitch(coordinator, zone)

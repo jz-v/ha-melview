@@ -24,10 +24,10 @@ async def async_setup_entry(
         _LOGGER.debug("Sensor option is disabled in config entry.")
         return
 
-    devices = hass.data[DOMAIN][entry.entry_id]
+    coordinators = entry.runtime_data
 
-    entities = [MelViewCurrentTempSensor(coordinator) for coordinator in devices]
-    for coordinator in devices:
+    entities = [MelViewCurrentTempSensor(coordinator) for coordinator in coordinators]
+    for coordinator in coordinators:
         if coordinator.device.get_unit_type() == "ERV":
             entities.extend(
                 [

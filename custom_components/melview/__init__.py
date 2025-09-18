@@ -15,6 +15,8 @@ from .climate import MelViewClimate
 from .switch import MelViewZoneSwitch
 from .coordinator import MelViewCoordinator
 
+type MelviewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
+
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.CLIMATE, Platform.SWITCH, Platform.SENSOR, Platform.FAN]
@@ -33,7 +35,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: MelviewConfigEntry) -> bool:
     """Establish connection with MelView."""
     await async_migrate_entry(hass, entry)
     conf = entry.data
@@ -65,21 +67,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await coordinator.async_config_entry_first_refresh()
         _LOGGER.debug("Device: " + device.get_friendly_name())
         device_list.append(coordinator)
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = device_list
+    entry.runtime_data = device_list
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
   
-    _LOGGER.debug('Set up coordinator(s)')
+    _LOGGER.debug('Set up coordinator(s): %s', entry.runtime_data)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
-
-    domain_data = hass.data.get(DOMAIN, {})
-    domain_data.pop(config_entry.entry_id, None)
-    if DOMAIN in hass.data and not hass.data[DOMAIN]:
-        hass.data.pop(DOMAIN, None)
 
     return unload_ok
 

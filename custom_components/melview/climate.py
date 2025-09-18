@@ -262,7 +262,7 @@ async def async_setup_platform(hass, config, add_devices, discovery_info=None):
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView device climate based on config_entry."""
-    coordinators = hass.data[DOMAIN][entry.entry_id]
+    coordinators = entry.runtime_data
     entities = [
         MelViewClimate(coordinator)
         for coordinator in coordinators
