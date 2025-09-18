@@ -36,6 +36,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data={
                 CONF_EMAIL: email,
                 CONF_PASSWORD: password,
+            },
+            options={
                 CONF_LOCAL: local,
                 CONF_SENSOR: sensor,
             },

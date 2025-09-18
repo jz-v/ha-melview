@@ -37,6 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Establish connection with MelView."""
     await async_migrate_entry(hass, entry)
     conf = entry.data
+    options = entry.options
     mv_auth = MelViewAuthentication(conf[CONF_EMAIL], conf[CONF_PASSWORD])
     result = await mv_auth.asynclogin()
     if not result:
@@ -53,7 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
         raise ConfigEntryAuthFailed
     _LOGGER.debug('Authentication successful')
-    melview = MelView(mv_auth,localcontrol=conf[CONF_LOCAL])
+    melview = MelView(mv_auth, localcontrol=options.get(CONF_LOCAL))
     device_list = []
     _LOGGER.debug('Getting data')
     
@@ -85,12 +86,12 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 async def async_migrate_entry(hass, config_entry):
     """Migrate old config entry."""
     data = {**config_entry.data}
-    options = config_entry.options
-    
-    if CONF_LOCAL in options:
-        data[CONF_LOCAL] = options[CONF_LOCAL]
-    if CONF_SENSOR in options:
-        data[CONF_SENSOR] = options[CONF_SENSOR]
-    
-    hass.config_entries.async_update_entry(config_entry, data=data)
+    options = {**config_entry.options}
+
+    if CONF_LOCAL in data:
+        options[CONF_LOCAL] = data.pop(CONF_LOCAL)
+    if CONF_SENSOR in data:
+        options[CONF_SENSOR] = data.pop(CONF_SENSOR)
+
+    hass.config_entries.async_update_entry(config_entry, data=data, options=options)
     return True
