@@ -7,9 +7,9 @@ from homeassistant.const import UnitOfTemperature, PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, CONF_SENSOR
+from .entity import MelViewBaseEntity
+from .const import CONF_SENSOR
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,15 +40,14 @@ async def async_setup_entry(
     async_add_entities(entities, update_before_add=True)
 
 
-class MelViewCurrentTempSensor(CoordinatorEntity, SensorEntity):
+class MelViewCurrentTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor representing the current room temperature for a MelView device."""
     _attr_has_entity_name = True
     _attr_name = "Current Temperature"
 
     def __init__(self, coordinator):
         """Initialize sensor, tied to a DataUpdateCoordinator."""
-        super().__init__(coordinator)
-        self.coordinator = coordinator
+        super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -62,20 +61,15 @@ class MelViewCurrentTempSensor(CoordinatorEntity, SensorEntity):
         data = self.coordinator.data or {}
         return float(data.get("roomtemp", 0))
 
-    @property
-    def device_info(self):
-        return {"identifiers": {(DOMAIN, self.coordinator.device.get_id())}}
 
-
-class MelViewOutdoorTempSensor(CoordinatorEntity, SensorEntity):
+class MelViewOutdoorTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor representing the outdoor (fresh air) temperature."""
 
     _attr_has_entity_name = True
     _attr_name = "Fresh Air"
 
     def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self.coordinator = coordinator
+        super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -87,20 +81,15 @@ class MelViewOutdoorTempSensor(CoordinatorEntity, SensorEntity):
         data = self.coordinator.data or {}
         return float(data.get("outdoortemp", 0))
 
-    @property
-    def device_info(self):
-        return {"identifiers": {(DOMAIN, self.coordinator.device.get_id())}}
 
-
-class MelViewSupplyTempSensor(CoordinatorEntity, SensorEntity):
+class MelViewSupplyTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor for the pre-warmed supply air temperature."""
 
     _attr_has_entity_name = True
     _attr_name = "Pre-warmed"
 
     def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self.coordinator = coordinator
+        super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -115,20 +104,15 @@ class MelViewSupplyTempSensor(CoordinatorEntity, SensorEntity):
         efficiency = float(data.get("coreefficiency", 0))
         return round(outdoor + efficiency * (room - outdoor), 1)
 
-    @property
-    def device_info(self):
-        return {"identifiers": {(DOMAIN, self.coordinator.device.get_id())}}
 
-
-class MelViewExhaustTempSensor(CoordinatorEntity, SensorEntity):
+class MelViewExhaustTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor for the stale air temperature leaving the unit."""
 
     _attr_has_entity_name = True
     _attr_name = "Stale Air"
 
     def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self.coordinator = coordinator
+        super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -140,20 +124,15 @@ class MelViewExhaustTempSensor(CoordinatorEntity, SensorEntity):
         data = self.coordinator.data or {}
         return float(data.get("exhausttemp", 0))
 
-    @property
-    def device_info(self):
-        return {"identifiers": {(DOMAIN, self.coordinator.device.get_id())}}
 
-
-class MelViewCoreEfficiencySensor(CoordinatorEntity, SensorEntity):
+class MelViewCoreEfficiencySensor(MelViewBaseEntity, SensorEntity):
     """Sensor for the core heat recovery efficiency percentage."""
 
     _attr_has_entity_name = True
     _attr_name = "Core Efficiency"
 
     def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self.coordinator = coordinator
+        super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = PERCENTAGE
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -163,8 +142,3 @@ class MelViewCoreEfficiencySensor(CoordinatorEntity, SensorEntity):
     def native_value(self):
         data = self.coordinator.data or {}
         return round(float(data.get("coreefficiency", 0)) * 100, 1)
-
-    @property
-    def device_info(self):
-        return {"identifiers": {(DOMAIN, self.coordinator.device.get_id())}}
-
