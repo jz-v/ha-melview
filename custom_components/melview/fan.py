@@ -3,20 +3,19 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util.percentage import (
     ordered_list_item_to_percentage,
     percentage_to_ordered_list_item,
 )
 
-from .const import DOMAIN
 from .coordinator import MelViewCoordinator
+from .entity import MelViewBaseEntity
 from .melview import LOSSNAY_PRESETS
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class MelViewLossnayFan(CoordinatorEntity, FanEntity):
+class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
     """Fan entity to control Lossnay ERV units."""
 
     _attr_has_entity_name = True
@@ -30,8 +29,7 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
     )
 
     def __init__(self, coordinator: MelViewCoordinator):
-        super().__init__(coordinator)
-        self.coordinator = coordinator
+        super().__init__(coordinator, coordinator.device)
         self._attr_unique_id = f"{coordinator.get_id()}_lossnay"
         self._device = coordinator.device
         self._last_preset: str = "Lossnay"
@@ -102,15 +100,6 @@ class MelViewLossnayFan(CoordinatorEntity, FanEntity):
         if await self.coordinator.async_set_speed_code(code):
             await self.coordinator.async_request_refresh()
 
-    @property
-    def device_info(self):
-        """Create device"""
-        return {
-            "identifiers": {(DOMAIN, self._device.get_id())},
-            "name": self._device.get_friendly_name(),
-            "manufacturer": "Mitsubishi Electric",
-            "model": self._device.model,
-        }
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView Lossnay fans based on a config entry."""
