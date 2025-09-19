@@ -1,18 +1,21 @@
 """The MelView integration."""
+
 from __future__ import annotations
 
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError, ConfigEntryNotReady
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    ConfigEntryError,
+    ConfigEntryNotReady,
+)
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, CONF_LOCAL, CONF_SENSOR
 from .melview import MelViewAuthentication, MelView
-from .climate import MelViewClimate
-from .switch import MelViewZoneSwitch
 from .coordinator import MelViewCoordinator
 
 type MelviewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
@@ -20,6 +23,7 @@ type MelviewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.CLIMATE, Platform.SWITCH, Platform.SENSOR, Platform.FAN]
+
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up MelView; YAML is no longer supported (warn once if present)."""
@@ -55,7 +59,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelviewConfigEntry) -> b
             translation_placeholders={"email": conf[CONF_EMAIL]},
         )
         raise ConfigEntryAuthFailed
-    _LOGGER.debug('Authentication successful')
+    _LOGGER.debug("Authentication successful")
     melview = MelView(mv_auth, localcontrol=options.get(CONF_LOCAL))
 
     units = mv_auth.number_units()
@@ -65,10 +69,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelviewConfigEntry) -> b
     if units == 0:
         _LOGGER.debug("Account has no devices")
         raise ConfigEntryError("Account has no devices")
-    
+
     device_list = []
-    _LOGGER.debug('Getting data')
-    
+    _LOGGER.debug("Getting data")
+
     devices = await melview.async_get_devices_list()
     if devices is None:
         _LOGGER.debug("Unable to retrieve device list")
@@ -80,16 +84,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelviewConfigEntry) -> b
         device_list.append(coordinator)
     entry.runtime_data = device_list
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-  
-    _LOGGER.debug('Set up coordinator(s): %s', entry.runtime_data)
+
+    _LOGGER.debug("Set up coordinator(s): %s", entry.runtime_data)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        config_entry, PLATFORMS
+    )
 
     return unload_ok
+
 
 async def async_migrate_entry(hass, config_entry):
     """Migrate old config entry."""

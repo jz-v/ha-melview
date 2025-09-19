@@ -7,8 +7,10 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class MelViewCoordinator(DataUpdateCoordinator):
     """Coordinator to fetch data from a Melview API once per interval."""
+
     def __init__(self, hass, config_entry, device: MelViewDevice):
         """Initialize."""
         super().__init__(
@@ -21,7 +23,7 @@ class MelViewCoordinator(DataUpdateCoordinator):
         )
         self.device = device
         self._caps: dict | None = None
-    
+
     def __getattr__(self, name: str):
         """Forward any missing attribute lookups to the underlying MelViewDevice."""
         return getattr(self.device, name)
@@ -31,7 +33,9 @@ class MelViewCoordinator(DataUpdateCoordinator):
         try:
             if self._caps is None:
                 self._caps = await self.device.async_refresh_device_caps()
-                _LOGGER.debug("Unit capabilities: %s", json.dumps(self.device._caps, indent=2))
+                _LOGGER.debug(
+                    "Unit capabilities: %s", json.dumps(self.device._caps, indent=2)
+                )
             ok = await self.device.async_refresh_device_info()
             if not ok or self.device._json is None:
                 raise UpdateFailed("Failed to refresh MelView info")

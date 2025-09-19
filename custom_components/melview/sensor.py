@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorDeviceClass,
+    SensorStateClass,
+)
 from homeassistant.const import UnitOfTemperature, PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -42,6 +46,7 @@ async def async_setup_entry(
 
 class MelViewCurrentTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor representing the current room temperature for a MelView device."""
+
     _attr_has_entity_name = True
     _attr_name = "Current Temperature"
 

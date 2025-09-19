@@ -43,7 +43,9 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
     @property
     def preset_mode(self) -> str | None:
         code = self.coordinator.data.get("setmode")
-        return next((name for name, val in LOSSNAY_PRESETS.items() if val == code), None)
+        return next(
+            (name for name, val in LOSSNAY_PRESETS.items() if val == code), None
+        )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         if preset_mode not in LOSSNAY_PRESETS:
@@ -79,7 +81,11 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
         code = self.coordinator.data.get("setfan")
         if code in self._speed_codes:
             percentage = ordered_list_item_to_percentage(self._speed_codes, code)
-            _LOGGER.debug("Lossnay fan percentage: raw code=%s, calculated percentage=%s", code, percentage)
+            _LOGGER.debug(
+                "Lossnay fan percentage: raw code=%s, calculated percentage=%s",
+                code,
+                percentage,
+            )
             return percentage
         _LOGGER.debug("Lossnay fan percentage: raw code=%s not in speed codes", code)
         return None
@@ -87,15 +93,17 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
     @property
     def speed_count(self) -> int:
         count = len(self._speed_codes)
-        _LOGGER.debug("Lossnay fan speed_count: speed_codes=%s, count=%d", self._speed_codes, count)
+        _LOGGER.debug(
+            "Lossnay fan speed_count: speed_codes=%s, count=%d",
+            self._speed_codes,
+            count,
+        )
         return count
 
     async def async_set_percentage(self, percentage: int) -> None:
         code = percentage_to_ordered_list_item(self._speed_codes, percentage)
         _LOGGER.debug(
-            "Lossnay fan set speed with percentage=%d, mapped code=%s",
-            percentage,
-            code
+            "Lossnay fan set speed with percentage=%d, mapped code=%s", percentage, code
         )
         if await self.coordinator.async_set_speed_code(code):
             await self.coordinator.async_request_refresh()

@@ -6,8 +6,10 @@ from .entity import MelViewBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
     """Melview zone switch handler for Home Assistant"""
+
     def __init__(self, coordinator: MelViewCoordinator, zone):
         super().__init__(coordinator, coordinator.device)
         self._id = zone.id
@@ -19,7 +21,7 @@ class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
         """Check if the zone is currently on."""
         zone = self.coordinator.get_zone(self._id)
         return bool(zone.status)
-    
+
     @property
     def extra_state_attributes(self):
         """Return spill status as attribute."""
@@ -30,20 +32,21 @@ class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
 
     async def async_turn_on(self):
         """Turn on the zone"""
-        _LOGGER.debug('Switch on zone %s', self._attr_name)
+        _LOGGER.debug("Switch on zone %s", self._attr_name)
         if await self.coordinator.async_enable_zone(self._id):
             await self.coordinator.async_refresh()
 
     async def async_turn_off(self):
         """Turn off the zone"""
-        _LOGGER.debug('Switch off zone %s', self._attr_name)
+        _LOGGER.debug("Switch off zone %s", self._attr_name)
         if await self.coordinator.async_disable_zone(self._id):
             await self.coordinator.async_refresh()
+
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up Melview device climate based on config_entry."""
     coordinators = entry.runtime_data
-    
+
     entities = [
         MelViewZoneSwitch(coordinator, zone)
         for coordinator in coordinators

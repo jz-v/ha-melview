@@ -4,9 +4,7 @@ import time
 from aiohttp import ClientSession
 from .const import APPVERSION, HEADERS, APIVERSION
 
-from homeassistant.components.climate.const import (
-    HVACMode
-)
+from homeassistant.components.climate.const import HVACMode
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +16,7 @@ MODE = {
     HVACMode.HEAT: 1,
     HVACMode.COOL: 3,
     HVACMode.DRY: 2,
-    HVACMode.FAN_ONLY: 7
+    HVACMode.FAN_ONLY: 7,
 }
 
 FANSTAGES = {
@@ -35,8 +33,10 @@ LOSSNAY_PRESETS = {
     "Auto Lossnay": 3,
 }
 
+
 class MelViewAuthentication:
     """Implementation to remember and refresh MelView cookies."""
+
     def __init__(self, email, password):
         self._email = email
         self._password = password
@@ -53,42 +53,65 @@ class MelViewAuthentication:
         self._cookie = None
         self._login_json = None
         async with ClientSession() as session:
-            req = await session.post('https://api.melview.net/api/login.aspx',
-                    json={'user': self._email, 'pass': self._password,
-                          'appversion': APPVERSION},
-                    headers=HEADERS) 
+            req = await session.post(
+                "https://api.melview.net/api/login.aspx",
+                json={
+                    "user": self._email,
+                    "pass": self._password,
+                    "appversion": APPVERSION,
+                },
+                headers=HEADERS,
+            )
         self._login_json = await req.json()
         _LOGGER.debug("Login status code: %d", req.status)
-        _LOGGER.debug("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
-        _LOGGER.debug("Login response json:\n%s", json.dumps(self._login_json, indent=2))
+        _LOGGER.debug(
+            "Login response headers:\n%s", json.dumps(dict(req.headers), indent=2)
+        )
+        _LOGGER.debug(
+            "Login response json:\n%s", json.dumps(self._login_json, indent=2)
+        )
         if req.status == 200:
             cks = req.cookies
-            if 'auth' in cks:
-                auth_value = cks['auth'].value
+            if "auth" in cks:
+                auth_value = cks["auth"].value
                 if auth_value:
                     self._cookie = auth_value
                     return True
                 else:
                     _LOGGER.error("Invalid auth cookie")
                     _LOGGER.error("Login status code: %d", req.status)
-                    _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
-                    _LOGGER.error("Login response json:\n%s", json.dumps(self._login_json, indent=2))                    
+                    _LOGGER.error(
+                        "Login response headers:\n%s",
+                        json.dumps(dict(req.headers), indent=2),
+                    )
+                    _LOGGER.error(
+                        "Login response json:\n%s",
+                        json.dumps(self._login_json, indent=2),
+                    )
                     return False
             _LOGGER.error("Missing auth cookie")
             _LOGGER.error("Login status code: %d", req.status)
-            _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
-            _LOGGER.error("Login response json:\n%s", json.dumps(self._login_json, indent=2))
+            _LOGGER.error(
+                "Login response headers:\n%s", json.dumps(dict(req.headers), indent=2)
+            )
+            _LOGGER.error(
+                "Login response json:\n%s", json.dumps(self._login_json, indent=2)
+            )
         else:
-            _LOGGER.error("Invalid response status")            
+            _LOGGER.error("Invalid response status")
             _LOGGER.error("Login status code: %d", req.status)
-            _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
-            _LOGGER.error("Login response json:\n%s", json.dumps(self._login_json, indent=2))
+            _LOGGER.error(
+                "Login response headers:\n%s", json.dumps(dict(req.headers), indent=2)
+            )
+            _LOGGER.error(
+                "Login response json:\n%s", json.dumps(self._login_json, indent=2)
+            )
         return False
 
     def get_cookie(self):
         """Return authentication cookie"""
-        return {'auth': self._cookie}
-    
+        return {"auth": self._cookie}
+
     def number_units(self):
         """Return the number of units in login response."""
         if not self._login_json:
@@ -97,6 +120,7 @@ class MelViewAuthentication:
             return int(self._login_json.get("userunits", 0))
         except Exception:
             return False
+
 
 class MelViewZone:
     def __init__(self, id, name, status):
@@ -107,8 +131,10 @@ class MelViewZone:
 
 class MelViewDevice:
     """Handler class for a MelView unit"""
-    def __init__(self, deviceid, buildingid, friendlyname,
-                 authentication, localcontrol=False):
+
+    def __init__(
+        self, deviceid, buildingid, friendlyname, authentication, localcontrol=False
+    ):
         self._deviceid = deviceid
         self._buildingid = buildingid
         self._friendlyname = friendlyname
@@ -126,10 +152,9 @@ class MelViewDevice:
         self.model = None
         self.temp_ranges = {}
 
-    
     async def async_refresh(self):
         await self.async_refresh_device_caps()
-        await self.async_refresh_device_info()    
+        await self.async_refresh_device_info()
 
     def __str__(self):
         return str(self._json)
@@ -139,17 +164,19 @@ class MelViewDevice:
         self._last_info_time_s = time.time()
 
         async with ClientSession() as session:
-            req = await session.post('https://api.melview.net/api/unitcapabilities.aspx',
-                            cookies=self._authentication.get_cookie(),
-                            json={'unitid': self._deviceid, 'v': APIVERSION})
+            req = await session.post(
+                "https://api.melview.net/api/unitcapabilities.aspx",
+                cookies=self._authentication.get_cookie(),
+                json={"unitid": self._deviceid, "v": APIVERSION},
+            )
         if req.status == 200:
             self._caps = await req.json()
-            if self._localip and 'localip' in self._caps:
-                self._localip = self._caps['localip']
-            if self._caps['fanstage']:
-                self.fan = FANSTAGES[self._caps['fanstage']]
-            if 'hasautofan' in self._caps and self._caps['hasautofan'] == 1:
-                self.fan[0] = 'auto'
+            if self._localip and "localip" in self._caps:
+                self._localip = self._caps["localip"]
+            if self._caps["fanstage"]:
+                self.fan = FANSTAGES[self._caps["fanstage"]]
+            if "hasautofan" in self._caps and self._caps["hasautofan"] == 1:
+                self.fan[0] = "auto"
             self.fan_keyed = {value: key for key, value in self.fan.items()}
             if "max" in self._caps:
                 for hvac_mode, mode_id in MODE.items():
@@ -159,9 +186,9 @@ class MelViewDevice:
                             "min": caps_range["min"],
                             "max": caps_range["max"],
                         }
-            if 'modelname' in self._caps:
-                self.model = self._caps['modelname']
-            if 'halfdeg' in self._caps and self._caps['halfdeg'] == 1:
+            if "modelname" in self._caps:
+                self.model = self._caps["modelname"]
+            if "halfdeg" in self._caps and self._caps["halfdeg"] == 1:
                 self.halfdeg = True
             return True
         if req.status == 401 and retry:
@@ -169,38 +196,46 @@ class MelViewDevice:
             if await self._authentication.asynclogin():
                 return await self.async_refresh_device_caps(retry=False)
         else:
-            _LOGGER.error("Unable to retrieve unit capabilities"
-                          "(Invalid status code: %d)", req.status)
+            _LOGGER.error(
+                "Unable to retrieve unit capabilities(Invalid status code: %d)",
+                req.status,
+            )
         return False
-   
+
     async def async_refresh_device_info(self, retry=True):
         self._json = None
         self._last_info_time_s = time.time()
 
         async with ClientSession() as session:
-            req = await session.post('https://api.melview.net/api/unitcommand.aspx',
-                            cookies=self._authentication.get_cookie(),
-                            json={'unitid': self._deviceid, 'v': APIVERSION})
+            req = await session.post(
+                "https://api.melview.net/api/unitcommand.aspx",
+                cookies=self._authentication.get_cookie(),
+                json={"unitid": self._deviceid, "v": APIVERSION},
+            )
         if req.status == 200:
             self._json = await req.json()
-            if 'zones' in self._json:
-                self._zones = {z['zoneid'] : MelViewZone(z['zoneid'], z['name'], z['status']) for z in self._json['zones']}
-            if 'standby' in self._json:
-                self._standby = self._json['standby']
-            if 'error' in self._json:
-                if self._json['error'] != 'ok':
-                    _LOGGER.error("Unit error: %s", self._json['error'])
-            if 'fault' in self._json:
-                if self._json['fault'] != '':
-                    _LOGGER.error("Unit fault: %s", self._json['fault'])
+            if "zones" in self._json:
+                self._zones = {
+                    z["zoneid"]: MelViewZone(z["zoneid"], z["name"], z["status"])
+                    for z in self._json["zones"]
+                }
+            if "standby" in self._json:
+                self._standby = self._json["standby"]
+            if "error" in self._json:
+                if self._json["error"] != "ok":
+                    _LOGGER.error("Unit error: %s", self._json["error"])
+            if "fault" in self._json:
+                if self._json["fault"] != "":
+                    _LOGGER.error("Unit fault: %s", self._json["fault"])
             return True
         if req.status == 401 and retry:
             _LOGGER.error("Info error 401 (trying to re-login)")
             if await self._authentication.asynclogin():
                 return await self.async_refresh_device_info(retry=False)
         else:
-            _LOGGER.error("Unable to retrieve info (invalid status code: %d)",
-                          req.status)
+            _LOGGER.error(
+                "Unable to retrieve info (invalid status code: %d)", req.status
+            )
         return False
 
     async def async_is_info_valid(self):
@@ -212,13 +247,13 @@ class MelViewDevice:
             return await self.async_refresh_device_info()
 
         return True
-        
+
     async def async_is_caps_valid(self):
         if self._caps is None:
             return await self.async_refresh_device_caps()
 
         return True
-        
+
     async def async_send_command(self, command, retry=True):
         _LOGGER.debug("Command issued: %s", command)
 
@@ -227,20 +262,28 @@ class MelViewDevice:
             return False
 
         async with ClientSession() as session:
-            req = await session.post('https://api.melview.net/api/unitcommand.aspx',
-                            cookies=self._authentication.get_cookie(),
-                            json={'unitid': self._deviceid, 'v': APIVERSION,
-                                  'commands': command, 'lc': 1})
+            req = await session.post(
+                "https://api.melview.net/api/unitcommand.aspx",
+                cookies=self._authentication.get_cookie(),
+                json={
+                    "unitid": self._deviceid,
+                    "v": APIVERSION,
+                    "commands": command,
+                    "lc": 1,
+                },
+            )
         if req.status == 200:
             _LOGGER.debug("Command sent to server")
 
             resp = await req.json()
             if self._localip:
-                if 'lc' in resp:
-                    local_command = resp['lc']
+                if "lc" in resp:
+                    local_command = resp["lc"]
                     async with ClientSession() as session:
-                        req = await session.post('http://{}/smart'.format(self._localip),
-                                        data=LOCAL_DATA.format(local_command))
+                        req = await session.post(
+                            "http://{}/smart".format(self._localip),
+                            data=LOCAL_DATA.format(local_command),
+                        )
                     if req.status == 200:
                         _LOGGER.debug("Command sent locally")
                     else:
@@ -254,8 +297,7 @@ class MelViewDevice:
             if await self._authentication.asynclogin():
                 return await self.async_send_command(command, retry=False)
         else:
-            _LOGGER.error("Unable to send command (invalid status code: %d",
-                          req.status)
+            _LOGGER.error("Unable to send command (invalid status code: %d", req.status)
 
         return False
 
@@ -283,26 +325,26 @@ class MelViewDevice:
         if not await self.async_is_info_valid():
             return 0
 
-        return float(self._json['settemp'])
+        return float(self._json["settemp"])
 
     async def async_get_room_temperature(self):
         """Get current room temperature"""
         if not await self.async_is_info_valid():
             return 0
-        return self._json.get('roomtemp', 0)
+        return self._json.get("roomtemp", 0)
 
     def get_outside_temperature(self):
         """Get current outside temperature"""
-        if not 'hasoutdoortemp' in self._caps or self._caps['hasoutdoortemp'] == 0:
+        if "hasoutdoortemp" not in self._caps or self._caps["hasoutdoortemp"] == 0:
             _LOGGER.error("Outdoor temperature not supported")
             return 0
-        return self._json.get('outdoortemp', 0)
+        return self._json.get("outdoortemp", 0)
 
     def get_unit_type(self):
         """Return the unit type from capabilities if available."""
         if self._caps is None:
             return None
-        return self._caps.get('unittype')
+        return self._caps.get("unittype")
 
     async def async_get_speed(self):
         """Get the set fan speed"""
@@ -310,7 +352,7 @@ class MelViewDevice:
             return "auto"
 
         for key, val in self.fan_keyed.items():
-            if self._json['setfan'] == val:
+            if self._json["setfan"] == val:
                 return key
 
         return "auto"
@@ -322,7 +364,7 @@ class MelViewDevice:
 
         if await self.async_is_power_on():
             for key, val in MODE.items():
-                if self._json['setmode'] == val:
+                if self._json["setmode"] == val:
                     return key
 
         return HVACMode.AUTO
@@ -338,7 +380,7 @@ class MelViewDevice:
         if not await self.async_is_info_valid():
             return False
 
-        return self._json['power']
+        return self._json["power"]
 
     async def async_set_temperature(self, temperature):
         """Set the target temperature"""
@@ -346,18 +388,26 @@ class MelViewDevice:
         temp_range = self.temp_ranges.get(mode)
         if not temp_range:
             _LOGGER.warning("No temperature range available for mode %s", mode.value)
-            return await self.async_send_command('TS{:.2f}'.format(temperature))
+            return await self.async_send_command("TS{:.2f}".format(temperature))
         min_temp = temp_range["min"]
         max_temp = temp_range["max"]
         if temperature < min_temp:
-            _LOGGER.error("Temperature %.1f lower than min %d for mode %s",
-                          temperature, min_temp, mode)
+            _LOGGER.error(
+                "Temperature %.1f lower than min %d for mode %s",
+                temperature,
+                min_temp,
+                mode,
+            )
             return False
         if temperature > max_temp:
-            _LOGGER.error("Temperature %.1f greater than max %d for mode %s",
-                          temperature, max_temp, mode)
+            _LOGGER.error(
+                "Temperature %.1f greater than max %d for mode %s",
+                temperature,
+                max_temp,
+                mode,
+            )
             return False
-        return await self.async_send_command('TS{:.2f}'.format(temperature))
+        return await self.async_send_command("TS{:.2f}".format(temperature))
 
     async def async_set_speed(self, speed):
         """Set the fan speed by label (fan stage name)."""
@@ -367,7 +417,7 @@ class MelViewDevice:
         if speed not in self.fan_keyed.keys():
             _LOGGER.error("Fan speed %d not supported", speed)
             return False
-        return await self.async_send_command('FS{:.2f}'.format(self.fan_keyed[speed]))
+        return await self.async_send_command("FS{:.2f}".format(self.fan_keyed[speed]))
 
     async def async_set_speed_code(self, speed_code):
         """Set the fan speed by code (fan stage integer)."""
@@ -377,7 +427,7 @@ class MelViewDevice:
         if speed_code not in self.fan.keys():
             _LOGGER.error("Fan speed code %d not supported", speed_code)
             return False
-        return await self.async_send_command('FS{:.2f}'.format(speed_code))
+        return await self.async_send_command("FS{:.2f}".format(speed_code))
 
     async def async_set_mode(self, mode):
         """Set operating mode"""
@@ -385,19 +435,25 @@ class MelViewDevice:
             if not await self.async_power_on():
                 return False
 
-        if mode == "Auto" and (not 'hasautomode' in self._caps or self._caps['hasautomode'] == 0):
+        if mode == "Auto" and (
+            "hasautomode" not in self._caps or self._caps["hasautomode"] == 0
+        ):
             _LOGGER.error("Auto mode not supported")
             return False
-        if mode == "Dry" and (not 'hasdrymode' in self._caps or self._caps['hasdrymode'] == 0):
+        if mode == "Dry" and (
+            "hasdrymode" not in self._caps or self._caps["hasdrymode"] == 0
+        ):
             _LOGGER.error("Dry mode not supported")
             return False
-        if mode != "Cool" and ('hascoolonly' in self._caps and self._caps['hascoolonly'] == 1):
+        if mode != "Cool" and (
+            "hascoolonly" in self._caps and self._caps["hascoolonly"] == 1
+        ):
             _LOGGER.error("Only cool mode supported")
             return False
         if mode not in MODE.keys():
             _LOGGER.error("Mode %d not supported", mode)
             return False
-        return await self.async_send_command('MD{}'.format(MODE[mode]))
+        return await self.async_send_command("MD{}".format(MODE[mode]))
 
     async def async_enable_zone(self, zoneid):
         """Turn on a zone"""
@@ -409,11 +465,11 @@ class MelViewDevice:
 
     async def async_power_on(self):
         """Turn on the unit"""
-        return await self.async_send_command('PW1')
-        
+        return await self.async_send_command("PW1")
+
     async def async_power_off(self):
         """Turn off the unit"""
-        return await self.async_send_command('PW0')
+        return await self.async_send_command("PW0")
 
     async def async_set_lossnay_preset(self, preset_name: str) -> bool:
         """Set Lossnay ERV preset mode."""
@@ -423,8 +479,10 @@ class MelViewDevice:
             return False
         return await self.async_send_command(f"MD{code}")
 
+
 class MelView:
     """Handler for multiple MelView devices under one user"""
+
     def __init__(self, authentication, localcontrol=False):
         self._authentication = authentication
         self._unitcount = 0
@@ -435,19 +493,23 @@ class MelView:
         devices = []
 
         async with ClientSession() as session:
-            req = await session.post('https://api.melview.net/api/rooms.aspx',
-                            json={'unitid': 0},
-                            headers=HEADERS,
-                            cookies=self._authentication.get_cookie())
+            req = await session.post(
+                "https://api.melview.net/api/rooms.aspx",
+                json={"unitid": 0},
+                headers=HEADERS,
+                cookies=self._authentication.get_cookie(),
+            )
         if req.status == 200:
             reply = await req.json()
             for building in reply:
-                for unit in building['units']:
-                    melViewDevice= MelViewDevice(unit['unitid'],
-                                                 building['buildingid'],
-                                                 unit['room'],
-                                                 self._authentication,
-                                                 self._localcontrol)
+                for unit in building["units"]:
+                    melViewDevice = MelViewDevice(
+                        unit["unitid"],
+                        building["buildingid"],
+                        unit["room"],
+                        self._authentication,
+                        self._localcontrol,
+                    )
                     await melViewDevice.async_refresh()
                     devices.append(melViewDevice)
 
@@ -456,7 +518,8 @@ class MelView:
             if await self._authentication.asynclogin():
                 return await self.async_get_devices_list(retry=False)
         else:
-            _LOGGER.error("Failed to get device list (status code invalid: %d)",
-                          req.status)
+            _LOGGER.error(
+                "Failed to get device list (status code invalid: %d)", req.status
+            )
 
         return devices
