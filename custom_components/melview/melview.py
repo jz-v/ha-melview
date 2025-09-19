@@ -41,23 +41,26 @@ class MelViewAuthentication:
         self._email = email
         self._password = password
         self._cookie = None
+        self._login_json = None
 
     def is_login(self):
         """Return login status"""
         return self._cookie is not None
 
-    async def  asynclogin(self):
+    async def asynclogin(self):
         """Generate a new login cookie"""
         _LOGGER.debug("Trying to login")
         self._cookie = None
+        self._login_json = None
         async with ClientSession() as session:
             req = await session.post('https://api.melview.net/api/login.aspx',
                     json={'user': self._email, 'pass': self._password,
                           'appversion': APPVERSION},
                     headers=HEADERS) 
+        self._login_json = await req.json()
         _LOGGER.debug("Login status code: %d", req.status)
         _LOGGER.debug("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
-        _LOGGER.debug("Login response json:\n%s", json.dumps(await req.json(), indent=2))
+        _LOGGER.debug("Login response json:\n%s", json.dumps(self._login_json, indent=2))
         if req.status == 200:
             cks = req.cookies
             if 'auth' in cks:
@@ -69,23 +72,31 @@ class MelViewAuthentication:
                     _LOGGER.error("Invalid auth cookie")
                     _LOGGER.error("Login status code: %d", req.status)
                     _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
-                    _LOGGER.error("Login response json:\n%s", json.dumps(await req.json(), indent=2))                    
+                    _LOGGER.error("Login response json:\n%s", json.dumps(self._login_json, indent=2))                    
                     return False
             _LOGGER.error("Missing auth cookie")
             _LOGGER.error("Login status code: %d", req.status)
             _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
-            _LOGGER.error("Login response json:\n%s", json.dumps(await req.json(), indent=2))
+            _LOGGER.error("Login response json:\n%s", json.dumps(self._login_json, indent=2))
         else:
             _LOGGER.error("Invalid response status")            
             _LOGGER.error("Login status code: %d", req.status)
             _LOGGER.error("Login response headers:\n%s", json.dumps(dict(req.headers), indent=2))
-            _LOGGER.error("Login response json:\n%s", json.dumps(await req.json(), indent=2))
+            _LOGGER.error("Login response json:\n%s", json.dumps(self._login_json, indent=2))
         return False
 
     def get_cookie(self):
         """Return authentication cookie"""
         return {'auth': self._cookie}
-
+    
+    def number_units(self):
+        """Return the number of units in login response."""
+        if not self._login_json:
+            return False
+        try:
+            return int(self._login_json.get("userunits", 0))
+        except Exception:
+            return False
 
 class MelViewZone:
     def __init__(self, id, name, status):

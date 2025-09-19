@@ -6,9 +6,9 @@
             "password_change_success": "Password updated successfully."
         },
         "error": {
-            "cannot_connect": "Failed to connect.",
             "invalid_auth": "Invalid authentication.",
-            "unknown": "Unexpected error."
+            "unknown": "Unexpected error. Enable debug logging and retry, then check the logs for details.",
+            "no_units": "No units configured in this Mitsubishi Electric Wi-Fi Control account."
         },
         "step": {
             "user": {

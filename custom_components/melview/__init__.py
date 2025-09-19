@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
@@ -57,12 +57,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelviewConfigEntry) -> b
         raise ConfigEntryAuthFailed
     _LOGGER.debug('Authentication successful')
     melview = MelView(mv_auth, localcontrol=options.get(CONF_LOCAL))
+
+    units = mv_auth.number_units()
+    if units is False:
+        _LOGGER.debug("Unable to determine number of devices")
+        raise ConfigEntryNotReady("Unable to determine number of devices")
+    if units == 0:
+        _LOGGER.debug("Account has no devices")
+        raise ConfigEntryError("Account has no devices")
+    
     device_list = []
     _LOGGER.debug('Getting data')
     
     devices = await melview.async_get_devices_list()
+    if devices is None:
+        _LOGGER.debug("Unable to retrieve device list")
+        raise ConfigEntryNotReady("Unable to retrieve device list")
     for device in devices:
-        await device.async_refresh()
         coordinator = MelViewCoordinator(hass, entry, device)
         await coordinator.async_config_entry_first_refresh()
         _LOGGER.debug("Device: " + device.get_friendly_name())

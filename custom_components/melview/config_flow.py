@@ -84,6 +84,36 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 errors=self._errors,
             )
 
+        units = auth.number_units()
+        if units is None:
+            self._errors = {"base": "unknown"}
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_EMAIL, default=email): str,
+                        vol.Required(CONF_PASSWORD): str,
+                        vol.Required(CONF_LOCAL, default=True): bool,
+                        vol.Required(CONF_SENSOR, default=True): bool,
+                    }
+                ),
+                errors=self._errors,
+            )
+        if units == 0:
+            self._errors = {"base": "no_units"}
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_EMAIL, default=email): str,
+                        vol.Required(CONF_PASSWORD): str,
+                        vol.Required(CONF_LOCAL, default=True): bool,
+                        vol.Required(CONF_SENSOR, default=True): bool,
+                    }
+                ),
+                errors=self._errors,
+            )
+
         return await self._create_entry(email, password, local, sensor)
 
     async def async_step_user(self, user_input=None):
