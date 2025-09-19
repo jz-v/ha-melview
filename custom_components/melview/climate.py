@@ -13,23 +13,20 @@ from homeassistant.const import (
     PRECISION_WHOLE,
     STATE_OFF
 )
-from .melview import MelViewAuthentication, MelView, MODE
-from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD, CONF_LOCAL
+from .melview import MODE
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .entity import MelViewBaseEntity
 from .coordinator import MelViewCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = []
-
-class MelViewClimate(CoordinatorEntity, ClimateEntity):
+class MelViewClimate(MelViewBaseEntity, ClimateEntity):
     """MelView handler for Home Assistant"""
     _attr_has_entity_name = True
     _attr_name = None
     
     def __init__(self, coordinator: MelViewCoordinator):
-        super().__init__(coordinator)
-        self.coordinator = coordinator
+        super().__init__(coordinator, coordinator.device)
         self._device = coordinator.device
         device = coordinator.device
 
@@ -102,16 +99,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         except (TypeError, ValueError):
             _LOGGER.error("Invalid target temperature value: %s", val)
             return None
-
-    @property
-    def device_info(self):
-        """Create device"""
-        return {
-            "identifiers": {(DOMAIN, self._device.get_id())},
-            "name": self._device.get_friendly_name(),
-            "manufacturer": "Mitsubishi Electric",
-            "model": self._device.model,
-        }
 
     @property
     def min_temp(self) -> float:
@@ -218,47 +205,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         _LOGGER.debug('Power off')
         if await self._device.async_power_off():
             await self.coordinator.async_refresh()
-
-async def async_setup_platform(hass, config, add_devices, discovery_info=None):
-    """Set up the HASS component"""
-    _LOGGER.debug('Adding component')
-
-    email = config[DOMAIN][CONF_EMAIL]
-    password = config[DOMAIN][CONF_PASSWORD]
-    local = config[DOMAIN][CONF_LOCAL]
-
-    if email is None:
-        _LOGGER.error('No email provided')
-        return False
-
-    if password is None:
-        _LOGGER.error('No password provided')
-        return False
-
-    if local is None:
-        _LOGGER.warning('Var local unspecified, defaulting to false')
-        local = False
-
-    mv_auth = MelViewAuthentication(email, password)
-    result= await mv_auth.asynclogin()
-    if not result:
-        _LOGGER.error('Login combination')
-        return False
-
-    melview = MelView(mv_auth, localcontrol=local)
-
-    device_list = []
-
-    devices = await melview.async_get_devices_list()
-    for device in devices:
-        await device.async_refresh()
-        _LOGGER.debug('New device: %s', device.get_friendly_name())
-        device_list.append(MelViewClimate(device))
-
-    add_devices(device_list)
-
-    _LOGGER.debug('Component successfully added')
-    return True
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView device climate based on config_entry."""
