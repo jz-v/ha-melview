@@ -13,8 +13,8 @@
         "step": {
             "user": {
                 "data": {
-                    "password": "Password",
-                    "email": "Email",
+                    "email": "[%key:common::config_flow::data::email%]",
+                    "password": "[%key:common::config_flow::data::password%]",
 					"local": "Local commands (faster)",
                     "sensor": "Current temperature"
                 },
@@ -27,7 +27,7 @@
             },
             "reconfigure": {
                 "data": {
-                    "password": "New Password"
+                    "password": "[%key:common::config_flow::data::password%]"
                 },
                 "description": "Update password for {email}",
                 "title": "Update Password"
