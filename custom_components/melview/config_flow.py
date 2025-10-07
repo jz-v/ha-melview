@@ -86,7 +86,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         units = auth.number_units()
-        if units is None:
+        if units is False:
             self._errors = {"base": "unknown"}
             return self.async_show_form(
                 step_id="user",
