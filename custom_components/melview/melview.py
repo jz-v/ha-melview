@@ -174,7 +174,7 @@ class MelViewDevice:
             if self._localip and "localip" in self._caps:
                 self._localip = self._caps["localip"]
             if self._caps["fanstage"]:
-                self.fan = FANSTAGES[self._caps["fanstage"]]
+                self.fan = dict(FANSTAGES[self._caps["fanstage"]])
             if "hasautofan" in self._caps and self._caps["hasautofan"] == 1:
                 self.fan[0] = "auto"
             self.fan_keyed = {value: key for key, value in self.fan.items()}
@@ -451,7 +451,7 @@ class MelViewDevice:
             _LOGGER.error("Only cool mode supported")
             return False
         if mode not in MODE.keys():
-            _LOGGER.error("Mode %d not supported", mode)
+            _LOGGER.error("Mode %s not supported", mode)
             return False
         return await self.async_send_command("MD{}".format(MODE[mode]))
 
@@ -493,12 +493,16 @@ class MelView:
         devices = []
 
         async with ClientSession() as session:
-            req = await session.post(
-                "https://api.melview.net/api/rooms.aspx",
-                json={"unitid": 0},
-                headers=HEADERS,
-                cookies=self._authentication.get_cookie(),
-            )
+            try:
+                req = await session.post(
+                    "https://api.melview.net/api/rooms.aspx",
+                    json={"unitid": 0},
+                    headers=HEADERS,
+                    cookies=self._authentication.get_cookie(),
+                )
+            except Exception as err:
+                _LOGGER.error("Device list request failed: %s", err)
+                return None
         if req.status == 200:
             reply = await req.json()
             for building in reply:
@@ -512,14 +516,15 @@ class MelView:
                     )
                     await melViewDevice.async_refresh()
                     devices.append(melViewDevice)
+            return devices
 
-        elif req.status == 401 and retry:
+        if req.status == 401 and retry:
             _LOGGER.error("Device list error 401 (trying to re-login)")
             if await self._authentication.asynclogin():
                 return await self.async_get_devices_list(retry=False)
-        else:
-            _LOGGER.error(
-                "Failed to get device list (status code invalid: %d)", req.status
-            )
 
-        return devices
+        _LOGGER.error(
+            "Failed to get device list (status code invalid: %d)", req.status
+        )
+
+        return None

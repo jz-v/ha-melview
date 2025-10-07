@@ -74,7 +74,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelviewConfigEntry) -> b
     _LOGGER.debug("Getting data")
 
     devices = await melview.async_get_devices_list()
-    if devices is None:
+    if not devices:
         _LOGGER.debug("Unable to retrieve device list")
         raise ConfigEntryNotReady("Unable to retrieve device list")
     for device in devices:

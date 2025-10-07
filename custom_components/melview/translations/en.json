@@ -7,6 +7,7 @@
         },
         "error": {
             "invalid_auth": "Invalid authentication.",
+            "cannot_connect": "Failed to connect. Check the Mitsubishi Electric Wi-Fi Control service is reachable.",
             "unknown": "Unexpected error. Enable debug logging and retry, then check the logs for details.",
             "no_units": "No units configured in this Mitsubishi Electric Wi-Fi Control account."
         },

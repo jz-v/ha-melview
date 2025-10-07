@@ -59,19 +59,21 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         valid = False
+        error = "invalid_auth"
         try:
             async with timeout(15):
                 auth = MelViewAuthentication(email, password)
                 valid = await auth.asynclogin()
         except (ClientError, asyncio.TimeoutError) as e:
             _LOGGER.error("MelView auth error during config flow: %r", e)
+            error = "cannot_connect"
             valid = False
         except Exception:  # pragma: no cover - unexpected
             _LOGGER.exception("Unexpected MelView error during config flow")
             valid = False
 
         if not valid:
-            self._errors = {"base": "invalid_auth"}
+            self._errors = {"base": error}
             return self.async_show_form(
                 step_id="user",
                 data_schema=vol.Schema(
@@ -150,6 +152,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             valid = False
+            error = "invalid_auth"
             try:
                 async with timeout(15):
                     auth = MelViewAuthentication(email, user_input[CONF_PASSWORD])
@@ -157,9 +160,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             except (ClientError, asyncio.TimeoutError) as e:
                 _LOGGER.error("MelView auth error during reconfigure: %r", e)
                 valid = False
+                error = "cannot_connect"
 
             if not valid:
-                self._errors["base"] = "invalid_auth"
+                self._errors["base"] = error
                 return self.async_show_form(
                     step_id="reconfigure",
                     data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
@@ -200,9 +204,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             except (ClientError, asyncio.TimeoutError) as e:
                 _LOGGER.error("MelView auth error during reauth: %r", e)
                 valid = False
-
+                self._errors["base"] = "cannot_connect"
             if not valid:
-                self._errors["base"] = "invalid_auth"
+                if "base" not in self._errors:
+                    self._errors["base"] = "invalid_auth"
                 return self.async_show_form(
                     step_id="reauth",
                     data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
