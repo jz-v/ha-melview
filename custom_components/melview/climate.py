@@ -3,7 +3,7 @@ from homeassistant.components import logbook
 from homeassistant.components.climate.const import (
     HVACMode,
     HVACAction,
-    ClimateEntityFeature
+    ClimateEntityFeature,
 )
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.const import (
@@ -11,25 +11,23 @@ from homeassistant.const import (
     ATTR_TEMPERATURE,
     PRECISION_HALVES,
     PRECISION_WHOLE,
-    STATE_OFF
+    STATE_OFF,
 )
-from .melview import MelViewAuthentication, MelView, MODE
-from .const import DOMAIN, CONF_EMAIL, CONF_PASSWORD, CONF_LOCAL
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .melview import MODE
+from .entity import MelViewBaseEntity
 from .coordinator import MelViewCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = []
 
-class MelViewClimate(CoordinatorEntity, ClimateEntity):
+class MelViewClimate(MelViewBaseEntity, ClimateEntity):
     """MelView handler for Home Assistant"""
+
     _attr_has_entity_name = True
     _attr_name = None
-    
+
     def __init__(self, coordinator: MelViewCoordinator):
-        super().__init__(coordinator)
-        self.coordinator = coordinator
+        super().__init__(coordinator, coordinator.device)
         self._device = coordinator.device
         device = coordinator.device
 
@@ -58,7 +56,12 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
     @property
     def supported_features(self):
         """Let HASS know feature support"""
-        return (ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF)
+        return (
+            ClimateEntityFeature.TARGET_TEMPERATURE
+            | ClimateEntityFeature.FAN_MODE
+            | ClimateEntityFeature.TURN_ON
+            | ClimateEntityFeature.TURN_OFF
+        )
 
     @property
     def state(self):
@@ -104,16 +107,6 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             return None
 
     @property
-    def device_info(self):
-        """Create device"""
-        return {
-            "identifiers": {(DOMAIN, self._device.get_id())},
-            "name": self._device.get_friendly_name(),
-            "manufacturer": "Mitsubishi Electric",
-            "model": self._device.model,
-        }
-
-    @property
     def min_temp(self) -> float:
         """Return the minimum temperature for the current HVAC mode."""
         mode = self.hvac_mode
@@ -141,8 +134,7 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             return HVACMode.OFF
         mode_index = self.coordinator.data.get("setmode")
         mode = next(
-            (mode for mode, val in MODE.items() if val == mode_index),
-            HVACMode.AUTO
+            (mode for mode, val in MODE.items() if val == mode_index), HVACMode.AUTO
         )
         return mode
 
@@ -182,14 +174,14 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
         """Set the target temperature"""
         temp = kwargs.get(ATTR_TEMPERATURE)
         if temp is not None:
-            _LOGGER.debug('Set temperature %d', temp)
+            _LOGGER.debug("Set temperature %d", temp)
             if await self._device.async_set_temperature(temp):
                 await self.coordinator.async_refresh()
 
     async def async_set_fan_mode(self, fan_mode) -> None:
         """Set the fan speed"""
         speed = fan_mode
-        _LOGGER.debug('Set fan: %s', speed)
+        _LOGGER.debug("Set fan: %s", speed)
         if await self._device.async_set_speed(speed):
             await self.coordinator.async_refresh()
             parsed_speed = fan_mode.title()
@@ -201,68 +193,28 @@ class MelViewClimate(CoordinatorEntity, ClimateEntity):
             )
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
-        _LOGGER.debug('Set mode: %s', hvac_mode)
-        if hvac_mode == 'off':
+        _LOGGER.debug("Set mode: %s", hvac_mode)
+        if hvac_mode == "off":
             await self.async_turn_off()
         elif await self._device.async_set_mode(hvac_mode):
             await self.coordinator.async_refresh()
 
-    async def async_turn_on(self) ->None:
+    async def async_turn_on(self) -> None:
         """Turn on the unit"""
-        _LOGGER.debug('Power on')
+        _LOGGER.debug("Power on")
         if await self._device.async_power_on():
             await self.coordinator.async_refresh()
 
     async def async_turn_off(self) -> None:
         """Turn off the unit"""
-        _LOGGER.debug('Power off')
+        _LOGGER.debug("Power off")
         if await self._device.async_power_off():
             await self.coordinator.async_refresh()
 
-async def async_setup_platform(hass, config, add_devices, discovery_info=None):
-    """Set up the HASS component"""
-    _LOGGER.debug('Adding component')
-
-    email = config[DOMAIN][CONF_EMAIL]
-    password = config[DOMAIN][CONF_PASSWORD]
-    local = config[DOMAIN][CONF_LOCAL]
-
-    if email is None:
-        _LOGGER.error('No email provided')
-        return False
-
-    if password is None:
-        _LOGGER.error('No password provided')
-        return False
-
-    if local is None:
-        _LOGGER.warning('Var local unspecified, defaulting to false')
-        local = False
-
-    mv_auth = MelViewAuthentication(email, password)
-    result= await mv_auth.asynclogin()
-    if not result:
-        _LOGGER.error('Login combination')
-        return False
-
-    melview = MelView(mv_auth, localcontrol=local)
-
-    device_list = []
-
-    devices = await melview.async_get_devices_list()
-    for device in devices:
-        await device.async_refresh()
-        _LOGGER.debug('New device: %s', device.get_friendly_name())
-        device_list.append(MelViewClimate(device))
-
-    add_devices(device_list)
-
-    _LOGGER.debug('Component successfully added')
-    return True
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView device climate based on config_entry."""
-    coordinators = hass.data[DOMAIN][entry.entry_id]
+    coordinators = entry.runtime_data
     entities = [
         MelViewClimate(coordinator)
         for coordinator in coordinators

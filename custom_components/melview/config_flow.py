@@ -1,4 +1,5 @@
 """Config flow for the Melview platform."""
+
 from __future__ import annotations
 
 import asyncio
@@ -36,6 +37,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data={
                 CONF_EMAIL: email,
                 CONF_PASSWORD: password,
+            },
+            options={
                 CONF_LOCAL: local,
                 CONF_SENSOR: sensor,
             },
@@ -69,6 +72,36 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if not valid:
             self._errors = {"base": "invalid_auth"}
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_EMAIL, default=email): str,
+                        vol.Required(CONF_PASSWORD): str,
+                        vol.Required(CONF_LOCAL, default=True): bool,
+                        vol.Required(CONF_SENSOR, default=True): bool,
+                    }
+                ),
+                errors=self._errors,
+            )
+
+        units = auth.number_units()
+        if units is None:
+            self._errors = {"base": "unknown"}
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(CONF_EMAIL, default=email): str,
+                        vol.Required(CONF_PASSWORD): str,
+                        vol.Required(CONF_LOCAL, default=True): bool,
+                        vol.Required(CONF_SENSOR, default=True): bool,
+                    }
+                ),
+                errors=self._errors,
+            )
+        if units == 0:
+            self._errors = {"base": "no_units"}
             return self.async_show_form(
                 step_id="user",
                 data_schema=vol.Schema(

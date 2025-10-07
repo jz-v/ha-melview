@@ -1,30 +1,35 @@
 {
+    "title": "Mitsubishi Electric Wi-Fi Control",
     "config": {
         "abort": {
-            "already_configured": "Mitsubishi Electric Wi-Fi Control integration already configured for this email.",
+            "already_configured": "Integration already configured for this email.",
             "password_change_success": "Password updated successfully."
         },
         "error": {
-            "cannot_connect": "Failed to connect.",
             "invalid_auth": "Invalid authentication.",
-            "unknown": "Unexpected error."
+            "unknown": "Unexpected error. Enable debug logging and retry, then check the logs for details.",
+            "no_units": "No units configured in this Mitsubishi Electric Wi-Fi Control account."
         },
         "step": {
             "user": {
                 "data": {
-                    "password": "Password",
                     "email": "Email",
-					"local": "Send commands locally (faster)",
-                    "sensor": "Create 'current temperature' sensor entity"
+                    "password": "Password",
+					"local": "Local commands (faster)",
+                    "sensor": "Current temperature"
                 },
-                "description": "Enter your Mitsubishi Electric Wi-Fi Control (app.melview.net) account credentials.",
-                "title": "Connect to Cloud Service"
+                "data_description": {
+                    "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands.",
+                    "sensor": "Create a separate 'Current temperature' sensor entity."
+                },
+                "description": "Enter your AU/NZ Mitsubishi Electric Wi‑Fi Control account credentials.\n\n0.5° temperature steps will be available if enabled in the Wi‑Fi Control app.",
+                "title": "Connect to Mitsubishi Electric Wi‑Fi Control"
             },
             "reconfigure": {
                 "data": {
-                    "password": "New Password"
+                    "password": "Password"
                 },
-                "description": "Update the password for {email}",
+                "description": "Update password for {email}",
                 "title": "Update Password"
             }
         }
@@ -33,10 +38,14 @@
         "step": {
             "init": {
                 "data": {
-                    "local": "Send commands locally",
-                    "sensor": "Create 'current temperature' sensor entity"
+					"local": "Local commands (faster)",
+                    "sensor": "Current temperature"
                 },
-                "description": "Sending commands locally will result in a faster response, however, an internet connection is always required as each command is verified by the server prior to sending via LAN. For 0.5° temperature adjustments, enable/disable this in the Wi-Fi Control app (or app.melview.net). Integration must be reloaded for changes to take effect.",
+                "data_description": {
+                    "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands.",
+                    "sensor": "Create a separate 'Current temperature' sensor entity."
+                },
+                "description": "Integration must be reloaded for changes to take effect.\n\n0.5° temperature steps will be available if enabled in the Wi‑Fi Control app.",
                 "title": "Options"
             }
         }
