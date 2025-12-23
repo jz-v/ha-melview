@@ -15,6 +15,7 @@ Features:
  - optional 'current temperature' sensor entity
  - Lossnay ERV support (experimental, see below)
 
+Note: this integration will only work for units in Australia and New Zealand.
 
 ## Installation
 Please completely remove any existing custom components for melview prior to installing this one.
