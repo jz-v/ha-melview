@@ -196,7 +196,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
         _LOGGER.debug("Set mode: %s", hvac_mode)
-        if hvac_mode == "off":
+        if hvac_mode == HVACMode.OFF:
             await self.async_turn_off()
         elif await self._device.async_set_mode(hvac_mode):
             await self.coordinator.async_refresh()
