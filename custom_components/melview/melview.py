@@ -228,8 +228,8 @@ class MelViewDevice:
         if req.status == 200:
             self._json = await req.json()
 
-            fault = (self._json["fault"])
-            error = (self._json["error"])
+            fault = self._json["fault"]
+            error = self._json["error"]
             if fault == "COMM":
                 raise ConnectionError("Unit not communicating with the server (COMM fault)")
             if fault != "":
@@ -466,25 +466,11 @@ class MelViewDevice:
             if not await self.async_power_on():
                 return False
 
-        if mode == "Auto" and (
-            "hasautomode" not in self._caps or self._caps["hasautomode"] == 0
-        ):
-            _LOGGER.error("Auto mode not supported")
-            return False
-        if mode == "Dry" and (
-            "hasdrymode" not in self._caps or self._caps["hasdrymode"] == 0
-        ):
-            _LOGGER.error("Dry mode not supported")
-            return False
-        if mode != "Cool" and (
-            "hascoolonly" in self._caps and self._caps["hascoolonly"] == 1
-        ):
-            _LOGGER.error("Only cool mode supported")
-            return False
-        if mode not in MODE.keys():
+        if mode not in MODE:
             _LOGGER.error("Mode %s not supported", mode)
             return False
-        return await self.async_send_command("MD{}".format(MODE[mode]))
+
+        return await self.async_send_command(f"MD{MODE[mode]}")
 
     async def async_enable_zone(self, zoneid):
         """Turn on a zone"""
