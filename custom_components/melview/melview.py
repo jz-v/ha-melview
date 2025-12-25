@@ -161,8 +161,6 @@ class MelViewDevice:
         return str(self._json)
 
     async def async_refresh_device_caps(self, retry=True):
-        self._json = None
-        self._last_info_time_s = time.time()
 
         async with ClientSession() as session:
             req = await session.post(
