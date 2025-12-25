@@ -192,14 +192,14 @@ class MelViewDevice:
             if "error" in self._caps:
                 if self._caps["error"] != "ok":
                     _LOGGER.warning(
-                        "%s unit capabilities error: %s... attempting to continue",
+                        "%s unit capabilities error: %s, attempting to continue",
                         self.get_friendly_name(),
                         self._caps["error"]
                     )
             if "fault" in self._caps:
                 if self._caps["fault"] != "":
                     _LOGGER.warning(
-                        "%s unit capabilities fault: %s... attempting to continue",
+                        "%s unit capabilities fault: %s, attempting to continue",
                         self.get_friendly_name(),
                         self._caps["fault"],
                     )
@@ -328,7 +328,7 @@ class MelViewDevice:
             if await self._authentication.asynclogin():
                 return await self.async_send_command(command, retry=False)
         else:
-            _LOGGER.error("Unable to send command (invalid status code: %d", req.status)
+            _LOGGER.error("Unable to send command (invalid status code: %d)", req.status)
 
         return False
 
