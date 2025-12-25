@@ -163,47 +163,49 @@ class MelViewDevice:
     async def async_refresh_device_caps(self, retry=True):
 
         async with ClientSession() as session:
-            req = await session.post(
+            async with session.post(
                 "https://api.melview.net/api/unitcapabilities.aspx",
                 cookies=self._authentication.get_cookie(),
                 json={"unitid": self._deviceid, "v": APIVERSION},
-            )
-        if req.status == 200:
-            self._caps = await req.json()
-            if self._localip and "localip" in self._caps:
-                self._localip = self._caps["localip"]
-            if self._caps["fanstage"]:
-                self.fan = dict(FANSTAGES[self._caps["fanstage"]])
-            if "hasautofan" in self._caps and self._caps["hasautofan"] == 1:
-                self.fan[0] = "auto"
-            self.fan_keyed = {value: key for key, value in self.fan.items()}
-            if "max" in self._caps:
-                for hvac_mode, mode_id in MODE.items():
-                    caps_range = self._caps["max"].get(str(mode_id))
-                    if caps_range and "min" in caps_range and "max" in caps_range:
-                        self.temp_ranges[hvac_mode] = {
-                            "min": caps_range["min"],
-                            "max": caps_range["max"],
-                        }
-            if "modelname" in self._caps:
-                self.model = self._caps["modelname"]
-            if "halfdeg" in self._caps and self._caps["halfdeg"] == 1:
-                self.halfdeg = True
-            if "error" in self._caps:
-                if self._caps["error"] != "ok":
-                    _LOGGER.warning(
-                        "%s unit capabilities error: %s, attempting to continue",
-                        self.get_friendly_name(),
-                        self._caps["error"]
-                    )
-            if "fault" in self._caps:
-                if self._caps["fault"] != "":
-                    _LOGGER.warning(
-                        "%s unit capabilities fault: %s, attempting to continue",
-                        self.get_friendly_name(),
-                        self._caps["fault"],
-                    )
-            return True
+            ) as resp:
+                if resp.status == 200:
+                    self._caps = await resp.json()
+                    if self._localip and "localip" in self._caps:
+                        self._localip = self._caps["localip"]
+                    if self._caps["fanstage"]:
+                        self.fan = dict(FANSTAGES[self._caps["fanstage"]])
+                    if "hasautofan" in self._caps and self._caps["hasautofan"] == 1:
+                        self.fan[0] = "auto"
+                    self.fan_keyed = {value: key for key, value in self.fan.items()}
+                    if "max" in self._caps:
+                        for hvac_mode, mode_id in MODE.items():
+                            caps_range = self._caps["max"].get(str(mode_id))
+                            if caps_range and "min" in caps_range and "max" in caps_range:
+                                self.temp_ranges[hvac_mode] = {
+                                    "min": caps_range["min"],
+                                    "max": caps_range["max"],
+                                }
+                    if "modelname" in self._caps:
+                        self.model = self._caps["modelname"]
+                    if "halfdeg" in self._caps and self._caps["halfdeg"] == 1:
+                        self.halfdeg = True
+                    if "error" in self._caps:
+                        if self._caps["error"] != "ok":
+                            _LOGGER.warning(
+                                "%s unit capabilities error: %s, attempting to continue",
+                                self.get_friendly_name(),
+                                self._caps["error"]
+                            )
+                    if "fault" in self._caps:
+                        if self._caps["fault"] != "":
+                            _LOGGER.warning(
+                                "%s unit capabilities fault: %s, attempting to continue",
+                                self.get_friendly_name(),
+                                self._caps["fault"],
+                            )
+                    return True
+                else:
+                    req = resp
         if req.status == 401 and retry:
             _LOGGER.error("Unit capabilities error 401 (trying to re-login)")
             if await self._authentication.asynclogin():
@@ -220,39 +222,41 @@ class MelViewDevice:
         self._last_info_time_s = time.time()
 
         async with ClientSession() as session:
-            req = await session.post(
+            async with session.post(
                 "https://api.melview.net/api/unitcommand.aspx",
                 cookies=self._authentication.get_cookie(),
                 json={"unitid": self._deviceid, "v": APIVERSION},
-            )
-        if req.status == 200:
-            self._json = await req.json()
+            ) as resp:
+                if resp.status == 200:
+                    self._json = await resp.json()
 
-            fault = self._json["fault"]
-            error = self._json["error"]
-            if fault == "COMM":
-                raise ConnectionError("Unit not communicating with the server (COMM fault)")
-            if fault != "":
-                _LOGGER.warning(
-                    "Unit %s fault: %s",
-                    self.get_friendly_name(),
-                    fault,
-                )
-            if error != "ok":
-                _LOGGER.warning(
-                    "Unit %s error: %s (unexpected value; please report to https://github.com/jz-v/ha-melview/issues)",
-                    self.get_friendly_name(),
-                    error,
-                )
+                    fault = self._json["fault"]
+                    error = self._json["error"]
+                    if fault == "COMM":
+                        raise ConnectionError("Unit not communicating with the server (COMM fault)")
+                    if fault != "":
+                        _LOGGER.warning(
+                            "Unit %s fault: %s",
+                            self.get_friendly_name(),
+                            fault,
+                        )
+                    if error != "ok":
+                        _LOGGER.warning(
+                            "Unit %s error: %s (unexpected value; please report to https://github.com/jz-v/ha-melview/issues)",
+                            self.get_friendly_name(),
+                            error,
+                        )
 
-            if "zones" in self._json:
-                self._zones = {
-                    z["zoneid"]: MelViewZone(z["zoneid"], z["name"], z["status"])
-                    for z in self._json["zones"]
-                }
-            if "standby" in self._json:
-                self._standby = self._json["standby"]
-            return True
+                    if "zones" in self._json:
+                        self._zones = {
+                            z["zoneid"]: MelViewZone(z["zoneid"], z["name"], z["status"])
+                            for z in self._json["zones"]
+                        }
+                    if "standby" in self._json:
+                        self._standby = self._json["standby"]
+                    return True
+                else:
+                    req = resp
         if req.status == 401 and retry:
             _LOGGER.error("Info error 401 (trying to re-login)")
             if await self._authentication.asynclogin():
@@ -293,7 +297,7 @@ class MelViewDevice:
             return False
 
         async with ClientSession() as session:
-            req = await session.post(
+            async with session.post(
                 "https://api.melview.net/api/unitcommand.aspx",
                 cookies=self._authentication.get_cookie(),
                 json={
@@ -302,14 +306,16 @@ class MelViewDevice:
                     "commands": command,
                     "lc": 1,
                 },
-            )
-        if req.status == 200:
-            _LOGGER.debug("Command sent to server")
-
-            resp = await req.json()
+            ) as resp:
+                if resp.status == 200:
+                    _LOGGER.debug("Command sent to server")
+                    data = await resp.json()
+                else:
+                    req = resp
+        if 'data' in locals():
             if self._localip:
-                if "lc" in resp:
-                    local_command = resp["lc"]
+                if "lc" in data:
+                    local_command = data["lc"]
                     async with ClientSession() as session:
                         req = await session.post(
                             "http://{}/smart".format(self._localip),
