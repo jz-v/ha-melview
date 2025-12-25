@@ -8,6 +8,7 @@ from homeassistant.components.climate.const import HVACMode
 
 _LOGGER = logging.getLogger(__name__)
 
+
 LOCAL_DATA = """<?xml version="1.0" encoding="UTF-8"?>
 <ESV>{}</ESV>"""
 
@@ -190,6 +191,20 @@ class MelViewDevice:
                 self.model = self._caps["modelname"]
             if "halfdeg" in self._caps and self._caps["halfdeg"] == 1:
                 self.halfdeg = True
+            if "error" in self._caps:
+                if self._caps["error"] != "ok":
+                    _LOGGER.warning(
+                        "%s unit capabilities error: %s... attempting to continue",
+                        self.get_friendly_name(),
+                        self._caps["error"]
+                    )
+            if "fault" in self._caps:
+                if self._caps["fault"] != "":
+                    _LOGGER.warning(
+                        "%s unit capabilities fault: %s... attempting to continue",
+                        self.get_friendly_name(),
+                        self._caps["fault"],
+                    )
             return True
         if req.status == 401 and retry:
             _LOGGER.error("Unit capabilities error 401 (trying to re-login)")
@@ -197,7 +212,7 @@ class MelViewDevice:
                 return await self.async_refresh_device_caps(retry=False)
         else:
             _LOGGER.error(
-                "Unable to retrieve unit capabilities(Invalid status code: %d)",
+                "Unable to retrieve unit capabilities (Invalid status code: %d)",
                 req.status,
             )
         return False
@@ -214,6 +229,24 @@ class MelViewDevice:
             )
         if req.status == 200:
             self._json = await req.json()
+
+            fault = (self._json["fault"])
+            error = (self._json["error"])
+            if fault == "COMM":
+                raise ConnectionError("Unit not communicating with the server (COMM fault)")
+            if fault != "":
+                _LOGGER.warning(
+                    "Unit %s fault: %s",
+                    self.get_friendly_name(),
+                    fault,
+                )
+            if error != "ok":
+                _LOGGER.warning(
+                    "Unit %s error: %s (unexpected value; please report to https://github.com/jz-v/ha-melview/issues)",
+                    self.get_friendly_name(),
+                    error,
+                )
+
             if "zones" in self._json:
                 self._zones = {
                     z["zoneid"]: MelViewZone(z["zoneid"], z["name"], z["status"])
@@ -221,12 +254,6 @@ class MelViewDevice:
                 }
             if "standby" in self._json:
                 self._standby = self._json["standby"]
-            if "error" in self._json:
-                if self._json["error"] != "ok":
-                    _LOGGER.error("Unit error: %s", self._json["error"])
-            if "fault" in self._json:
-                if self._json["fault"] != "":
-                    _LOGGER.error("Unit fault: %s", self._json["fault"])
             return True
         if req.status == 401 and retry:
             _LOGGER.error("Info error 401 (trying to re-login)")
@@ -239,12 +266,18 @@ class MelViewDevice:
         return False
 
     async def async_is_info_valid(self):
-        if self._json is None:
-            return await self.async_refresh_device_info()
+        """Ensure cached unit info is fresh."""
+        try:
+            if self._json is None:
+                return await self.async_refresh_device_info()
 
-        if (time.time() - self._last_info_time_s) >= self._info_lease_seconds:
-            _LOGGER.debug("Current settings out of date, refreshing")
-            return await self.async_refresh_device_info()
+            if (time.time() - self._last_info_time_s) >= self._info_lease_seconds:
+                _LOGGER.debug("Current settings out of date, refreshing")
+                return await self.async_refresh_device_info()
+
+        except ConnectionError as err:
+            _LOGGER.debug("Info refresh failed: %s", err)
+            return False
 
         return True
 
