@@ -1,4 +1,5 @@
 import logging
+
 from homeassistant.components.switch import SwitchEntity
 
 from .coordinator import MelViewCoordinator

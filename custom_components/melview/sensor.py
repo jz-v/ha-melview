@@ -3,17 +3,17 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components.sensor import (
-    SensorEntity,
     SensorDeviceClass,
+    SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfTemperature, PERCENTAGE
-from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import PERCENTAGE, UnitOfTemperature
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .entity import MelViewBaseEntity
 from .const import CONF_SENSOR
+from .entity import MelViewBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
 

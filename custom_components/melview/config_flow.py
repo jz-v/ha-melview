@@ -5,15 +5,14 @@ from __future__ import annotations
 import asyncio
 import logging
 
+import voluptuous as vol
 from aiohttp import ClientError
 from async_timeout import timeout
-import voluptuous as vol
-
 from homeassistant import config_entries
-from homeassistant.const import CONF_PASSWORD, CONF_EMAIL
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 
-from .const import DOMAIN, CONF_LOCAL, CONF_SENSOR
+from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 from .melview import MelViewAuthentication
 
 _LOGGER = logging.getLogger(__name__)

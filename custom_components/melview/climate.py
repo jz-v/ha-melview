@@ -1,21 +1,23 @@
 import logging
+
 from homeassistant.components import logbook
-from homeassistant.components.climate.const import (
-    HVACMode,
-    HVACAction,
-    ClimateEntityFeature,
-)
 from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate.const import (
+    ClimateEntityFeature,
+    HVACAction,
+    HVACMode,
+)
 from homeassistant.const import (
-    UnitOfTemperature,
     ATTR_TEMPERATURE,
     PRECISION_HALVES,
     PRECISION_WHOLE,
     STATE_OFF,
+    UnitOfTemperature,
 )
-from .melview import MODE
-from .entity import MelViewBaseEntity
+
 from .coordinator import MelViewCoordinator
+from .entity import MelViewBaseEntity
+from .melview import MODE
 
 _LOGGER = logging.getLogger(__name__)
 

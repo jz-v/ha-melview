@@ -5,18 +5,18 @@ from __future__ import annotations
 import logging
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import (
     ConfigEntryAuthFailed,
     ConfigEntryError,
     ConfigEntryNotReady,
 )
 from homeassistant.helpers import issue_registry as ir
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
-from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, CONF_LOCAL, CONF_SENSOR
-from .melview import MelViewAuthentication, MelView
+from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 from .coordinator import MelViewCoordinator
+from .melview import MelView, MelViewAuthentication
 
 type MelViewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
 
