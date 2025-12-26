@@ -45,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
     conf = entry.data
     options = entry.options
     mv_auth = MelViewAuthentication(conf[CONF_EMAIL], conf[CONF_PASSWORD])
-    result = await mv_auth.asynclogin()
+    result = await mv_auth.async_login()
     if not result:
         _LOGGER.error("MelView authentication failed for %s", conf[CONF_EMAIL])
         ir.async_create_issue(
@@ -80,7 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
     for device in devices:
         coordinator = MelViewCoordinator(hass, entry, device)
         await coordinator.async_config_entry_first_refresh()
-        _LOGGER.debug("Device: " + device.get_friendly_name())
+        _LOGGER.debug("Device: %s", device.get_friendly_name())
         device_list.append(coordinator)
     entry.runtime_data = device_list
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

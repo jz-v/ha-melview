@@ -62,7 +62,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             async with timeout(15):
                 auth = MelViewAuthentication(email, password)
-                valid = await auth.asynclogin()
+                valid = await auth.async_login()
         except (ClientError, asyncio.TimeoutError) as e:
             _LOGGER.error("MelView auth error during config flow: %r", e)
             error = "cannot_connect"
@@ -155,7 +155,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 async with timeout(15):
                     auth = MelViewAuthentication(email, user_input[CONF_PASSWORD])
-                    valid = await auth.asynclogin()
+                    valid = await auth.async_login()
             except (ClientError, asyncio.TimeoutError) as e:
                 _LOGGER.error("MelView auth error during reconfigure: %r", e)
                 valid = False
@@ -199,7 +199,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 async with timeout(15):
                     auth = MelViewAuthentication(email, user_input[CONF_PASSWORD])
-                    valid = await auth.asynclogin()
+                    valid = await auth.async_login()
             except (ClientError, asyncio.TimeoutError) as e:
                 _LOGGER.error("MelView auth error during reauth: %r", e)
                 valid = False

@@ -49,7 +49,7 @@ class MelViewAuthentication:
         """Return login status"""
         return self._cookie is not None
 
-    async def asynclogin(self):
+    async def async_login(self):
         """Generate a new login cookie"""
         _LOGGER.debug("Trying to login")
         self._cookie = None
@@ -209,7 +209,7 @@ class MelViewDevice:
                     req = resp
         if req.status == 401 and retry:
             _LOGGER.error("Unit capabilities error 401 (trying to re-login)")
-            if await self._authentication.asynclogin():
+            if await self._authentication.async_login():
                 return await self.async_refresh_device_caps(retry=False)
         else:
             _LOGGER.error(
@@ -267,7 +267,7 @@ class MelViewDevice:
                     req = resp
         if req.status == 401 and retry:
             _LOGGER.error("Info error 401 (trying to re-login)")
-            if await self._authentication.asynclogin():
+            if await self._authentication.async_login():
                 return await self.async_refresh_device_info(retry=False)
         else:
             _LOGGER.error(
@@ -339,7 +339,7 @@ class MelViewDevice:
             return True
         if req.status == 401 and retry:
             _LOGGER.error("Command send error 401 (trying to relogin)")
-            if await self._authentication.asynclogin():
+            if await self._authentication.async_login():
                 return await self.async_send_command(command, retry=False)
         else:
             _LOGGER.error("Unable to send command (invalid status code: %d)", req.status)
@@ -538,20 +538,20 @@ class MelView:
             reply = await req.json()
             for building in reply:
                 for unit in building["units"]:
-                    melViewDevice = MelViewDevice(
+                    device = MelViewDevice(
                         unit["unitid"],
                         building["buildingid"],
                         unit["room"],
                         self._authentication,
                         self._localcontrol,
                     )
-                    await melViewDevice.async_refresh()
-                    devices.append(melViewDevice)
+                    await device.async_refresh()
+                    devices.append(device)
             return devices
 
         if req.status == 401 and retry:
             _LOGGER.error("Device list error 401 (trying to re-login)")
-            if await self._authentication.asynclogin():
+            if await self._authentication.async_login():
                 return await self.async_get_devices_list(retry=False)
 
         _LOGGER.error(
