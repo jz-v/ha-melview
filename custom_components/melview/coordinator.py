@@ -42,4 +42,4 @@ class MelViewCoordinator(DataUpdateCoordinator):
             _LOGGER.debug("Data: %s", json.dumps(self.device._json, indent=2))
             return self.device._json
         except Exception as err:
-            raise UpdateFailed(f"Error fetching MelView data: {err}") from err
+            raise UpdateFailed(str(err)) from err

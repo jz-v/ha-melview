@@ -233,7 +233,12 @@ class MelViewDevice:
                     fault = self._json["fault"]
                     error = self._json["error"]
                     if fault == "COMM":
-                        raise ConnectionError("Unit not communicating with the server (COMM fault)")
+                        raise ConnectionError(
+                            "Unit is not communicating with the MelView server (COMM fault). "
+                            "Check the adapter is connected to Wi-Fi with an internet connection. "
+                            "For further troubleshooting, refer to the Mitsubishi Electric "
+                            "Wi-Fi Control adapter User Manual."
+                        )
                     if fault != "":
                         _LOGGER.warning(
                             "Unit %s fault: %s",
@@ -242,7 +247,9 @@ class MelViewDevice:
                         )
                     if error != "ok":
                         _LOGGER.warning(
-                            "Unit %s error: %s (unexpected value; please report to https://github.com/jz-v/ha-melview/issues)",
+                            "Unit %s error: %s"
+                            "Unexpected value: please raise an Issue in the GitHub repository:"
+                            "https://github.com/jz-v/ha-melview/issues)",
                             self.get_friendly_name(),
                             error,
                         )
