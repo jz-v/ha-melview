@@ -1,4 +1,4 @@
-"""Config flow for the Melview platform."""
+"""Config flow for the MelView platform."""
 
 from __future__ import annotations
 

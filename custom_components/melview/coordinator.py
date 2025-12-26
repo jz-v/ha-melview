@@ -9,7 +9,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class MelViewCoordinator(DataUpdateCoordinator):
-    """Coordinator to fetch data from a Melview API once per interval."""
+    """Coordinator to fetch data from a MelView API once per interval."""
 
     def __init__(self, hass, config_entry, device: MelViewDevice):
         """Initialize."""

@@ -18,7 +18,7 @@ from .const import DOMAIN, CONF_LOCAL, CONF_SENSOR
 from .melview import MelViewAuthentication, MelView
 from .coordinator import MelViewCoordinator
 
-type MelviewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
+type MelViewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: MelviewConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> bool:
     """Establish connection with MelView."""
     await async_migrate_entry(hass, entry)
     conf = entry.data

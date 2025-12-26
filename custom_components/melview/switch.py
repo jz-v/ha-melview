@@ -8,7 +8,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
-    """Melview zone switch handler for Home Assistant"""
+    """MelView zone switch handler for Home Assistant"""
 
     def __init__(self, coordinator: MelViewCoordinator, zone):
         super().__init__(coordinator, coordinator.device)
@@ -44,7 +44,7 @@ class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
 
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
-    """Set up Melview device climate based on config_entry."""
+    """Set up MelView device climate based on config_entry."""
     coordinators = entry.runtime_data
 
     entities = [
