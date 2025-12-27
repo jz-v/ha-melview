@@ -12,7 +12,7 @@ from homeassistant.exceptions import (
     ConfigEntryError,
     ConfigEntryNotReady,
 )
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import device_registry as dr, issue_registry as ir
 
 from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 from .coordinator import MelViewCoordinator
@@ -67,16 +67,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
         _LOGGER.debug("Unable to determine number of devices")
         raise ConfigEntryNotReady("Unable to determine number of devices")
     if units == 0:
-        _LOGGER.debug("Account has no devices")
+        _LOGGER.info("MelView account currently has no devices; cleaning up.")
+        _cleanup_removed_devices(hass, entry, set())
         raise ConfigEntryError("Account has no devices")
 
-    device_list = []
     _LOGGER.debug("Getting data")
-
     devices = await melview.async_get_devices_list()
     if not devices:
         _LOGGER.debug("Unable to retrieve device list")
         raise ConfigEntryNotReady("Unable to retrieve device list")
+
+    _cleanup_removed_devices(
+        hass, entry, {str(device.get_id()) for device in devices}
+    )
+
+    device_list = []
     for device in devices:
         coordinator = MelViewCoordinator(hass, entry, device)
         await coordinator.async_config_entry_first_refresh()
@@ -110,3 +115,28 @@ async def async_migrate_entry(hass, config_entry):
 
     hass.config_entries.async_update_entry(config_entry, data=data, options=options)
     return True
+
+
+def _cleanup_removed_devices(
+    hass: HomeAssistant, config_entry: ConfigEntry, active_device_ids: set[str]
+) -> None:
+    """Remove devices that no longer exist in the MelView account."""
+    device_registry = dr.async_get(hass)
+    for device_entry in dr.async_entries_for_config_entry(
+        device_registry, config_entry.entry_id
+    ):
+        melview_ids = {
+            identifier[1]
+            for identifier in device_entry.identifiers
+            if identifier[0] == DOMAIN
+        }
+        if not melview_ids:
+            continue
+        if melview_ids & active_device_ids:
+            continue
+        _LOGGER.debug(
+            "Removing stale MelView device '%s' (%s)",
+            device_entry.name or device_entry.id,
+            ", ".join(sorted(melview_ids)),
+        )
+        device_registry.async_remove_device(device_entry.id)
