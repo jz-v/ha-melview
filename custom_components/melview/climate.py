@@ -63,7 +63,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
             | ClimateEntityFeature.TURN_ON
             | ClimateEntityFeature.TURN_OFF
         )
-        if self.hvac_mode in (HVACMode.AUTO, HVACMode.HEAT, HVACMode.COOL):
+        if self.hvac_mode in (HVACMode.AUTO, HVACMode.HEAT, HVACMode.COOL, HVACMode.DRY):
             features |= ClimateEntityFeature.TARGET_TEMPERATURE
         return features
 
