@@ -186,6 +186,10 @@ class MelViewDevice:
                                     "min": caps_range["min"],
                                     "max": caps_range["max"],
                                 }
+                                if hvac_mode == HVACMode.COOL:
+                                    self.temp_ranges[HVACMode.DRY] = dict(
+                                        self.temp_ranges[HVACMode.COOL]
+                                    )
                     if "modelname" in self._caps:
                         self.model = self._caps["modelname"]
                     if "halfdeg" in self._caps and self._caps["halfdeg"] == 1:
