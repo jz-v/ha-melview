@@ -13,6 +13,7 @@ Features:
  - zone control support (for ducted systems)
  - standby/preheating detection
  - optional 'current temperature' sensor entity
+ - sleep timer (auto power-off), as a number entity
  - Lossnay ERV support (experimental, see below)
 
 Note: this integration will only work for units in Australia and New Zealand.

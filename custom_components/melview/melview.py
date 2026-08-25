@@ -5,7 +5,12 @@ import time
 from aiohttp import ClientSession
 from homeassistant.components.climate.const import HVACMode
 
-from .const import APIVERSION, APPVERSION, HEADERS
+from .const import (
+    APIVERSION,
+    APPVERSION,
+    HEADERS,
+    SLEEP_TIMER_MAX_MINUTES,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -505,6 +510,35 @@ class MelViewDevice:
     async def async_power_off(self):
         """Turn off the unit"""
         return await self.async_send_command("PW0")
+
+    async def async_set_sleep_timer(self, minutes: int) -> bool:
+        """Set the sleep (auto power-off) timer in minutes. 0 cancels it."""
+        minutes = int(minutes)
+        if minutes < 0 or minutes > SLEEP_TIMER_MAX_MINUTES:
+            _LOGGER.error(
+                "Sleep timer %d out of range (0-%d minutes)",
+                minutes,
+                SLEEP_TIMER_MAX_MINUTES,
+            )
+            return False
+
+        if minutes > 0 and not await self.async_is_power_on():
+            # MelView discards a sleep timer on a unit that reports power off,
+            # and the app disables its timer button in that state, so refuse
+            # rather than silently powering the unit on.
+            _LOGGER.warning(
+                "Ignoring sleep timer for %s: the unit is off",
+                self.get_friendly_name(),
+            )
+            return False
+
+        return await self.async_send_command(f"PT{minutes}")
+
+    def get_sleep_timer_end(self):
+        """Get the raw "sleeptimer" value (unit power-off time), or None"""
+        if self._json is None:
+            return None
+        return self._json.get("sleeptimer")
 
     async def async_set_lossnay_preset(self, preset_name: str) -> bool:
         """Set Lossnay ERV preset mode."""
