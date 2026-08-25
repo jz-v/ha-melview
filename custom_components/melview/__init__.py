@@ -22,7 +22,13 @@ type MelViewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.CLIMATE, Platform.SWITCH, Platform.SENSOR, Platform.FAN]
+PLATFORMS = [
+    Platform.CLIMATE,
+    Platform.SWITCH,
+    Platform.SENSOR,
+    Platform.FAN,
+    Platform.NUMBER,
+]
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
