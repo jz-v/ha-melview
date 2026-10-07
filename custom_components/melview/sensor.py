@@ -41,7 +41,7 @@ async def async_setup_entry(
                     MelViewCoreEfficiencySensor(coordinator),
                 ]
             )
-    async_add_entities(entities, update_before_add=True)
+    async_add_entities(entities)
 
 
 class MelViewCurrentTempSensor(MelViewBaseEntity, SensorEntity):

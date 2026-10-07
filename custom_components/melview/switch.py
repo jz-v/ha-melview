@@ -54,4 +54,4 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         for zone in coordinator.get_zones()
     ]
 
-    async_add_entities(entities, update_before_add=True)
+    async_add_entities(entities)

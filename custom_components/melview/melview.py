@@ -168,10 +168,6 @@ class MelViewDevice:
         self.model = None
         self.temp_ranges = {}
 
-    async def async_refresh(self):
-        await self.async_refresh_device_caps()
-        await self.async_refresh_device_info()
-
     def __str__(self):
         return str(self._json)
 
@@ -322,10 +318,6 @@ class MelViewDevice:
                 _LOGGER.error("Missing local command key")
 
         return True
-
-    async def async_force_update(self):
-        """Force info refresh"""
-        return await self.async_refresh_device_info()
 
     def get_id(self):
         """Get device ID"""
@@ -518,6 +510,6 @@ class MelView:
                     self._authentication,
                     self._localcontrol,
                 )
-                await device.async_refresh()
+                await device.async_refresh_device_caps()
                 devices.append(device)
         return devices

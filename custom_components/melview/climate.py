@@ -53,8 +53,6 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
             self._precision = PRECISION_HALVES
             self._target_step = 0.5
 
-        await self._device.async_force_update()
-
     @property
     def supported_features(self):
         """Let HASS know feature support"""
@@ -224,4 +222,4 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         for coordinator in coordinators
         if coordinator.device.get_unit_type() != "ERV"
     ]
-    async_add_entities(entities, update_before_add=True)
+    async_add_entities(entities)

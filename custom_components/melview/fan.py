@@ -118,4 +118,4 @@ async def async_setup_entry(hass, entry, async_add_entities) -> None:
         if coordinator.device.get_unit_type() == "ERV"
     ]
     if entities:
-        async_add_entities(entities, update_before_add=True)
+        async_add_entities(entities)
