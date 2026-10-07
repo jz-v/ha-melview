@@ -3,6 +3,7 @@ import logging
 from homeassistant.components import logbook
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
+    ATTR_HVAC_MODE,
     ClimateEntityFeature,
     HVACAction,
     HVACMode,
@@ -61,7 +62,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
             | ClimateEntityFeature.TURN_ON
             | ClimateEntityFeature.TURN_OFF
         )
-        if self.hvac_mode in (HVACMode.AUTO, HVACMode.HEAT, HVACMode.COOL, HVACMode.DRY):
+        if self._set_mode in (HVACMode.AUTO, HVACMode.HEAT, HVACMode.COOL, HVACMode.DRY):
             features |= ClimateEntityFeature.TARGET_TEMPERATURE
         return features
 
@@ -111,7 +112,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
     @property
     def min_temp(self) -> float:
         """Return the minimum temperature for the current HVAC mode."""
-        mode = self.hvac_mode
+        mode = self._set_mode
         if mode in self._device.temp_ranges:
             return self._device.temp_ranges[mode]["min"]
         return super().min_temp
@@ -119,7 +120,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
     @property
     def max_temp(self) -> float:
         """Return the maximum temperature for the current HVAC mode."""
-        mode = self.hvac_mode
+        mode = self._set_mode
         if mode in self._device.temp_ranges:
             return self._device.temp_ranges[mode]["max"]
         return super().max_temp
@@ -130,15 +131,19 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         return self._target_step
 
     @property
+    def _set_mode(self) -> HVACMode:
+        """Get the configured mode, which the unit reports even when off"""
+        mode_index = self.coordinator.data.get("setmode")
+        return next(
+            (mode for mode, val in MODE.items() if val == mode_index), HVACMode.AUTO
+        )
+
+    @property
     def hvac_mode(self):
         """Get the current operating mode"""
         if self.coordinator.data.get("power", 0) == 0:
             return HVACMode.OFF
-        mode_index = self.coordinator.data.get("setmode")
-        mode = next(
-            (mode for mode, val in MODE.items() if val == mode_index), HVACMode.AUTO
-        )
-        return mode
+        return self._set_mode
 
     @property
     def hvac_modes(self):
@@ -173,7 +178,10 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         return None
 
     async def async_set_temperature(self, **kwargs) -> None:
-        """Set the target temperature"""
+        """Set the target temperature, and the operating mode if given"""
+        # Set mode first so the temperature is checked against its range
+        if (hvac_mode := kwargs.get(ATTR_HVAC_MODE)) is not None:
+            await self.async_set_hvac_mode(hvac_mode)
         temp = kwargs.get(ATTR_TEMPERATURE)
         if temp is not None:
             _LOGGER.debug("Set temperature %.1f", temp)

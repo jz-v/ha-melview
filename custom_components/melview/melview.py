@@ -372,14 +372,13 @@ class MelViewDevice:
         return "auto"
 
     async def async_get_mode(self):
-        """Get the set mode"""
+        """Get the set mode (reported even when the unit is off)"""
         if not await self.async_is_info_valid():
             return HVACMode.AUTO
 
-        if await self.async_is_power_on():
-            for key, val in MODE.items():
-                if self._json["setmode"] == val:
-                    return key
+        for key, val in MODE.items():
+            if self._json["setmode"] == val:
+                return key
 
         return HVACMode.AUTO
 
