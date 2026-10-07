@@ -23,7 +23,6 @@ class MelViewCoordinator(DataUpdateCoordinator):
             always_update=True,
         )
         self.device = device
-        self._caps: dict | None = None
 
     def __getattr__(self, name: str):
         """Forward any missing attribute lookups to the underlying MelViewDevice."""
@@ -32,11 +31,8 @@ class MelViewCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from the MelView API."""
         try:
-            if self._caps is None:
-                self._caps = await self.device.async_refresh_device_caps()
-                _LOGGER.debug(
-                    "Unit capabilities: %s", json.dumps(self.device._caps, indent=2)
-                )
+            if not await self.device.async_is_caps_valid():
+                raise UpdateFailed("Failed to refresh MelView capabilities")
             ok = await self.device.async_refresh_device_info()
             if not ok or self.device._json is None:
                 raise UpdateFailed("Failed to refresh MelView info")

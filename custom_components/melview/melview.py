@@ -176,6 +176,7 @@ class MelViewDevice:
             return False
 
         self._caps = caps
+        _LOGGER.debug("Unit capabilities: %s", json.dumps(self._caps, indent=2))
         if self._localip and "localip" in self._caps:
             self._localip = self._caps["localip"]
         if self._caps["fanstage"]:
