@@ -13,6 +13,7 @@ from homeassistant.exceptions import (
     ConfigEntryNotReady,
 )
 from homeassistant.helpers import device_registry as dr, issue_registry as ir
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 from .coordinator import MelViewCoordinator
@@ -44,7 +45,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
     await async_migrate_entry(hass, entry)
     conf = entry.data
     options = entry.options
-    mv_auth = MelViewAuthentication(conf[CONF_EMAIL], conf[CONF_PASSWORD])
+    mv_auth = MelViewAuthentication(
+        conf[CONF_EMAIL], conf[CONF_PASSWORD], async_get_clientsession(hass)
+    )
     result = await mv_auth.async_login()
     if not result:
         _LOGGER.error("MelView authentication failed for %s", conf[CONF_EMAIL])

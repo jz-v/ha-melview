@@ -11,6 +11,7 @@ from async_timeout import timeout
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 from .melview import MelViewAuthentication
@@ -61,7 +62,9 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         error = "invalid_auth"
         try:
             async with timeout(15):
-                auth = MelViewAuthentication(email, password)
+                auth = MelViewAuthentication(
+                    email, password, async_get_clientsession(self.hass)
+                )
                 valid = await auth.async_login()
         except (ClientError, asyncio.TimeoutError) as e:
             _LOGGER.error("MelView auth error during config flow: %r", e)
@@ -154,7 +157,11 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             error = "invalid_auth"
             try:
                 async with timeout(15):
-                    auth = MelViewAuthentication(email, user_input[CONF_PASSWORD])
+                    auth = MelViewAuthentication(
+                        email,
+                        user_input[CONF_PASSWORD],
+                        async_get_clientsession(self.hass),
+                    )
                     valid = await auth.async_login()
             except (ClientError, asyncio.TimeoutError) as e:
                 _LOGGER.error("MelView auth error during reconfigure: %r", e)
@@ -198,7 +205,11 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 async with timeout(15):
-                    auth = MelViewAuthentication(email, user_input[CONF_PASSWORD])
+                    auth = MelViewAuthentication(
+                        email,
+                        user_input[CONF_PASSWORD],
+                        async_get_clientsession(self.hass),
+                    )
                     valid = await auth.async_login()
             except (ClientError, asyncio.TimeoutError) as e:
                 _LOGGER.error("MelView auth error during reauth: %r", e)
