@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import time
 
 from aiohttp import ClientSession
@@ -73,6 +74,12 @@ class MelViewAuthentication:
             status = req.status
             headers = dict(req.headers)
             auth = req.cookies.get("auth")
+        if "Set-Cookie" in headers:
+            headers["Set-Cookie"] = re.sub(
+                r"auth=([^;]*)",
+                lambda m: f"auth={m[1][:8]}...({len(m[1])} chars)",
+                headers["Set-Cookie"],
+            )
         _LOGGER.debug("Login status code: %d", status)
         _LOGGER.debug("Login response headers:\n%s", json.dumps(headers, indent=2))
         _LOGGER.debug(
