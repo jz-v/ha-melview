@@ -430,7 +430,7 @@ class MelViewDevice:
             if not await self.async_power_on():
                 return False
         if speed not in self.fan_keyed.keys():
-            _LOGGER.error("Fan speed %d not supported", speed)
+            _LOGGER.error("Fan speed %s not supported", speed)
             return False
         return await self.async_send_command("FS{:.2f}".format(self.fan_keyed[speed]))
 

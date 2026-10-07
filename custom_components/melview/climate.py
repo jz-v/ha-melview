@@ -178,7 +178,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         """Set the target temperature"""
         temp = kwargs.get(ATTR_TEMPERATURE)
         if temp is not None:
-            _LOGGER.debug("Set temperature %d", temp)
+            _LOGGER.debug("Set temperature %.1f", temp)
             if await self._device.async_set_temperature(temp):
                 await self.coordinator.async_refresh()
 
