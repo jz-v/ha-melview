@@ -134,7 +134,7 @@ class MelViewAuthentication:
             return False
         try:
             return int(self._login_json.get("userunits", 0))
-        except Exception:
+        except (AttributeError, TypeError, ValueError):
             return False
 
 
@@ -203,20 +203,18 @@ class MelViewDevice:
             self.model = self._caps["modelname"]
         if "halfdeg" in self._caps and self._caps["halfdeg"] == 1:
             self.halfdeg = True
-        if "error" in self._caps:
-            if self._caps["error"] != "ok":
-                _LOGGER.warning(
-                    "%s unit capabilities error: %s, attempting to continue",
-                    self.get_friendly_name(),
-                    self._caps["error"],
-                )
-        if "fault" in self._caps:
-            if self._caps["fault"] != "":
-                _LOGGER.warning(
-                    "%s unit capabilities fault: %s, attempting to continue",
-                    self.get_friendly_name(),
-                    self._caps["fault"],
-                )
+        if "error" in self._caps and self._caps["error"] != "ok":
+            _LOGGER.warning(
+                "%s unit capabilities error: %s, attempting to continue",
+                self.get_friendly_name(),
+                self._caps["error"],
+            )
+        if "fault" in self._caps and self._caps["fault"] != "":
+            _LOGGER.warning(
+                "%s unit capabilities fault: %s, attempting to continue",
+                self.get_friendly_name(),
+                self._caps["fault"],
+            )
         return True
 
     async def async_refresh_device_info(self):
@@ -307,7 +305,7 @@ class MelViewDevice:
         if self._localip:
             if "lc" in data:
                 async with self._authentication.session.post(
-                    "http://{}/smart".format(self._localip),
+                    f"http://{self._localip}/smart",
                     data=LOCAL_DATA.format(data["lc"]),
                 ) as req:
                     if req.status == 200:
@@ -401,7 +399,7 @@ class MelViewDevice:
         temp_range = self.temp_ranges.get(mode)
         if not temp_range:
             _LOGGER.warning("No temperature range available for mode %s", mode.value)
-            return await self.async_send_command("TS{:.2f}".format(temperature))
+            return await self.async_send_command(f"TS{temperature:.2f}")
         min_temp = temp_range["min"]
         max_temp = temp_range["max"]
         if temperature < min_temp:
@@ -420,33 +418,34 @@ class MelViewDevice:
                 mode,
             )
             return False
-        return await self.async_send_command("TS{:.2f}".format(temperature))
+        return await self.async_send_command(f"TS{temperature:.2f}")
+
+    async def _async_ensure_power_on(self):
+        """Turn the unit on if it is off"""
+        return await self.async_is_power_on() or await self.async_power_on()
 
     async def async_set_speed(self, speed):
         """Set the fan speed by label (fan stage name)."""
-        if not await self.async_is_power_on():
-            if not await self.async_power_on():
-                return False
-        if speed not in self.fan_keyed.keys():
+        if not await self._async_ensure_power_on():
+            return False
+        if speed not in self.fan_keyed:
             _LOGGER.error("Fan speed %s not supported", speed)
             return False
-        return await self.async_send_command("FS{:.2f}".format(self.fan_keyed[speed]))
+        return await self.async_send_command(f"FS{self.fan_keyed[speed]:.2f}")
 
     async def async_set_speed_code(self, speed_code):
         """Set the fan speed by code (fan stage integer)."""
-        if not await self.async_is_power_on():
-            if not await self.async_power_on():
-                return False
-        if speed_code not in self.fan.keys():
+        if not await self._async_ensure_power_on():
+            return False
+        if speed_code not in self.fan:
             _LOGGER.error("Fan speed code %d not supported", speed_code)
             return False
-        return await self.async_send_command("FS{:.2f}".format(speed_code))
+        return await self.async_send_command(f"FS{speed_code:.2f}")
 
     async def async_set_mode(self, mode):
         """Set operating mode"""
-        if not await self.async_is_power_on():
-            if not await self.async_power_on():
-                return False
+        if not await self._async_ensure_power_on():
+            return False
 
         if mode not in MODE:
             _LOGGER.error("Mode %s not supported", mode)
@@ -493,7 +492,7 @@ class MelView:
             reply = await self._authentication.async_api_post(
                 "rooms.aspx", {"unitid": 0}, headers=HEADERS
             )
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001 - any failure means "not ready, retry"
             _LOGGER.error("Device list request failed: %s", err)
             return None
         if reply is None:

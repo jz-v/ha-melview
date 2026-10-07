@@ -20,7 +20,6 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
 
     _attr_has_entity_name = True
     _attr_name = None
-    _attr_preset_modes = list(LOSSNAY_PRESETS)
     _attr_supported_features = (
         FanEntityFeature.TURN_ON
         | FanEntityFeature.TURN_OFF
@@ -31,6 +30,7 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
     def __init__(self, coordinator: MelViewCoordinator):
         super().__init__(coordinator, coordinator.device)
         self._attr_unique_id = f"{coordinator.get_id()}_lossnay"
+        self._attr_preset_modes = list(LOSSNAY_PRESETS)
         self._device = coordinator.device
         self._last_preset: str = "Lossnay"
         self._speed_codes = sorted(k for k in coordinator.fan if k != 0)
@@ -51,9 +51,8 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
         if preset_mode not in LOSSNAY_PRESETS:
             _LOGGER.error("Preset mode %s not supported", preset_mode)
             return
-        if not self.is_on:
-            if not await self.coordinator.async_power_on():
-                return
+        if not self.is_on and not await self.coordinator.async_power_on():
+            return
         if await self.coordinator.async_set_lossnay_preset(preset_mode):
             self._last_preset = preset_mode
             await self.coordinator.async_request_refresh()
