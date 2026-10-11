@@ -63,8 +63,8 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
 
     async def async_turn_on(
         self,
-        preset_mode: str | None = None,
         percentage: int | None = None,
+        preset_mode: str | None = None,
         **kwargs,
     ) -> None:
         if preset_mode:
