@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from aiohttp import ClientError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
@@ -18,7 +19,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 from .coordinator import MelViewCoordinator
-from .melview import MelView, MelViewAuthentication
+from .melview import MelView, MelViewAuthentication, MelViewAuthError, MelViewError
 
 type MelViewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
 
@@ -49,20 +50,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
     mv_auth = MelViewAuthentication(
         conf[CONF_EMAIL], conf[CONF_PASSWORD], async_get_clientsession(hass)
     )
-    result = await mv_auth.async_login()
+    try:
+        result = await mv_auth.async_login()
+    except (MelViewError, ClientError, TimeoutError) as err:
+        raise ConfigEntryNotReady(f"Unable to connect to MelView: {err}") from err
     if not result:
-        _LOGGER.error("MelView authentication failed for %s", conf[CONF_EMAIL])
-        ir.async_create_issue(
-            hass,
-            DOMAIN,
-            f"reauth_{entry.entry_id}",
-            is_fixable=True,
-            breaks_in_ha_version=None,
-            severity=ir.IssueSeverity.ERROR,
-            translation_key="reauth",
-            translation_placeholders={"email": conf[CONF_EMAIL]},
+        raise ConfigEntryAuthFailed(
+            f"MelView rejected the credentials for {conf[CONF_EMAIL]}"
         )
-        raise ConfigEntryAuthFailed
+    # Clean up the repair issue created by earlier versions on auth failure
+    ir.async_delete_issue(hass, DOMAIN, f"reauth_{entry.entry_id}")
     _LOGGER.debug("Authentication successful")
     melview = MelView(mv_auth, localcontrol=options.get(CONF_LOCAL))
 
@@ -76,7 +73,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
         raise ConfigEntryError("Account has no devices")
 
     _LOGGER.debug("Getting data")
-    devices = await melview.async_get_devices_list()
+    try:
+        devices = await melview.async_get_devices_list()
+    except MelViewAuthError as err:
+        raise ConfigEntryAuthFailed(str(err)) from err
+    except (MelViewError, ClientError, TimeoutError) as err:
+        raise ConfigEntryNotReady(f"Unable to connect to MelView: {err}") from err
     if not devices:
         _LOGGER.debug("Unable to retrieve device list")
         raise ConfigEntryNotReady("Unable to retrieve device list")

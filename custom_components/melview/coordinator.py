@@ -2,9 +2,10 @@ import json
 import logging
 from datetime import timedelta
 
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .melview import MelViewDevice
+from .melview import MelViewAuthError, MelViewDevice
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,5 +39,7 @@ class MelViewCoordinator(DataUpdateCoordinator):
                 raise UpdateFailed("Failed to refresh MelView info")
             _LOGGER.debug("Data: %s", json.dumps(self.device._json, indent=2))
             return self.device._json
+        except MelViewAuthError as err:
+            raise ConfigEntryAuthFailed(str(err)) from err
         except Exception as err:
             raise UpdateFailed(str(err)) from err

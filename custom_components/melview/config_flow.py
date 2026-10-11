@@ -14,7 +14,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
-from .melview import MelViewAuthentication
+from .melview import MelViewAuthentication, MelViewError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,12 +66,13 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     email, password, async_get_clientsession(self.hass)
                 )
                 valid = await auth.async_login()
-        except (ClientError, asyncio.TimeoutError) as e:
+        except (ClientError, asyncio.TimeoutError, MelViewError) as e:
             _LOGGER.error("MelView auth error during config flow: %r", e)
             error = "cannot_connect"
             valid = False
         except Exception:  # pragma: no cover - unexpected
             _LOGGER.exception("Unexpected MelView error during config flow")
+            error = "unknown"
             valid = False
 
         if not valid:
@@ -163,7 +164,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                         async_get_clientsession(self.hass),
                     )
                     valid = await auth.async_login()
-            except (ClientError, asyncio.TimeoutError) as e:
+            except (ClientError, asyncio.TimeoutError, MelViewError) as e:
                 _LOGGER.error("MelView auth error during reconfigure: %r", e)
                 valid = False
                 error = "cannot_connect"
@@ -190,19 +191,18 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={"email": email},
         )
 
-    async def async_step_reauth(self, user_input=None):
-        """Handle re-authentication when credentials are invalid."""
+    async def async_step_reauth(self, entry_data):
+        """Start re-authentication when the stored credentials are rejected."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input=None):
+        """Ask for the new password and validate it."""
         self._errors = {}
-
-        entry = None
-        if self.context.get("entry_id"):
-            entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
-        if entry is None:
-            return self.async_abort(reason="unknown")
-
-        email = entry.data.get(CONF_EMAIL, "")
+        entry = self._get_reauth_entry()
+        email = entry.data[CONF_EMAIL]
 
         if user_input is not None:
+            valid = False
             try:
                 async with timeout(15):
                     auth = MelViewAuthentication(
@@ -211,29 +211,22 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                         async_get_clientsession(self.hass),
                     )
                     valid = await auth.async_login()
-            except (ClientError, asyncio.TimeoutError) as e:
+            except (ClientError, asyncio.TimeoutError, MelViewError) as e:
                 _LOGGER.error("MelView auth error during reauth: %r", e)
-                valid = False
                 self._errors["base"] = "cannot_connect"
-            if not valid:
-                if "base" not in self._errors:
+            else:
+                if not valid:
                     self._errors["base"] = "invalid_auth"
-                return self.async_show_form(
-                    step_id="reauth",
-                    data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
-                    errors=self._errors,
-                    description_placeholders={"email": email},
+
+            if valid:
+                return self.async_update_reload_and_abort(
+                    entry, data_updates={CONF_PASSWORD: user_input[CONF_PASSWORD]}
                 )
 
-            new_data = dict(entry.data)
-            new_data[CONF_PASSWORD] = user_input[CONF_PASSWORD]
-            self.hass.config_entries.async_update_entry(entry, data=new_data)
-            await self.hass.config_entries.async_reload(entry.entry_id)
-            return self.async_abort(reason="reauth_successful")
-
         return self.async_show_form(
-            step_id="reauth",
+            step_id="reauth_confirm",
             data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+            errors=self._errors,
             description_placeholders={"email": email},
         )
 

@@ -37,6 +37,14 @@ LOSSNAY_PRESETS = {
 }
 
 
+class MelViewError(Exception):
+    """Error communicating with the MelView API."""
+
+
+class MelViewAuthError(MelViewError):
+    """MelView rejected the account credentials."""
+
+
 class MelViewAuthentication:
     """Implementation to remember and refresh MelView cookies."""
 
@@ -57,7 +65,11 @@ class MelViewAuthentication:
         return self._cookie is not None
 
     async def async_login(self):
-        """Generate a new login cookie"""
+        """Generate a new login cookie.
+
+        Return False if the credentials are rejected; raise MelViewError if
+        the server returns an error status.
+        """
         _LOGGER.debug("Trying to login")
         self._cookie = None
         self._login_json = None
@@ -70,10 +82,11 @@ class MelViewAuthentication:
             },
             headers=HEADERS,
         ) as req:
-            self._login_json = await req.json()
             status = req.status
             headers = dict(req.headers)
             auth = req.cookies.get("auth")
+            if status == 200:
+                self._login_json = await req.json()
         if "Set-Cookie" in headers:
             headers["Set-Cookie"] = re.sub(
                 r"auth=([^;]*)",
@@ -87,14 +100,13 @@ class MelViewAuthentication:
         )
         if status != 200:
             self._log_login_failure("Invalid response status", status, headers)
-        elif auth is None:
-            self._log_login_failure("Missing auth cookie", status, headers)
-        elif not auth.value:
-            self._log_login_failure("Invalid auth cookie", status, headers)
-        else:
-            self._cookie = auth.value
-            return True
-        return False
+            raise MelViewError(f"Login failed (status {status})")
+        # Rejected credentials still return 200, but with an empty auth cookie
+        if auth is None or not auth.value:
+            self._log_login_failure("Login rejected", status, headers)
+            return False
+        self._cookie = auth.value
+        return True
 
     def _log_login_failure(self, reason, status, headers):
         _LOGGER.error(reason)
@@ -109,7 +121,11 @@ class MelViewAuthentication:
         return {"auth": self._cookie}
 
     async def async_api_post(self, endpoint, payload, *, headers=None, retry=True):
-        """POST to the MelView API, re-logging in once on 401. Return JSON or None."""
+        """POST to the MelView API. Return JSON or None.
+
+        On 401 or 503 (MelView returns 503 for an invalidated session), log in
+        again once; raise MelViewAuthError if the credentials are rejected.
+        """
         async with self._session.post(
             f"https://api.melview.net/api/{endpoint}",
             json=payload,
@@ -119,12 +135,13 @@ class MelViewAuthentication:
             if resp.status == 200:
                 return await resp.json()
             status = resp.status
-        if status == 401 and retry:
-            _LOGGER.error("%s error 401 (trying to re-login)", endpoint)
-            if await self.async_login():
-                return await self.async_api_post(
-                    endpoint, payload, headers=headers, retry=False
-                )
+        if status in (401, 503) and retry:
+            _LOGGER.debug("%s returned %d, logging in again", endpoint, status)
+            if not await self.async_login():
+                raise MelViewAuthError("MelView rejected the stored credentials")
+            return await self.async_api_post(
+                endpoint, payload, headers=headers, retry=False
+            )
         _LOGGER.error("%s failed (invalid status code: %d)", endpoint, status)
         return None
 
@@ -492,6 +509,8 @@ class MelView:
             reply = await self._authentication.async_api_post(
                 "rooms.aspx", {"unitid": 0}, headers=HEADERS
             )
+        except MelViewAuthError:
+            raise
         except Exception as err:  # noqa: BLE001 - any failure means "not ready, retry"
             _LOGGER.error("Device list request failed: %s", err)
             return None

@@ -3,7 +3,8 @@
     "config": {
         "abort": {
             "already_configured": "Integration already configured for this email.",
-            "password_change_success": "Password updated successfully."
+            "password_change_success": "Password updated successfully.",
+            "reauth_successful": "Re-authentication successful."
         },
         "error": {
             "invalid_auth": "Invalid authentication.",
@@ -32,6 +33,13 @@
                 },
                 "description": "Update password for {email}",
                 "title": "Update Password"
+            },
+            "reauth_confirm": {
+                "data": {
+                    "password": "Password"
+                },
+                "description": "Mitsubishi Electric Wi-Fi Control rejected the saved password for {email}. Enter the current password.",
+                "title": "Re-authenticate"
             }
         }
     },
