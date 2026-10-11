@@ -22,6 +22,7 @@ async def test_current_temperature(
     assert state.state == "21.5"
     assert state.attributes["unit_of_measurement"] == "°C"
     assert state.attributes["device_class"] == "temperature"
+    assert "source" not in state.attributes
 
 
 async def test_sensor_option_off(

@@ -59,7 +59,6 @@ class MelViewCurrentTempSensor(MelViewBaseEntity, SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_device_class = SensorDeviceClass.TEMPERATURE
         self._attr_unique_id = f"{api.get_id()}_current_temp"
-        self._attr_extra_state_attributes = {"source": "melview.py cache"}
 
     @property
     def native_value(self):
