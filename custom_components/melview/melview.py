@@ -45,6 +45,10 @@ class MelViewAuthError(MelViewError):
     """MelView rejected the account credentials."""
 
 
+class MelViewValidationError(MelViewError):
+    """A command was rejected because its input is not valid for the unit."""
+
+
 class MelViewAuthentication:
     """Implementation to remember and refresh MelView cookies."""
 
@@ -264,20 +268,13 @@ class MelViewDevice:
         return True
 
     async def async_is_info_valid(self):
-        """Ensure cached unit info is fresh."""
-        try:
-            if self._json is None:
-                return await self.async_refresh_device_info()
+        """Ensure cached unit info is fresh; raise if it cannot be refreshed."""
+        if self._json is None:
+            return await self.async_refresh_device_info()
 
-            if (time.time() - self._last_info_time_s) >= self._info_lease_seconds:
-                _LOGGER.debug("Current settings out of date, refreshing")
-                return await self.async_refresh_device_info()
-
-        except MelViewAuthError:
-            raise
-        except (ConnectionError, MelViewError) as err:
-            _LOGGER.debug("Info refresh failed: %s", err)
-            return False
+        if (time.time() - self._last_info_time_s) >= self._info_lease_seconds:
+            _LOGGER.debug("Current settings out of date, refreshing")
+            return await self.async_refresh_device_info()
 
         return True
 
@@ -288,27 +285,20 @@ class MelViewDevice:
         return True
 
     async def async_send_command(self, command):
+        """Send a command to the unit; raise if it cannot be sent."""
         _LOGGER.debug("Command issued: %s", command)
 
-        if not await self.async_is_info_valid():
-            _LOGGER.error("Data outdated, command %s failed", command)
-            return False
+        await self.async_is_info_valid()
 
-        try:
-            data = await self._authentication.async_api_post(
-                "unitcommand.aspx",
-                {
-                    "unitid": self._deviceid,
-                    "v": APIVERSION,
-                    "commands": command,
-                    "lc": 1,
-                },
-            )
-        except MelViewAuthError:
-            raise
-        except MelViewError as err:
-            _LOGGER.error("Command %s failed: %s", command, err)
-            return False
+        data = await self._authentication.async_api_post(
+            "unitcommand.aspx",
+            {
+                "unitid": self._deviceid,
+                "v": APIVERSION,
+                "commands": command,
+                "lc": 1,
+            },
+        )
         _LOGGER.debug("Command sent to server")
 
         if self._localip:
@@ -323,8 +313,6 @@ class MelViewDevice:
                         _LOGGER.error("Local command failed")
             else:
                 _LOGGER.error("Missing local command key")
-
-        return True
 
     def get_id(self):
         """Get device ID"""
@@ -380,8 +368,7 @@ class MelViewDevice:
 
     async def async_get_mode(self):
         """Get the set mode (reported even when the unit is off)"""
-        if not await self.async_is_info_valid():
-            return HVACMode.AUTO
+        await self.async_is_info_valid()
 
         for key, val in MODE.items():
             if self._json["setmode"] == val:
@@ -397,8 +384,7 @@ class MelViewDevice:
 
     async def async_is_power_on(self):
         """Check unit is on"""
-        if not await self.async_is_info_valid():
-            return False
+        await self.async_is_info_valid()
 
         return self._json["power"]
 
@@ -411,55 +397,37 @@ class MelViewDevice:
             return await self.async_send_command(f"TS{temperature:.2f}")
         min_temp = temp_range["min"]
         max_temp = temp_range["max"]
-        if temperature < min_temp:
-            _LOGGER.error(
-                "Temperature %.1f lower than min %d for mode %s",
-                temperature,
-                min_temp,
-                mode,
+        if not min_temp <= temperature <= max_temp:
+            raise MelViewValidationError(
+                f"Temperature {temperature:.1f} is outside the range "
+                f"{min_temp} to {max_temp} for {mode.value} mode"
             )
-            return False
-        if temperature > max_temp:
-            _LOGGER.error(
-                "Temperature %.1f greater than max %d for mode %s",
-                temperature,
-                max_temp,
-                mode,
-            )
-            return False
         return await self.async_send_command(f"TS{temperature:.2f}")
 
     async def _async_ensure_power_on(self):
         """Turn the unit on if it is off"""
-        return await self.async_is_power_on() or await self.async_power_on()
+        if not await self.async_is_power_on():
+            await self.async_power_on()
 
     async def async_set_speed(self, speed):
         """Set the fan speed by label (fan stage name)."""
-        if not await self._async_ensure_power_on():
-            return False
         if speed not in self.fan_keyed:
-            _LOGGER.error("Fan speed %s not supported", speed)
-            return False
+            raise MelViewValidationError(f"Fan speed {speed} not supported")
+        await self._async_ensure_power_on()
         return await self.async_send_command(f"FS{self.fan_keyed[speed]:.2f}")
 
     async def async_set_speed_code(self, speed_code):
         """Set the fan speed by code (fan stage integer)."""
-        if not await self._async_ensure_power_on():
-            return False
         if speed_code not in self.fan:
-            _LOGGER.error("Fan speed code %d not supported", speed_code)
-            return False
+            raise MelViewValidationError(f"Fan speed code {speed_code} not supported")
+        await self._async_ensure_power_on()
         return await self.async_send_command(f"FS{speed_code:.2f}")
 
     async def async_set_mode(self, mode):
         """Set operating mode"""
-        if not await self._async_ensure_power_on():
-            return False
-
         if mode not in MODE:
-            _LOGGER.error("Mode %s not supported", mode)
-            return False
-
+            raise MelViewValidationError(f"Mode {mode} not supported")
+        await self._async_ensure_power_on()
         return await self.async_send_command(f"MD{MODE[mode]}")
 
     async def async_enable_zone(self, zoneid):
@@ -478,12 +446,11 @@ class MelViewDevice:
         """Turn off the unit"""
         return await self.async_send_command("PW0")
 
-    async def async_set_lossnay_preset(self, preset_name: str) -> bool:
+    async def async_set_lossnay_preset(self, preset_name: str) -> None:
         """Set Lossnay ERV preset mode."""
         code = LOSSNAY_PRESETS.get(preset_name)
         if code is None:
-            _LOGGER.error("Unknown Lossnay preset: %s", preset_name)
-            return False
+            raise MelViewValidationError(f"Unknown Lossnay preset {preset_name}")
         return await self.async_send_command(f"MD{code}")
 
 

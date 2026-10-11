@@ -192,41 +192,42 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         temp = kwargs.get(ATTR_TEMPERATURE)
         if temp is not None:
             _LOGGER.debug("Set temperature %.1f", temp)
-            if await self._device.async_set_temperature(temp):
-                await self.coordinator.async_refresh()
+            await self._async_command(self._device.async_set_temperature(temp))
+            await self.coordinator.async_refresh()
 
     async def async_set_fan_mode(self, fan_mode) -> None:
         """Set the fan speed"""
         speed = fan_mode
         _LOGGER.debug("Set fan: %s", speed)
-        if await self._device.async_set_speed(speed):
-            await self.coordinator.async_refresh()
-            parsed_speed = fan_mode.title()
-            logbook.log_entry(
-                hass=self.hass,
-                name=self.name,
-                message=f"Fan speed set to {parsed_speed}",
-                entity_id=self.entity_id,
-            )
+        await self._async_command(self._device.async_set_speed(speed))
+        await self.coordinator.async_refresh()
+        parsed_speed = fan_mode.title()
+        logbook.log_entry(
+            hass=self.hass,
+            name=self.name,
+            message=f"Fan speed set to {parsed_speed}",
+            entity_id=self.entity_id,
+        )
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
         _LOGGER.debug("Set mode: %s", hvac_mode)
         if hvac_mode == HVACMode.OFF:
             await self.async_turn_off()
-        elif await self._device.async_set_mode(hvac_mode):
-            await self.coordinator.async_refresh()
+            return
+        await self._async_command(self._device.async_set_mode(hvac_mode))
+        await self.coordinator.async_refresh()
 
     async def async_turn_on(self) -> None:
         """Turn on the unit"""
         _LOGGER.debug("Power on")
-        if await self._device.async_power_on():
-            await self.coordinator.async_refresh()
+        await self._async_command(self._device.async_power_on())
+        await self.coordinator.async_refresh()
 
     async def async_turn_off(self) -> None:
         """Turn off the unit"""
         _LOGGER.debug("Power off")
-        if await self._device.async_power_off():
-            await self.coordinator.async_refresh()
+        await self._async_command(self._device.async_power_off())
+        await self.coordinator.async_refresh()
 
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:

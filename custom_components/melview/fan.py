@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util.percentage import (
     ordered_list_item_to_percentage,
     percentage_to_ordered_list_item,
@@ -51,13 +52,14 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         if preset_mode not in LOSSNAY_PRESETS:
-            _LOGGER.error("Preset mode %s not supported", preset_mode)
-            return
-        if not self.is_on and not await self.coordinator.async_power_on():
-            return
-        if await self.coordinator.async_set_lossnay_preset(preset_mode):
-            self._last_preset = preset_mode
-            await self.coordinator.async_request_refresh()
+            raise ServiceValidationError(f"Preset mode {preset_mode} not supported")
+        if not self.is_on:
+            await self._async_command(self.coordinator.async_power_on())
+        await self._async_command(
+            self.coordinator.async_set_lossnay_preset(preset_mode)
+        )
+        self._last_preset = preset_mode
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_on(
         self,
@@ -70,12 +72,12 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
         elif percentage is not None:
             await self.async_set_percentage(percentage)
         else:
-            if await self.coordinator.async_power_on():
-                await self.coordinator.async_request_refresh()
+            await self._async_command(self.coordinator.async_power_on())
+            await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
-        if await self.coordinator.async_power_off():
-            await self.coordinator.async_request_refresh()
+        await self._async_command(self.coordinator.async_power_off())
+        await self.coordinator.async_request_refresh()
 
     @property
     def percentage(self) -> int | None:
@@ -106,8 +108,8 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
         _LOGGER.debug(
             "Lossnay fan set speed with percentage=%d, mapped code=%s", percentage, code
         )
-        if await self.coordinator.async_set_speed_code(code):
-            await self.coordinator.async_request_refresh()
+        await self._async_command(self.coordinator.async_set_speed_code(code))
+        await self.coordinator.async_request_refresh()
 
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
