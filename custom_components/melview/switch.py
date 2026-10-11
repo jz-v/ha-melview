@@ -20,6 +20,11 @@ class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
         self._attr_name = f"Zone {zone.name}"
 
     @property
+    def available(self) -> bool:
+        """Return False once the unit stops reporting this zone."""
+        return super().available and self.coordinator.get_zone(self._id) is not None
+
+    @property
     def is_on(self) -> bool:
         """Check if the zone is currently on."""
         zone = self.coordinator.get_zone(self._id)

@@ -8,6 +8,7 @@ from homeassistant.const import (
     SERVICE_TURN_ON,
     STATE_OFF,
     STATE_ON,
+    STATE_UNAVAILABLE,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
@@ -48,6 +49,22 @@ async def test_turn_zones_on_and_off(
     assert melview_api.commands == ["Z21", "Z10"]
     assert hass.states.get(BEDROOM).state == STATE_ON
     assert hass.states.get(LOUNGE).state == STATE_OFF
+
+
+async def test_zone_no_longer_reported(
+    hass: HomeAssistant, melview_api: MelViewApi, init_integration: MockConfigEntry
+) -> None:
+    """A zone the unit stops reporting is unavailable until it comes back."""
+    coordinator = init_integration.runtime_data[0]
+    bedroom = melview_api.unit["zones"].pop()
+
+    await coordinator.async_refresh()
+    assert hass.states.get(BEDROOM).state == STATE_UNAVAILABLE
+    assert hass.states.get(LOUNGE).state == STATE_ON
+
+    melview_api.unit["zones"].append(bedroom)
+    await coordinator.async_refresh()
+    assert hass.states.get(BEDROOM).state == STATE_OFF
 
 
 async def test_zone_action_failure_raises(
