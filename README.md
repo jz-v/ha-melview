@@ -68,7 +68,14 @@ Devices include a **fan entity** with adjustable speed and presets, as well as a
 - Exhaust temperature  
 - Core efficiency.
 
-Support is experimental due to limited testing. If you encounter a problem please open an Issue and include debug logs.
+Support is experimental due to limited testing. If you encounter a problem please [report an issue](#reporting-issues).
+
+## Reporting issues
+Always attach a diagnostics download to a [new issue](https://github.com/jz-v/ha-melview/issues/new):
+1. **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Download diagnostics**. For a problem with one unit, use **Download diagnostics** on that unit's device page instead.
+2. Attach the downloaded file to the issue. Your email, password, unit IDs and local IP address are removed automatically.
+
+If the problem is an error or unexpected behaviour, also include debug logs: from the same **⋮** menu choose **Enable debug logging**, reproduce the problem, then choose **Disable debug logging** and attach the file that downloads. Debug logs are not redacted, so check them for personal details first.
 
 ## Removal
 1. **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Delete**.
