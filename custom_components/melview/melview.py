@@ -99,32 +99,25 @@ class MelViewAuthentication:
             "Login response json:\n%s", json.dumps(self._login_json, indent=2)
         )
         if status != 200:
-            self._log_login_failure("Invalid response status", status, headers)
             raise MelViewError(f"Login failed (status {status})")
         # Rejected credentials still return 200, but with an empty auth cookie
         if auth is None or not auth.value:
-            self._log_login_failure("Login rejected", status, headers)
+            _LOGGER.debug("Login rejected (empty auth cookie)")
             return False
         self._cookie = auth.value
         return True
-
-    def _log_login_failure(self, reason, status, headers):
-        _LOGGER.error(reason)
-        _LOGGER.error("Login status code: %d", status)
-        _LOGGER.error("Login response headers:\n%s", json.dumps(headers, indent=2))
-        _LOGGER.error(
-            "Login response json:\n%s", json.dumps(self._login_json, indent=2)
-        )
 
     def get_cookie(self):
         """Return authentication cookie"""
         return {"auth": self._cookie}
 
     async def async_api_post(self, endpoint, payload, *, headers=None, retry=True):
-        """POST to the MelView API. Return JSON or None.
+        """POST to the MelView API and return the JSON response.
 
         On 401 or 503 (MelView returns 503 for an invalidated session), log in
         again once; raise MelViewAuthError if the credentials are rejected.
+        Raise MelViewError for any other failure status; callers polling via
+        the coordinator rely on it to log the failure once, not every update.
         """
         async with self._session.post(
             f"https://api.melview.net/api/{endpoint}",
@@ -142,8 +135,7 @@ class MelViewAuthentication:
             return await self.async_api_post(
                 endpoint, payload, headers=headers, retry=False
             )
-        _LOGGER.error("%s failed (invalid status code: %d)", endpoint, status)
-        return None
+        raise MelViewError(f"{endpoint} failed (status {status})")
 
     def number_units(self):
         """Return the number of units in login response."""
@@ -189,13 +181,9 @@ class MelViewDevice:
         return str(self._json)
 
     async def async_refresh_device_caps(self):
-        caps = await self._authentication.async_api_post(
+        self._caps = await self._authentication.async_api_post(
             "unitcapabilities.aspx", {"unitid": self._deviceid, "v": APIVERSION}
         )
-        if caps is None:
-            return False
-
-        self._caps = caps
         _LOGGER.debug("Unit capabilities: %s", json.dumps(self._caps, indent=2))
         if self._localip and "localip" in self._caps:
             self._localip = self._caps["localip"]
@@ -241,8 +229,6 @@ class MelViewDevice:
         self._json = await self._authentication.async_api_post(
             "unitcommand.aspx", {"unitid": self._deviceid, "v": APIVERSION}
         )
-        if self._json is None:
-            return False
 
         fault = self._json["fault"]
         error = self._json["error"]
@@ -287,7 +273,9 @@ class MelViewDevice:
                 _LOGGER.debug("Current settings out of date, refreshing")
                 return await self.async_refresh_device_info()
 
-        except ConnectionError as err:
+        except MelViewAuthError:
+            raise
+        except (ConnectionError, MelViewError) as err:
             _LOGGER.debug("Info refresh failed: %s", err)
             return False
 
@@ -306,16 +294,20 @@ class MelViewDevice:
             _LOGGER.error("Data outdated, command %s failed", command)
             return False
 
-        data = await self._authentication.async_api_post(
-            "unitcommand.aspx",
-            {
-                "unitid": self._deviceid,
-                "v": APIVERSION,
-                "commands": command,
-                "lc": 1,
-            },
-        )
-        if data is None:
+        try:
+            data = await self._authentication.async_api_post(
+                "unitcommand.aspx",
+                {
+                    "unitid": self._deviceid,
+                    "v": APIVERSION,
+                    "commands": command,
+                    "lc": 1,
+                },
+            )
+        except MelViewAuthError:
+            raise
+        except MelViewError as err:
+            _LOGGER.error("Command %s failed: %s", command, err)
             return False
         _LOGGER.debug("Command sent to server")
 
