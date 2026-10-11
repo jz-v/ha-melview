@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import logging
+from asyncio import timeout
 
 import voluptuous as vol
 from aiohttp import ClientError
-from async_timeout import timeout
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
