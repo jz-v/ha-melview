@@ -22,7 +22,7 @@
                 },
                 "data_description": {
                     "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands.",
-                    "sensor": "Create a separate 'Current temperature' sensor entity."
+                    "sensor": "Create sensor entities for room temperature, plus air temperature and core efficiency sensors for Lossnay units."
                 },
                 "description": "Enter your AU/NZ Mitsubishi Electric Wi‑Fi Control account credentials.\n\n0.5° temperature steps will be available if enabled in the Wi‑Fi Control app.",
                 "title": "Connect to Mitsubishi Electric Wi‑Fi Control"
@@ -52,7 +52,7 @@
                 },
                 "data_description": {
                     "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands.",
-                    "sensor": "Create a separate 'Current temperature' sensor entity."
+                    "sensor": "Create sensor entities for room temperature, plus air temperature and core efficiency sensors for Lossnay units."
                 },
                 "description": "Integration must be reloaded for changes to take effect.\n\n0.5° temperature steps will be available if enabled in the Wi‑Fi Control app.",
                 "title": "Options"

@@ -31,6 +31,13 @@ Please completely remove any existing custom components for melview prior to ins
 
    [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=melview)
 
+## Configuration
+Setup asks for:
+ - **Email** and **Password**: your Mitsubishi Electric Wi-Fi Control app login.
+ - **Local commands (faster)**: also send commands to the adapter over LAN, see [About 'local commands'](#about-local-commands). Default: on.
+ - **Current temperature**: create sensor entities for room temperature (and the [Lossnay sensors](#lossnay-support)). Default: on.
+
+Local commands and Current temperature can be changed later under **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control → Configure**. Reload the integration for changes to take effect.
 
 ## Compatible devices
 This integration is intended to work with any AU/NZ region Wi-Fi adapter connecting to the melview API:
