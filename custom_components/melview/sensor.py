@@ -49,7 +49,6 @@ async def async_setup_entry(
 class MelViewCurrentTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor representing the current room temperature for a MelView device."""
 
-    _attr_has_entity_name = True
     _attr_name = "Current Temperature"
 
     def __init__(self, coordinator):
@@ -71,7 +70,6 @@ class MelViewCurrentTempSensor(MelViewBaseEntity, SensorEntity):
 class MelViewOutdoorTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor representing the outdoor (fresh air) temperature."""
 
-    _attr_has_entity_name = True
     _attr_name = "Fresh Air"
 
     def __init__(self, coordinator):
@@ -90,7 +88,6 @@ class MelViewOutdoorTempSensor(MelViewBaseEntity, SensorEntity):
 class MelViewSupplyTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor for the pre-warmed supply air temperature."""
 
-    _attr_has_entity_name = True
     _attr_name = "Pre-warmed"
 
     def __init__(self, coordinator):
@@ -114,7 +111,6 @@ class MelViewSupplyTempSensor(MelViewBaseEntity, SensorEntity):
 class MelViewExhaustTempSensor(MelViewBaseEntity, SensorEntity):
     """Sensor for the stale air temperature leaving the unit."""
 
-    _attr_has_entity_name = True
     _attr_name = "Stale Air"
 
     def __init__(self, coordinator):
@@ -133,7 +129,6 @@ class MelViewExhaustTempSensor(MelViewBaseEntity, SensorEntity):
 class MelViewCoreEfficiencySensor(MelViewBaseEntity, SensorEntity):
     """Sensor for the core heat recovery efficiency percentage."""
 
-    _attr_has_entity_name = True
     _attr_name = "Core Efficiency"
 
     def __init__(self, coordinator):

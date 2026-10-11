@@ -32,11 +32,7 @@ class MelViewCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from the MelView API."""
         try:
-            if not await self.device.async_is_caps_valid():
-                raise UpdateFailed("Failed to refresh MelView capabilities")
-            ok = await self.device.async_refresh_device_info()
-            if not ok or self.device._json is None:
-                raise UpdateFailed("Failed to refresh MelView info")
+            await self.device.async_refresh_device_info()
             _LOGGER.debug("Data: %s", json.dumps(self.device._json, indent=2))
             return self.device._json
         except MelViewAuthError as err:

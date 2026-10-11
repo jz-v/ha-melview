@@ -3,8 +3,6 @@
 DOMAIN = "melview"
 MANUFACTURER = "Mitsubishi Electric"
 
-CONF_EMAIL = "email"
-CONF_PASSWORD = "password"
 CONF_LOCAL = "local"
 CONF_SENSOR = "sensor"
 

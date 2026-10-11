@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
-from homeassistant.exceptions import ServiceValidationError
 from homeassistant.util.percentage import (
     ordered_list_item_to_percentage,
     percentage_to_ordered_list_item,
@@ -21,7 +20,6 @@ PARALLEL_UPDATES = 0
 class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
     """Fan entity to control Lossnay ERV units."""
 
-    _attr_has_entity_name = True
     _attr_name = None
     _attr_supported_features = (
         FanEntityFeature.TURN_ON
@@ -35,7 +33,6 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
         self._attr_unique_id = f"{coordinator.get_id()}_lossnay"
         self._attr_preset_modes = list(LOSSNAY_PRESETS)
         self._device = coordinator.device
-        self._last_preset: str = "Lossnay"
         self._speed_codes = sorted(k for k in coordinator.fan if k != 0)
         _LOGGER.debug("Initialised Lossnay fan with speed codes: %s", self._speed_codes)
 
@@ -51,14 +48,12 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
         )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
-        if preset_mode not in LOSSNAY_PRESETS:
-            raise ServiceValidationError(f"Preset mode {preset_mode} not supported")
+        # Home Assistant has already checked preset_mode is in preset_modes
         if not self.is_on:
             await self._async_command(self.coordinator.async_power_on())
         await self._async_command(
             self.coordinator.async_set_lossnay_preset(preset_mode)
         )
-        self._last_preset = preset_mode
         await self.coordinator.async_request_refresh()
 
     async def async_turn_on(

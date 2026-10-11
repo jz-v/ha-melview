@@ -64,10 +64,6 @@ class MelViewAuthentication:
         """Return the shared HTTP session"""
         return self._session
 
-    def is_login(self):
-        """Return login status"""
-        return self._cookie is not None
-
     async def async_login(self):
         """Generate a new login cookie.
 
@@ -161,11 +157,8 @@ class MelViewZone:
 class MelViewDevice:
     """Handler class for a MelView unit"""
 
-    def __init__(
-        self, deviceid, buildingid, friendlyname, authentication, localcontrol=False
-    ):
+    def __init__(self, deviceid, friendlyname, authentication, localcontrol=False):
         self._deviceid = deviceid
-        self._buildingid = buildingid
         self._friendlyname = friendlyname
         self._authentication = authentication
 
@@ -180,9 +173,6 @@ class MelViewDevice:
         self.halfdeg = False
         self.model = None
         self.temp_ranges = {}
-
-    def __str__(self):
-        return str(self._json)
 
     async def async_refresh_device_caps(self):
         self._caps = await self._authentication.async_api_post(
@@ -278,12 +268,6 @@ class MelViewDevice:
 
         return True
 
-    async def async_is_caps_valid(self):
-        if self._caps is None:
-            return await self.async_refresh_device_caps()
-
-        return True
-
     async def async_send_command(self, command):
         """Send a command to the unit; raise if it cannot be sent."""
         _LOGGER.debug("Command issued: %s", command)
@@ -323,9 +307,7 @@ class MelViewDevice:
         return self._friendlyname
 
     def get_unit_type(self):
-        """Return the unit type from capabilities if available."""
-        if self._caps is None:
-            return None
+        """Return the unit type from capabilities."""
         return self._caps.get("unittype")
 
     async def async_get_mode(self):
@@ -421,7 +403,6 @@ class MelView:
 
     def __init__(self, authentication, localcontrol=False):
         self._authentication = authentication
-        self._unitcount = 0
         self._localcontrol = localcontrol
 
     async def async_get_devices_list(self):
@@ -435,15 +416,12 @@ class MelView:
         except Exception as err:  # noqa: BLE001 - any failure means "not ready, retry"
             _LOGGER.error("Device list request failed: %s", err)
             return None
-        if reply is None:
-            return None
 
         devices = []
         for building in reply:
             for unit in building["units"]:
                 device = MelViewDevice(
                     unit["unitid"],
-                    building["buildingid"],
                     unit["room"],
                     self._authentication,
                     self._localcontrol,

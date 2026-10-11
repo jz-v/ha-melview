@@ -12,7 +12,6 @@ from homeassistant.const import (
     ATTR_TEMPERATURE,
     PRECISION_HALVES,
     PRECISION_WHOLE,
-    STATE_OFF,
     UnitOfTemperature,
 )
 
@@ -28,7 +27,6 @@ PARALLEL_UPDATES = 0
 class MelViewClimate(MelViewBaseEntity, ClimateEntity):
     """MelView handler for Home Assistant"""
 
-    _attr_has_entity_name = True
     _attr_name = None
 
     def __init__(self, coordinator: MelViewCoordinator):
@@ -36,9 +34,6 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         self._device = coordinator.device
         device = coordinator.device
 
-        self._enable_turn_on_off_backwards_compatibility = False
-
-        self._name = device.get_friendly_name()
         self._attr_unique_id = device.get_id()
 
         self._operations_list = [x for x in MODE] + [HVACMode.OFF]
@@ -72,19 +67,6 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         ):
             features |= ClimateEntityFeature.TARGET_TEMPERATURE
         return features
-
-    @property
-    def state(self):
-        """Return the current state"""
-        power = self.coordinator.data.get("power", 0)
-        if power == 0:
-            return STATE_OFF
-        return self.hvac_mode
-
-    @property
-    def is_on(self):
-        """Check unit is on"""
-        return self.state != STATE_OFF
 
     @property
     def precision(self):
@@ -164,7 +146,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
     @property
     def hvac_action(self):
         """Get the current action, returns None unless explicitly known."""
-        if self.state == STATE_OFF:
+        if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
         if self.hvac_mode == HVACMode.HEAT:
             if self._device._standby:
