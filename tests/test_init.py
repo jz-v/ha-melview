@@ -280,7 +280,13 @@ async def test_unit_faults_logged_every_poll(
 
     assert hass.states.get(CLIMATE).state != STATE_UNAVAILABLE
     assert caplog.text.count("Unit Ducted AC fault: E6") == 2
-    assert caplog.text.count("Unit Ducted AC error: E7") == 2
+    assert (
+        caplog.text.count(
+            "Unit Ducted AC error: E7. Unexpected value, please raise an issue at "
+            "https://github.com/jz-v/ha-melview/issues\n"
+        )
+        == 2
+    )
 
 
 @pytest.mark.parametrize("status", [401, 503])

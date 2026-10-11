@@ -241,9 +241,8 @@ class MelViewDevice:
             )
         if error != "ok":
             _LOGGER.warning(
-                "Unit %s error: %s"
-                "Unexpected value: please raise an Issue in the GitHub repository:"
-                "https://github.com/jz-v/ha-melview/issues)",
+                "Unit %s error: %s. Unexpected value, please raise an issue at "
+                "https://github.com/jz-v/ha-melview/issues",
                 self.get_friendly_name(),
                 error,
             )
