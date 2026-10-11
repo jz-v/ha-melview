@@ -97,24 +97,14 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         return UnitOfTemperature.CELSIUS
 
     @property
-    def current_temperature(self) -> float:
+    def current_temperature(self) -> float | None:
         """Get the current room temperature"""
-        val = self.coordinator.data.get("roomtemp", 0)
-        try:
-            return float(val)
-        except (TypeError, ValueError):
-            _LOGGER.error("Invalid temperature value: %s", val)
-            return 0.0
+        return self._data_float("roomtemp")
 
     @property
     def target_temperature(self) -> float | None:
         """Get the target temperature"""
-        val = self.coordinator.data.get("settemp")
-        try:
-            return float(val)
-        except (TypeError, ValueError):
-            _LOGGER.error("Invalid target temperature value: %s", val)
-            return None
+        return self._data_float("settemp")
 
     @property
     def min_temp(self) -> float:

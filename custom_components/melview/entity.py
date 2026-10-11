@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable
 
 from aiohttp import ClientError
@@ -10,6 +11,8 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, MANUFACTURER
 from .coordinator import MelViewCoordinator
 from .melview import MelViewAuthError, MelViewError, MelViewValidationError
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class MelViewBaseEntity(CoordinatorEntity[MelViewCoordinator]):
@@ -26,6 +29,17 @@ class MelViewBaseEntity(CoordinatorEntity[MelViewCoordinator]):
             manufacturer=MANUFACTURER,
             model=getattr(device, "model", None),
         )
+
+    def _data_float(self, key: str) -> float | None:
+        """Return a numeric value from the unit data, or None if missing or invalid."""
+        value = (self.coordinator.data or {}).get(key)
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            _LOGGER.error("Invalid %s value: %s", key, value)
+            return None
 
     async def _async_command(self, command: Awaitable[None]) -> None:
         """Await a device command, raising Home Assistant errors on failure."""

@@ -65,8 +65,7 @@ class MelViewCurrentTempSensor(MelViewBaseEntity, SensorEntity):
     @property
     def native_value(self):
         """Return the current room temperature from cached data."""
-        data = self.coordinator.data or {}
-        return float(data.get("roomtemp", 0))
+        return self._data_float("roomtemp")
 
 
 class MelViewOutdoorTempSensor(MelViewBaseEntity, SensorEntity):
@@ -85,8 +84,7 @@ class MelViewOutdoorTempSensor(MelViewBaseEntity, SensorEntity):
 
     @property
     def native_value(self):
-        data = self.coordinator.data or {}
-        return float(data.get("outdoortemp", 0))
+        return self._data_float("outdoortemp")
 
 
 class MelViewSupplyTempSensor(MelViewBaseEntity, SensorEntity):
@@ -105,10 +103,11 @@ class MelViewSupplyTempSensor(MelViewBaseEntity, SensorEntity):
 
     @property
     def native_value(self):
-        data = self.coordinator.data or {}
-        room = float(data.get("roomtemp", 0))
-        outdoor = float(data.get("outdoortemp", 0))
-        efficiency = float(data.get("coreefficiency", 0))
+        room = self._data_float("roomtemp")
+        outdoor = self._data_float("outdoortemp")
+        efficiency = self._data_float("coreefficiency")
+        if room is None or outdoor is None or efficiency is None:
+            return None
         return round(outdoor + efficiency * (room - outdoor), 1)
 
 
@@ -128,8 +127,7 @@ class MelViewExhaustTempSensor(MelViewBaseEntity, SensorEntity):
 
     @property
     def native_value(self):
-        data = self.coordinator.data or {}
-        return float(data.get("exhausttemp", 0))
+        return self._data_float("exhausttemp")
 
 
 class MelViewCoreEfficiencySensor(MelViewBaseEntity, SensorEntity):
@@ -147,5 +145,7 @@ class MelViewCoreEfficiencySensor(MelViewBaseEntity, SensorEntity):
 
     @property
     def native_value(self):
-        data = self.coordinator.data or {}
-        return round(float(data.get("coreefficiency", 0)) * 100, 1)
+        efficiency = self._data_float("coreefficiency")
+        if efficiency is None:
+            return None
+        return round(efficiency * 100, 1)
