@@ -45,8 +45,12 @@ def no_units(api: MelViewApi) -> None:
     api.login_json = {"userunits": 0}
 
 
-def unreadable_units(api: MelViewApi) -> None:
+def missing_units(api: MelViewApi) -> None:
     api.login_json = {}
+
+
+def unreadable_units(api: MelViewApi) -> None:
+    api.login_json = {"userunits": "many"}
 
 
 def restore(api: MelViewApi) -> None:
@@ -86,6 +90,7 @@ async def test_user_flow(
         (network_error, "cannot_connect"),
         (timeout, "cannot_connect"),
         (no_units, "no_units"),
+        (missing_units, "unknown"),
         (unreadable_units, "unknown"),
     ],
 )

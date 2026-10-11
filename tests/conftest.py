@@ -9,6 +9,7 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from homeassistant.config_entries import SOURCE_REAUTH
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -53,6 +54,7 @@ class MelViewApi:
         self.unit = load_fixture("unitcommand.json")
         self.login_status = 200
         self.login_json: dict[str, Any] = {"userunits": 1}
+        self.login_headers: dict[str, str] = {}
         # Number of logins to accept before rejecting the credentials; None
         # accepts every login.
         self.accept_logins: int | None = None
@@ -63,6 +65,8 @@ class MelViewApi:
         self.status_once: dict[str, list[int]] = {}
         # Endpoint -> exception raised instead of responding
         self.errors: dict[str, Exception] = {}
+        # Key returned with each command for sending it over the LAN
+        self.local_command: str | None = "LOCALCMD"
 
         aioclient_mock.post(f"{API_URL}/login.aspx", side_effect=self._login)
         for endpoint in ("rooms.aspx", "unitcapabilities.aspx", "unitcommand.aspx"):
@@ -81,7 +85,9 @@ class MelViewApi:
     @property
     def local_commands(self) -> list[str]:
         """Payloads sent to the unit over the LAN."""
-        return [data for _, url, data, _ in self._mock.mock_calls if url == LOCAL_URL]
+        return [
+            data for _, url, data, _ in self._mock.mock_calls if str(url) == LOCAL_URL
+        ]
 
     def _status(self, endpoint: str) -> int:
         if queued := self.status_once.get(endpoint):
@@ -98,6 +104,7 @@ class MelViewApi:
             url,
             status=self.login_status,
             json=self.login_json,
+            headers=self.login_headers,
             # MelView rejects credentials with a 200 and an empty auth cookie
             cookies={"auth": f"cookie-{self.login_count}" if accepted else ""},
         )
@@ -112,9 +119,12 @@ class MelViewApi:
         elif endpoint == "unitcapabilities.aspx":
             body = self.caps
         else:
+            body = dict(self.unit)
             if status == 200 and "commands" in data:
                 self._apply(data["commands"])
-            body = {**self.unit, "lc": "LOCALCMD"}
+                body = dict(self.unit)
+                if self.local_command is not None:
+                    body["lc"] = self.local_command
         return AiohttpClientMockResponse(method, url, status=status, json=body)
 
     async def _local(self, method, url, data) -> AiohttpClientMockResponse:
@@ -149,6 +159,7 @@ def melview_api(aioclient_mock: AiohttpClientMocker) -> MelViewApi:
 @pytest.fixture
 def erv_api(melview_api: MelViewApi) -> MelViewApi:
     """Return the fake MelView API with a Lossnay ERV unit."""
+    melview_api.rooms[0]["units"][0]["room"] = "Lossnay"
     melview_api.caps.update(unittype="ERV", modelname="LGH-F300RVX", fanstage=4)
     melview_api.caps["hasautofan"] = 0
     melview_api.unit.update(
@@ -171,6 +182,26 @@ def config_entry() -> MockConfigEntry:
         unique_id=EMAIL,
         data={CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD},
         options={CONF_LOCAL: False, CONF_SENSOR: True},
+    )
+
+
+@pytest.fixture
+def local_config_entry(config_entry: MockConfigEntry) -> MockConfigEntry:
+    """Return a MelView config entry with local commands on."""
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title=EMAIL,
+        unique_id=EMAIL,
+        data=config_entry.data,
+        options={**config_entry.options, CONF_LOCAL: True},
+    )
+
+
+def reauth_started(hass: HomeAssistant) -> bool:
+    """Return whether a reauth flow is in progress."""
+    return any(
+        flow["context"]["source"] == SOURCE_REAUTH
+        for flow in hass.config_entries.flow.async_progress()
     )
 
 
