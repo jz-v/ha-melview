@@ -63,6 +63,10 @@ Devices include a **fan entity** with adjustable speed and presets, as well as a
 
 Support is experimental due to limited testing. If you encounter a problem please open an Issue and include debug logs.
 
+## Removal
+1. **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Delete**.
+2. To remove the files as well, open HACS, find **Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Remove**, then restart Home Assistant.
+
 ## Attributions
  - Forked from https://github.com/haggis663/ha-melview (WTFPL licensed)
  - Original repository https://github.com/zacharyrs/ha-melview (WTFPL licensed)
