@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 
 import voluptuous as vol
@@ -66,7 +65,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     email, password, async_get_clientsession(self.hass)
                 )
                 valid = await auth.async_login()
-        except (ClientError, asyncio.TimeoutError, MelViewError) as e:
+        except (TimeoutError, ClientError, MelViewError) as e:
             _LOGGER.error("MelView auth error during config flow: %r", e)
             error = "cannot_connect"
             valid = False
@@ -164,7 +163,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                         async_get_clientsession(self.hass),
                     )
                     valid = await auth.async_login()
-            except (ClientError, asyncio.TimeoutError, MelViewError) as e:
+            except (TimeoutError, ClientError, MelViewError) as e:
                 _LOGGER.error("MelView auth error during reconfigure: %r", e)
                 valid = False
                 error = "cannot_connect"
@@ -211,7 +210,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                         async_get_clientsession(self.hass),
                     )
                     valid = await auth.async_login()
-            except (ClientError, asyncio.TimeoutError, MelViewError) as e:
+            except (TimeoutError, ClientError, MelViewError) as e:
                 _LOGGER.error("MelView auth error during reauth: %r", e)
                 self._errors["base"] = "cannot_connect"
             else:
