@@ -322,49 +322,11 @@ class MelViewDevice:
         """Get customised device name"""
         return self._friendlyname
 
-    async def async_get_precision_halves(self) -> bool:
-        """Get unit support for half-degree steps"""
-        if not await self.async_is_caps_valid():
-            return False
-
-        return self._caps.get("halfdeg") == 1
-
-    async def async_get_temperature(self):
-        """Get set temperature"""
-        if not await self.async_is_info_valid():
-            return 0
-
-        return float(self._json["settemp"])
-
-    async def async_get_room_temperature(self):
-        """Get current room temperature"""
-        if not await self.async_is_info_valid():
-            return 0
-        return self._json.get("roomtemp", 0)
-
-    def get_outside_temperature(self):
-        """Get current outside temperature"""
-        if "hasoutdoortemp" not in self._caps or self._caps["hasoutdoortemp"] == 0:
-            _LOGGER.error("Outdoor temperature not supported")
-            return 0
-        return self._json.get("outdoortemp", 0)
-
     def get_unit_type(self):
         """Return the unit type from capabilities if available."""
         if self._caps is None:
             return None
         return self._caps.get("unittype")
-
-    async def async_get_speed(self):
-        """Get the set fan speed"""
-        if not await self.async_is_info_valid():
-            return "auto"
-
-        for key, val in self.fan_keyed.items():
-            if self._json["setfan"] == val:
-                return key
-
-        return "auto"
 
     async def async_get_mode(self):
         """Get the set mode (reported even when the unit is off)"""
