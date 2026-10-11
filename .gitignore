@@ -3,3 +3,7 @@ custom_components/.DS_Store
 __pycache__/
 .mypy_cache/
 *.pyc
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/

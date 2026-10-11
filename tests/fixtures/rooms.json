@@ -1,0 +1,20 @@
+[
+  {
+    "buildingid": "200001",
+    "building": "Home",
+    "bschedule": "0",
+    "units": [
+      {
+        "room": "Ducted AC",
+        "unitid": "100001",
+        "power": "on",
+        "wifi": "3",
+        "mode": "1",
+        "temp": "20",
+        "settemp": "20",
+        "status": "",
+        "schedule1": 0
+      }
+    ]
+  }
+]

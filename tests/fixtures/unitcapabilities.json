@@ -1,0 +1,32 @@
+{
+  "id": "100001",
+  "modelid": "1281",
+  "modelname": "PEA-M140HAA",
+  "unitname": "Ducted AC",
+  "unittype": "ATA",
+  "fault": "",
+  "userunits": 1,
+  "modeltype": 3,
+  "multi": 0,
+  "omnicore": 0,
+  "halfdeg": 1,
+  "adaptortype": "mac568",
+  "addons": "",
+  "localip": "192.0.2.10",
+  "fanstage": 4,
+  "hasairdir": 0,
+  "hasswing": 0,
+  "hasautomode": 1,
+  "hascoolonly": 0,
+  "hasautofan": 1,
+  "hasdrymode": 1,
+  "hasairauto": 1,
+  "hasairdirh": 0,
+  "max": {
+    "3": {"min": 19, "max": 30},
+    "1": {"min": 17, "max": 28},
+    "8": {"min": 19, "max": 28}
+  },
+  "time": "21: 34 Fri",
+  "error": "ok"
+}

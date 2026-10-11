@@ -1,0 +1,18 @@
+{
+  "id": "100001",
+  "power": 1,
+  "standby": 0,
+  "setmode": 1,
+  "automode": 0,
+  "setfan": 3,
+  "settemp": "20",
+  "roomtemp": "21.5",
+  "airdir": 5,
+  "airdirh": 0,
+  "fault": "",
+  "error": "ok",
+  "zones": [
+    {"zoneid": 1, "name": "Lounge", "status": 1},
+    {"zoneid": 2, "name": "Bedroom", "status": 0}
+  ]
+}
