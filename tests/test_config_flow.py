@@ -53,6 +53,10 @@ def unreadable_units(api: MelViewApi) -> None:
     api.login_json = {"userunits": "many"}
 
 
+def unexpected_error(api: MelViewApi) -> None:
+    api.errors["login.aspx"] = RuntimeError("Something unexpected")
+
+
 def restore(api: MelViewApi) -> None:
     api.accept_logins = None
     api.login_status = 200
@@ -92,6 +96,7 @@ async def test_user_flow(
         (no_units, "no_units"),
         (missing_units, "unknown"),
         (unreadable_units, "unknown"),
+        (unexpected_error, "unknown"),
     ],
 )
 async def test_user_flow_errors(
@@ -111,6 +116,12 @@ async def test_user_flow_errors(
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": error}
+    # The form keeps what was entered, apart from the password
+    assert {
+        key.schema: key.description["suggested_value"]
+        for key in result["data_schema"].schema
+        if key.description
+    } == {CONF_EMAIL: EMAIL, CONF_LOCAL: True, CONF_SENSOR: False}
 
     restore(melview_api)
     result = await hass.config_entries.flow.async_configure(
@@ -193,7 +204,7 @@ async def test_reconfigure_flow(
         result["flow_id"], {CONF_PASSWORD: "new-password"}
     )
     assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "password_change_success"
+    assert result["reason"] == "reconfigure_successful"
     assert config_entry.data == {CONF_EMAIL: EMAIL, CONF_PASSWORD: "new-password"}
 
 

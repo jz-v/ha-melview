@@ -3,8 +3,8 @@
     "config": {
         "abort": {
             "already_configured": "Integration already configured for this email.",
-            "password_change_success": "Password updated successfully.",
-            "reauth_successful": "Re-authentication successful."
+            "reauth_successful": "Re-authentication successful.",
+            "reconfigure_successful": "Password updated successfully."
         },
         "error": {
             "invalid_auth": "Invalid authentication.",
@@ -21,6 +21,8 @@
                     "sensor": "Current temperature"
                 },
                 "data_description": {
+                    "email": "The email you use to log in to the Mitsubishi Electric Wi-Fi Control app.",
+                    "password": "The password for that account.",
                     "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands.",
                     "sensor": "Create sensor entities for room temperature, plus air temperature and core efficiency sensors for Lossnay units."
                 },
@@ -31,12 +33,18 @@
                 "data": {
                     "password": "Password"
                 },
+                "data_description": {
+                    "password": "The new password for your Mitsubishi Electric Wi-Fi Control account."
+                },
                 "description": "Update password for {email}",
                 "title": "Update Password"
             },
             "reauth_confirm": {
                 "data": {
                     "password": "Password"
+                },
+                "data_description": {
+                    "password": "The current password for your Mitsubishi Electric Wi-Fi Control account."
                 },
                 "description": "Mitsubishi Electric Wi-Fi Control rejected the saved password for {email}. Enter the current password.",
                 "title": "Re-authenticate"

@@ -11,11 +11,31 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import (
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
+)
 
 from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 from .melview import MelViewAuthentication, MelViewError
 
 _LOGGER = logging.getLogger(__name__)
+
+PASSWORD_SELECTOR = TextSelector(
+    TextSelectorConfig(type=TextSelectorType.PASSWORD, autocomplete="current-password")
+)
+USER_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_EMAIL): TextSelector(
+            TextSelectorConfig(type=TextSelectorType.EMAIL, autocomplete="username")
+        ),
+        vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
+        vol.Required(CONF_LOCAL, default=True): bool,
+        vol.Required(CONF_SENSOR, default=True): bool,
+    }
+)
+PASSWORD_SCHEMA = vol.Schema({vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR})
 
 
 class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -52,11 +72,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         sensor: bool,
     ):
         """Create client and validate credentials."""
-        if password is None and email is None:
-            raise ValueError(
-                "Invalid internal state. Called without either password or email"
-            )
-
         valid = False
         error = "invalid_auth"
         try:
@@ -69,74 +84,37 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.error("MelView auth error during config flow: %r", e)
             error = "cannot_connect"
             valid = False
-        except Exception:  # pragma: no cover - unexpected
+        except Exception:
             _LOGGER.exception("Unexpected MelView error during config flow")
             error = "unknown"
             valid = False
 
-        if not valid:
-            self._errors = {"base": error}
-            return self.async_show_form(
-                step_id="user",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(CONF_EMAIL, default=email): str,
-                        vol.Required(CONF_PASSWORD): str,
-                        vol.Required(CONF_LOCAL, default=True): bool,
-                        vol.Required(CONF_SENSOR, default=True): bool,
-                    }
-                ),
-                errors=self._errors,
-            )
+        if valid:
+            units = auth.number_units()
+            if units is False:
+                error = "unknown"
+            elif units == 0:
+                error = "no_units"
+            else:
+                return await self._create_entry(email, password, local, sensor)
 
-        units = auth.number_units()
-        if units is False:
-            self._errors = {"base": "unknown"}
-            return self.async_show_form(
-                step_id="user",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(CONF_EMAIL, default=email): str,
-                        vol.Required(CONF_PASSWORD): str,
-                        vol.Required(CONF_LOCAL, default=True): bool,
-                        vol.Required(CONF_SENSOR, default=True): bool,
-                    }
-                ),
-                errors=self._errors,
-            )
-        if units == 0:
-            self._errors = {"base": "no_units"}
-            return self.async_show_form(
-                step_id="user",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(CONF_EMAIL, default=email): str,
-                        vol.Required(CONF_PASSWORD): str,
-                        vol.Required(CONF_LOCAL, default=True): bool,
-                        vol.Required(CONF_SENSOR, default=True): bool,
-                    }
-                ),
-                errors=self._errors,
-            )
-
-        return await self._create_entry(email, password, local, sensor)
+        self._errors = {"base": error}
+        # Show the form again with what the user entered, except the password
+        return self.async_show_form(
+            step_id="user",
+            data_schema=self.add_suggested_values_to_schema(
+                USER_SCHEMA,
+                {CONF_EMAIL: email, CONF_LOCAL: local, CONF_SENSOR: sensor},
+            ),
+            errors=self._errors,
+        )
 
     async def async_step_user(self, user_input=None):
         """User initiated config flow."""
         self._errors = {}
 
         if user_input is None:
-            return self.async_show_form(
-                step_id="user",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(CONF_EMAIL): str,
-                        vol.Required(CONF_PASSWORD): str,
-                        vol.Required(CONF_LOCAL, default=True): bool,
-                        vol.Required(CONF_SENSOR, default=True): bool,
-                    }
-                ),
-            )
+            return self.async_show_form(step_id="user", data_schema=USER_SCHEMA)
 
         email = user_input[CONF_EMAIL].strip().lower()
         return await self._create_client(
@@ -172,7 +150,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 self._errors["base"] = error
                 return self.async_show_form(
                     step_id="reconfigure",
-                    data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+                    data_schema=PASSWORD_SCHEMA,
                     errors=self._errors,
                     description_placeholders={"email": email},
                 )
@@ -180,13 +158,11 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data = dict(entry.data)
             data[CONF_PASSWORD] = user_input[CONF_PASSWORD]
 
-            return self.async_update_reload_and_abort(
-                entry, data=data, reason="password_change_success"
-            )
+            return self.async_update_reload_and_abort(entry, data=data)
 
         return self.async_show_form(
             step_id="reconfigure",
-            data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+            data_schema=PASSWORD_SCHEMA,
             description_placeholders={"email": email},
         )
 
@@ -224,7 +200,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+            data_schema=PASSWORD_SCHEMA,
             errors=self._errors,
             description_placeholders={"email": email},
         )
