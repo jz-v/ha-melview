@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 import time
 
 from aiohttp import ClientSession
@@ -13,6 +12,9 @@ _LOGGER = logging.getLogger(__name__)
 
 LOCAL_DATA = """<?xml version="1.0" encoding="UTF-8"?>
 <ESV>{}</ESV>"""
+
+# Personal details in the login response, left out of debug logs
+LOGIN_PERSONAL_FIELDS = ("fullname", "countryinfo")
 
 MODE = {
     HVACMode.AUTO: 8,
@@ -83,27 +85,30 @@ class MelViewAuthentication:
             headers=HEADERS,
         ) as req:
             status = req.status
-            headers = dict(req.headers)
             auth = req.cookies.get("auth")
             if status == 200:
                 self._login_json = await req.json()
-        if "Set-Cookie" in headers:
-            headers["Set-Cookie"] = re.sub(
-                r"auth=([^;]*)",
-                lambda m: f"auth={m[1][:8]}...({len(m[1])} chars)",
-                headers["Set-Cookie"],
-            )
         _LOGGER.debug("Login status code: %d", status)
-        _LOGGER.debug("Login response headers:\n%s", json.dumps(headers, indent=2))
-        _LOGGER.debug(
-            "Login response json:\n%s", json.dumps(self._login_json, indent=2)
-        )
         if status != 200:
             raise MelViewError(f"Login failed (status {status})")
+        _LOGGER.debug(
+            "Login response json:\n%s",
+            json.dumps(
+                {
+                    key: value
+                    for key, value in self._login_json.items()
+                    if key not in LOGIN_PERSONAL_FIELDS
+                },
+                indent=2,
+            ),
+        )
         # Rejected credentials still return 200, but with an empty auth cookie
         if auth is None or not auth.value:
             _LOGGER.debug("Login rejected (empty auth cookie)")
             return False
+        _LOGGER.debug(
+            "Auth cookie obtained: %s... (%d chars)", auth.value[:8], len(auth.value)
+        )
         self._cookie = auth.value
         return True
 

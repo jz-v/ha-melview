@@ -54,7 +54,6 @@ class MelViewApi:
         self.unit = load_fixture("unitcommand.json")
         self.login_status = 200
         self.login_json: dict[str, Any] = {"userunits": 1}
-        self.login_headers: dict[str, str] = {}
         # Number of logins to accept before rejecting the credentials; None
         # accepts every login.
         self.accept_logins: int | None = None
@@ -72,6 +71,11 @@ class MelViewApi:
         for endpoint in ("rooms.aspx", "unitcapabilities.aspx", "unitcommand.aspx"):
             aioclient_mock.post(f"{API_URL}/{endpoint}", side_effect=self._api)
         aioclient_mock.post(LOCAL_URL, side_effect=self._local)
+
+    @property
+    def cookie(self) -> str:
+        """Auth cookie issued by the latest login."""
+        return f"cookie-{self.login_count}-0123456789abcdefghij"
 
     @property
     def commands(self) -> list[str]:
@@ -104,9 +108,8 @@ class MelViewApi:
             url,
             status=self.login_status,
             json=self.login_json,
-            headers=self.login_headers,
             # MelView rejects credentials with a 200 and an empty auth cookie
-            cookies={"auth": f"cookie-{self.login_count}" if accepted else ""},
+            cookies={"auth": self.cookie if accepted else ""},
         )
 
     async def _api(self, method, url, data) -> AiohttpClientMockResponse:

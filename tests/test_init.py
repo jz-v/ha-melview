@@ -197,19 +197,29 @@ async def test_yaml_config_warns_once(
     assert caplog.text.count("YAML configuration for melview") == 1
 
 
-async def test_auth_cookie_masked_in_debug_log(
+async def test_login_debug_log(
     hass: HomeAssistant,
     melview_api: MelViewApi,
     config_entry: MockConfigEntry,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Debug logs show only the start of the auth cookie."""
+    """Debug logs mask the auth cookie and leave out personal details."""
     caplog.set_level(logging.DEBUG, logger="custom_components.melview")
-    melview_api.login_headers = {"Set-Cookie": "auth=0123456789abcdef; path=/"}
+    melview_api.login_json = {
+        "id": 123456,
+        "userunits": 1,
+        "fullname": "Jane Citizen",
+        "countryinfo": {"country": "AU"},
+    }
     await setup_entry(hass, config_entry)
 
-    assert "auth=01234567...(16 chars); path=/" in caplog.text
-    assert "0123456789abcdef" not in caplog.text
+    assert "Auth cookie obtained: cookie-1... (29 chars)" in caplog.text
+    assert melview_api.cookie not in caplog.text
+    assert '"id": 123456' in caplog.text
+    assert '"userunits": 1' in caplog.text
+    assert "Jane Citizen" not in caplog.text
+    assert "countryinfo" not in caplog.text
+    assert "Login response headers" not in caplog.text
 
 
 async def test_unit_capability_warnings(

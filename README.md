@@ -75,7 +75,7 @@ Always attach a diagnostics download to a [new issue](https://github.com/jz-v/ha
 1. **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Download diagnostics**. For a problem with one unit, use **Download diagnostics** on that unit's device page instead.
 2. Attach the downloaded file to the issue. Your email, password and zone names are left out automatically; unit names, unit IDs and the unit's local IP address are included.
 
-If the problem is an error or unexpected behaviour, also include debug logs: from the same **⋮** menu choose **Enable debug logging**, reproduce the problem, then choose **Disable debug logging** and attach the file that downloads. Debug logs are not redacted, so check them for personal details first.
+If the problem is an error or unexpected behaviour, also include debug logs: from the same **⋮** menu choose **Enable debug logging**, reproduce the problem, then choose **Disable debug logging** and attach the file that downloads. Debug logs leave out your password and name, but can include your email address and unit and zone names; remove as you see fit.
 
 ## Removal
 1. **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Delete**.
