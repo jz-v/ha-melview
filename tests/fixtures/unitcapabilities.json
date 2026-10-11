@@ -28,5 +28,10 @@
     "8": {"min": 19, "max": 28}
   },
   "time": "21: 34 Fri",
-  "error": "ok"
+  "error": "ok",
+  "zones": [
+    {"zoneid": 1, "name": "Lounge", "status": 1, "display": 1},
+    {"zoneid": 2, "name": "Bedroom", "status": 0, "display": 1},
+    {"zoneid": 3, "name": "Zone 3", "status": 0, "display": 0}
+  ]
 }

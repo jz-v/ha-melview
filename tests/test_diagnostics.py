@@ -15,13 +15,11 @@ from custom_components.melview.const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 
 from .conftest import EMAIL, LOCAL_IP, PASSWORD, UNIT_ID, MelViewApi, setup_entry
 
-REDACTED = "**REDACTED**"
 
-
-def assert_nothing_sensitive(diagnostics: dict) -> None:
-    """Check no credential, IP or ID appears anywhere in the download."""
+def assert_no_credentials(diagnostics: dict) -> None:
+    """Check the email, password and auth cookie appear nowhere in the download."""
     text = json.dumps(diagnostics)
-    for secret in (EMAIL, PASSWORD, LOCAL_IP, UNIT_ID, "cookie-"):
+    for secret in (EMAIL, PASSWORD, "cookie-"):
         assert secret not in text
 
 
@@ -30,27 +28,26 @@ async def test_config_entry_diagnostics(
     hass_client: ClientSessionGenerator,
     init_integration: MockConfigEntry,
 ) -> None:
-    """The download covers the account and each unit, with secrets removed."""
+    """The download covers the account and each unit, without credentials."""
     diagnostics = await get_diagnostics_for_config_entry(
         hass, hass_client, init_integration
     )
 
-    assert_nothing_sensitive(diagnostics)
+    assert_no_credentials(diagnostics)
     entry = diagnostics["entry"]
-    assert entry["title"] == REDACTED
-    assert entry["unique_id"] == REDACTED
-    assert entry["data"] == {"email": REDACTED, "password": REDACTED}
+    assert "title" not in entry
+    assert "unique_id" not in entry
+    assert entry["data"] == {}
     assert entry["options"] == {CONF_LOCAL: False, CONF_SENSOR: True}
     assert diagnostics["account"] == {"units_reported": 1, "units_set_up": 1}
 
     [unit] = diagnostics["units"]
     assert unit["name"] == "Ducted AC"
-    assert unit["capabilities"]["id"] == REDACTED
+    assert unit["capabilities"]["id"] == UNIT_ID
     assert unit["capabilities"]["modelname"] == "PEA-M140HAA"
-    assert unit["capabilities"]["localip"] == REDACTED
-    assert unit["data"]["id"] == REDACTED
+    assert unit["capabilities"]["localip"] == LOCAL_IP
+    assert unit["data"]["id"] == UNIT_ID
     assert unit["data"]["roomtemp"] == "21.5"
-    assert unit["data"]["zones"][0] == {"zoneid": 1, "name": "Lounge", "status": 1}
     assert unit["fan_speeds"] == {
         "2": "low",
         "3": "medium",
@@ -59,9 +56,53 @@ async def test_config_entry_diagnostics(
         "0": "auto",
     }
     assert unit["temperature_ranges"]["heat"] == {"min": 17, "max": 28}
-    assert unit["local_ip_found"] is False
     assert unit["last_update_success"] is True
     assert unit["last_error"] is None
+
+
+async def test_zone_names_left_out(
+    hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
+    init_integration: MockConfigEntry,
+) -> None:
+    """Zones show number and status only; names can be people's names."""
+    diagnostics = await get_diagnostics_for_config_entry(
+        hass, hass_client, init_integration
+    )
+
+    [unit] = diagnostics["units"]
+    assert unit["capabilities"]["zones"][0] == {
+        "zoneid": 1,
+        "status": 1,
+        "display": 1,
+    }
+    assert unit["data"]["zones"] == [
+        {"zoneid": 1, "status": 1},
+        {"zoneid": 2, "status": 0},
+    ]
+    assert "Lounge" not in json.dumps(diagnostics)
+    # The live data the zone switches use still has the names
+    assert init_integration.runtime_data[0].data["zones"][0]["name"] == "Lounge"
+    assert hass.states.get("switch.ducted_ac_zone_lounge")
+
+
+async def test_unit_without_zones(
+    hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+) -> None:
+    """Units without zones are included as reported."""
+    del melview_api.caps["zones"], melview_api.unit["zones"]
+    await setup_entry(hass, config_entry)
+
+    diagnostics = await get_diagnostics_for_config_entry(
+        hass, hass_client, config_entry
+    )
+
+    [unit] = diagnostics["units"]
+    assert "zones" not in unit["capabilities"]
+    assert "zones" not in unit["data"]
 
 
 async def test_diagnostics_during_outage(
@@ -84,23 +125,6 @@ async def test_diagnostics_during_outage(
     assert unit["data"]["roomtemp"] == "21.5"
 
 
-async def test_diagnostics_with_local_commands(
-    hass: HomeAssistant,
-    hass_client: ClientSessionGenerator,
-    melview_api: MelViewApi,
-    local_config_entry: MockConfigEntry,
-) -> None:
-    """With local commands on, diagnostics say an IP was found but not what it is."""
-    await setup_entry(hass, local_config_entry)
-
-    diagnostics = await get_diagnostics_for_config_entry(
-        hass, hass_client, local_config_entry
-    )
-
-    assert_nothing_sensitive(diagnostics)
-    assert diagnostics["units"][0]["local_ip_found"] is True
-
-
 async def test_device_diagnostics(
     hass: HomeAssistant,
     hass_client: ClientSessionGenerator,
@@ -115,7 +139,7 @@ async def test_device_diagnostics(
         hass, hass_client, init_integration, device
     )
 
-    assert_nothing_sensitive(diagnostics)
-    assert diagnostics["entry"]["data"] == {"email": REDACTED, "password": REDACTED}
+    assert_no_credentials(diagnostics)
+    assert diagnostics["entry"]["data"] == {}
     assert diagnostics["unit"]["name"] == "Ducted AC"
     assert diagnostics["unit"]["capabilities"]["modelname"] == "PEA-M140HAA"
