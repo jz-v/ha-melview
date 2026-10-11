@@ -7,6 +7,8 @@ from .entity import MelViewBaseEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
     """MelView zone switch handler for Home Assistant"""

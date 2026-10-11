@@ -14,6 +14,8 @@ from .melview import LOSSNAY_PRESETS
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
     """Fan entity to control Lossnay ERV units."""

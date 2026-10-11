@@ -22,6 +22,8 @@ from .melview import MODE
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 class MelViewClimate(MelViewBaseEntity, ClimateEntity):
     """MelView handler for Home Assistant"""
