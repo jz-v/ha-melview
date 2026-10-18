@@ -141,6 +141,24 @@ async def test_unknown_fan_code(
     assert "Fan code 4 not present in available modes" in caplog.text
 
 
+async def test_no_fan_control(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A unit with fanstage 0, like an air-to-water unit, has no fan modes."""
+    melview_api.caps.update(fanstage=0, hasautofan=0)
+    melview_api.unit["setfan"] = 0
+    await setup_entry(hass, config_entry)
+
+    state = hass.states.get(CLIMATE)
+    assert not state.attributes[ATTR_SUPPORTED_FEATURES] & ClimateEntityFeature.FAN_MODE
+    assert ATTR_FAN_MODE not in state.attributes
+    assert ATTR_FAN_MODES not in state.attributes
+    assert "not present in available modes" not in caplog.text
+
+
 @pytest.mark.parametrize(
     ("service", "data", "commands"),
     [

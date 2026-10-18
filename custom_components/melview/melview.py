@@ -25,6 +25,7 @@ MODE = {
 }
 
 FANSTAGES = {
+    0: {},
     1: {5: "on"},
     2: {2: "low", 5: "high"},
     3: {2: "low", 3: "medium", 5: "high"},
@@ -174,7 +175,7 @@ class MelViewDevice:
         self._standby = 0
         self._zones = {}
 
-        self.fan = FANSTAGES[3]
+        self.fan = dict(FANSTAGES[3])
         self.halfdeg = False
         self.model = None
         self.temp_ranges = {}
@@ -186,7 +187,8 @@ class MelViewDevice:
         _LOGGER.debug("Unit capabilities: %s", json.dumps(self._caps, indent=2))
         if self._localip and "localip" in self._caps:
             self._localip = self._caps["localip"]
-        if self._caps["fanstage"]:
+        # Fanstage 0 means the unit has no fan control, e.g. air-to-water units
+        if self._caps.get("fanstage") in FANSTAGES:
             self.fan = dict(FANSTAGES[self._caps["fanstage"]])
         if "hasautofan" in self._caps and self._caps["hasautofan"] == 1:
             self.fan[0] = "auto"

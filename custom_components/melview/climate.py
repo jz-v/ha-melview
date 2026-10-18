@@ -54,11 +54,9 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
     @property
     def supported_features(self):
         """Let HASS know feature support"""
-        features = (
-            ClimateEntityFeature.FAN_MODE
-            | ClimateEntityFeature.TURN_ON
-            | ClimateEntityFeature.TURN_OFF
-        )
+        features = ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
+        if self._device.fan:
+            features |= ClimateEntityFeature.FAN_MODE
         if self._set_mode in (
             HVACMode.AUTO,
             HVACMode.HEAT,
