@@ -1,4 +1,5 @@
 {
   "name": "Mitsubishi Electric Wi-Fi Control (AU/NZ)",
-  "country": ["AU","NZ"]
+  "country": ["AU","NZ"],
+  "homeassistant": "2025.8.0"
 }
