@@ -208,8 +208,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return OptionsFlowHandler(config_entry)
 
 
-class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle options flow for MelView."""
+class OptionsFlowHandler(config_entries.OptionsFlowWithReload):
+    """Handle options flow for MelView; saving changed options reloads the entry."""
 
     def __init__(self, config_entry):
         """Initialize MelView options flow."""

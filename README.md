@@ -37,7 +37,7 @@ Setup asks for:
  - **Local commands (faster)**: also send commands to the adapter over LAN, see [About 'local commands'](#about-local-commands). Default: on.
  - **Current temperature**: create sensor entities for room temperature (and the [Lossnay sensors](#lossnay-support)). Default: on.
 
-Local commands and Current temperature can be changed later under **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control → Configure**. Reload the integration for changes to take effect.
+Local commands and Current temperature can be changed later under **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control → Configure**. Changes apply as soon as they are saved.
 
 ## Compatible devices
 This integration is intended to work with any AU/NZ region Wi-Fi adapter connecting to the melview API:

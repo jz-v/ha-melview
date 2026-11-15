@@ -224,6 +224,24 @@ async def test_options_moved_out_of_data(
     assert entry.options == {CONF_LOCAL: False, CONF_SENSOR: False}
 
 
+async def test_saving_options_reloads(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """Changed options apply as soon as they are saved."""
+    sensor = "sensor.ducted_ac_current_temperature"
+    assert hass.states.get(sensor).state == "21.5"
+
+    result = await hass.config_entries.options.async_init(init_integration.entry_id)
+    await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_LOCAL: False, CONF_SENSOR: False}
+    )
+    await hass.async_block_till_done()
+
+    # The entry reloaded without the sensor, so it is no longer provided
+    assert init_integration.state is ConfigEntryState.LOADED
+    assert hass.states.get(sensor).state == STATE_UNAVAILABLE
+
+
 async def test_yaml_config_warns_once(
     hass: HomeAssistant, caplog: pytest.LogCaptureFixture
 ) -> None:
