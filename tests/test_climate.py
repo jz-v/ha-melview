@@ -37,7 +37,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from .conftest import MelViewApi, reauth_started, setup_entry
+from .conftest import (
+    LOCAL_IP,
+    NEW_LOCAL_IP,
+    MelViewApi,
+    reauth_started,
+    setup_entry,
+)
 
 CLIMATE = "climate.ducted_ac"
 
@@ -381,3 +387,42 @@ async def test_local_commands_without_local_ip(
     assert "Ducted AC did not report a local IP address" in caplog.text
     assert melview_api.commands == ["PW1"]
     assert melview_api.local_commands == []
+
+
+async def test_local_ip_change_is_picked_up(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    local_config_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """When the adapter moves to a new local IP, commands follow it."""
+    await setup_entry(hass, local_config_entry)
+    melview_api.caps["localip"] = NEW_LOCAL_IP
+    melview_api.unreachable_ips.add(LOCAL_IP)
+
+    await call(hass, SERVICE_TURN_ON)
+
+    assert melview_api.local_command_ips == [LOCAL_IP, NEW_LOCAL_IP]
+    assert (
+        f"Ducted AC local IP address changed from {LOCAL_IP} to {NEW_LOCAL_IP}"
+        in caplog.text
+    )
+
+    await call(hass, SERVICE_TURN_OFF)
+
+    assert melview_api.local_command_ips == [LOCAL_IP, NEW_LOCAL_IP, NEW_LOCAL_IP]
+    assert melview_api.commands == ["PW1", "PW0"]
+
+
+async def test_local_ip_check_failure_is_ignored(
+    hass: HomeAssistant, melview_api: MelViewApi, local_config_entry: MockConfigEntry
+) -> None:
+    """Failing to look up a new local IP does not fail the command."""
+    await setup_entry(hass, local_config_entry)
+    melview_api.unreachable_ips.add(LOCAL_IP)
+    melview_api.status["unitcapabilities.aspx"] = 500
+
+    await call(hass, SERVICE_TURN_ON)
+
+    assert melview_api.commands == ["PW1"]
+    assert melview_api.local_command_ips == [LOCAL_IP]

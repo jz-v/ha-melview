@@ -10,6 +10,7 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from aiohttp import ClientError
 from homeassistant.config_entries import SOURCE_REAUTH
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
@@ -27,6 +28,8 @@ PASSWORD = "secret"
 UNIT_ID = "100001"
 LOCAL_IP = "192.0.2.10"
 LOCAL_URL = f"http://{LOCAL_IP}/smart"
+# Address the adapter moves to in tests where its local IP changes
+NEW_LOCAL_IP = "192.0.2.20"
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -67,6 +70,8 @@ class MelViewApi:
         self.status_once: dict[str, list[int]] = {}
         # Endpoint -> exception raised instead of responding
         self.errors: dict[str, Exception] = {}
+        # Local IP addresses where no adapter answers
+        self.unreachable_ips: set[str] = set()
         # Endpoints that never answer
         self.hang: set[str] = set()
         # Key returned with each command for sending it over the LAN
@@ -75,7 +80,8 @@ class MelViewApi:
         aioclient_mock.post(f"{API_URL}/login.aspx", side_effect=self._login)
         for endpoint in ("rooms.aspx", "unitcapabilities.aspx", "unitcommand.aspx"):
             aioclient_mock.post(f"{API_URL}/{endpoint}", side_effect=self._api)
-        aioclient_mock.post(LOCAL_URL, side_effect=self._local)
+        for local_ip in (LOCAL_IP, NEW_LOCAL_IP):
+            aioclient_mock.post(f"http://{local_ip}/smart", side_effect=self._local)
 
     @property
     def cookie(self) -> str:
@@ -96,6 +102,13 @@ class MelViewApi:
         """Payloads sent to the unit over the LAN."""
         return [
             data for _, url, data, _ in self._mock.mock_calls if str(url) == LOCAL_URL
+        ]
+
+    @property
+    def local_command_ips(self) -> list[str]:
+        """Local IP addresses commands were sent to, in order."""
+        return [
+            url.host for _, url, _, _ in self._mock.mock_calls if url.name == "smart"
         ]
 
     def _status(self, endpoint: str) -> int:
@@ -142,6 +155,8 @@ class MelViewApi:
     async def _local(self, method, url, data) -> AiohttpClientMockResponse:
         if exc := self.errors.get("smart"):
             raise exc
+        if url.host in self.unreachable_ips:
+            raise ClientError("No route to host")
         return AiohttpClientMockResponse(method, url, status=self._status("smart"))
 
     def _apply(self, command: str) -> None:

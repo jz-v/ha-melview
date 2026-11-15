@@ -332,6 +332,14 @@ class MelViewDevice:
         if key is None:
             _LOGGER.error("Missing local command key")
             return
+        if await self._async_post_local_command(key):
+            return
+        # The adapter may have been given a new address since setup
+        if await self._async_refresh_local_ip():
+            await self._async_post_local_command(key)
+
+    async def _async_post_local_command(self, key):
+        """Post a command to the adapter; return False if it was not reached."""
         try:
             async with (
                 timeout(LOCAL_TIMEOUT),
@@ -348,11 +356,34 @@ class MelViewDevice:
                 self._localip,
                 str(err) or "timed out",
             )
-            return
+            return False
         if status == 200:
             _LOGGER.debug("Command sent locally")
         else:
             _LOGGER.error("Local command failed")
+        return True
+
+    async def _async_refresh_local_ip(self):
+        """Ask MelView for the adapter's local IP; return True if it changed."""
+        try:
+            caps = await self._authentication.async_api_post(
+                "unitcapabilities.aspx", {"unitid": self._deviceid, "v": APIVERSION}
+            )
+        except (MelViewError, ClientError) as err:
+            _LOGGER.debug("Unable to check the local IP address: %s", err)
+            return False
+        localip = caps.get("localip")
+        if not localip or localip == self._localip:
+            return False
+        _LOGGER.info(
+            "%s local IP address changed from %s to %s",
+            self.get_friendly_name(),
+            self._localip,
+            localip,
+        )
+        self._localip = localip
+        self._caps["localip"] = localip
+        return True
 
     def get_id(self):
         """Get device ID"""
