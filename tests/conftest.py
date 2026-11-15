@@ -52,6 +52,8 @@ class MelViewApi:
         self.rooms = load_fixture("rooms.json")
         self.caps = load_fixture("unitcapabilities.json")
         self.unit = load_fixture("unitcommand.json")
+        # Unit ID -> state reported for that unit instead of `unit`
+        self.units: dict[str, dict[str, Any]] = {}
         self.login_status = 200
         self.login_json: dict[str, Any] = {"userunits": 1}
         # Number of logins to accept before rejecting the credentials; None
@@ -122,7 +124,7 @@ class MelViewApi:
         elif endpoint == "unitcapabilities.aspx":
             body = self.caps
         else:
-            body = dict(self.unit)
+            body = dict(self.units.get(data["unitid"], self.unit))
             if status == 200 and "commands" in data:
                 self._apply(data["commands"])
                 body = dict(self.unit)

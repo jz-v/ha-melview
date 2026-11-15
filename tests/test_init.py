@@ -2,14 +2,19 @@
 
 import logging
 from collections.abc import Callable
+from datetime import timedelta
 
 import pytest
 from aiohttp import ClientError
+from freezegun.api import FrozenDateTimeFactory
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    async_fire_time_changed,
+)
 
 from custom_components.melview import async_setup
 from custom_components.melview.const import CONF_LOCAL, CONF_SENSOR, DOMAIN
@@ -125,6 +130,37 @@ async def test_setup_rejected_credentials_start_reauth(
     break_api(melview_api)
     await setup_entry(hass, config_entry)
     assert reauth_started(hass)
+
+
+async def test_unit_not_responding_at_setup(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A unit that is offline at setup is left out, then added when it responds."""
+    melview_api.rooms[0]["units"].append({"room": "Bedroom AC", "unitid": "100002"})
+    melview_api.units["100002"] = {**melview_api.unit, "fault": "COMM"}
+
+    await setup_entry(hass, config_entry)
+
+    assert config_entry.state is ConfigEntryState.LOADED
+    assert hass.states.get(CLIMATE).state != STATE_UNAVAILABLE
+    assert hass.states.get("climate.bedroom_ac") is None
+    assert (
+        "Unit Bedroom AC is not available and will be added when it responds: "
+        "Unit is not communicating with the MelView server"
+    ) in caplog.text
+
+    del melview_api.units["100002"]
+    freezer.tick(timedelta(seconds=31))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+
+    assert config_entry.state is ConfigEntryState.LOADED
+    assert hass.states.get("climate.bedroom_ac").state != STATE_UNAVAILABLE
+    assert hass.states.get(CLIMATE).state != STATE_UNAVAILABLE
 
 
 async def test_removed_units_are_cleaned_up(

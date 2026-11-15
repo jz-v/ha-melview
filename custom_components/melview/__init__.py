@@ -7,7 +7,7 @@ import logging
 from aiohttp import ClientError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import (
     ConfigEntryAuthFailed,
     ConfigEntryError,
@@ -86,11 +86,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
     _cleanup_removed_devices(hass, entry, {str(device.get_id()) for device in devices})
 
     device_list = []
+    not_responding = []
     for device in devices:
         coordinator = MelViewCoordinator(hass, entry, device)
-        await coordinator.async_config_entry_first_refresh()
+        try:
+            await coordinator.async_config_entry_first_refresh()
+        except ConfigEntryNotReady as err:
+            not_responding.append((coordinator, err))
+            continue
         _LOGGER.debug("Device: %s", device.get_friendly_name())
         device_list.append(coordinator)
+    if not device_list:
+        raise not_responding[0][1]
+    # One unit that cannot be read must not stop the others loading
+    for coordinator, err in not_responding:
+        _LOGGER.warning(
+            "Unit %s is not available and will be added when it responds: %s",
+            coordinator.device.get_friendly_name(),
+            err.__cause__ or err,
+        )
+        _reload_when_unit_responds(hass, entry, coordinator)
     entry.runtime_data = device_list
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -119,6 +134,24 @@ async def async_migrate_entry(hass, config_entry):
 
     hass.config_entries.async_update_entry(config_entry, data=data, options=options)
     return True
+
+
+def _reload_when_unit_responds(
+    hass: HomeAssistant, entry: MelViewConfigEntry, coordinator: MelViewCoordinator
+) -> None:
+    """Keep polling a unit that failed at setup; reload once it responds."""
+
+    @callback
+    def _async_unit_updated() -> None:
+        if coordinator.last_update_success:
+            _LOGGER.info(
+                "Unit %s is responding, reloading to add it",
+                coordinator.device.get_friendly_name(),
+            )
+            hass.config_entries.async_schedule_reload(entry.entry_id)
+
+    # The coordinator only polls while it has a listener
+    entry.async_on_unload(coordinator.async_add_listener(_async_unit_updated))
 
 
 def _cleanup_removed_devices(
