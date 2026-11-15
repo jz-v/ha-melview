@@ -26,7 +26,7 @@ Requires Home Assistant 2025.8 or newer. Please completely remove any existing c
 
    On Home Assistant 2026.11 or newer this opens the built-in Marketplace (**Settings → Marketplace**). On older versions it opens HACS, which has to be [installed](https://hacs.xyz) first.
 2. Install the integration (in HACS the button is **Download**).
-3. Restart Home Assistant.
+3. If you installed with HACS, restart Home Assistant. The Marketplace does not need a restart for a first install.
 4. Click this button to add the integration:
 
    [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=melview)
