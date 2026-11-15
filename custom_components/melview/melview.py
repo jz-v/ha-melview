@@ -1,8 +1,9 @@
 import json
 import logging
 import time
+from asyncio import timeout
 
-from aiohttp import ClientSession
+from aiohttp import ClientError, ClientSession
 from homeassistant.components.climate.const import HVACMode
 
 from .const import APIVERSION, APPVERSION, HEADERS
@@ -12,6 +13,9 @@ _LOGGER = logging.getLogger(__name__)
 
 LOCAL_DATA = """<?xml version="1.0" encoding="UTF-8"?>
 <ESV>{}</ESV>"""
+
+# Seconds to wait for the adapter to accept a command over the LAN
+LOCAL_TIMEOUT = 5
 
 # Personal details in the login response, left out of debug logs
 LOGIN_PERSONAL_FIELDS = ("fullname", "countryinfo")
@@ -171,7 +175,8 @@ class MelViewDevice:
         self._caps = None
         self._info_lease_seconds = 30  # Data lasts for 30s.
         self._json = None
-        self._localip = localcontrol
+        self._localcontrol = localcontrol
+        self._localip = None
         self._standby = 0
         self._zones = {}
 
@@ -185,8 +190,14 @@ class MelViewDevice:
             "unitcapabilities.aspx", {"unitid": self._deviceid, "v": APIVERSION}
         )
         _LOGGER.debug("Unit capabilities: %s", json.dumps(self._caps, indent=2))
-        if self._localip and "localip" in self._caps:
-            self._localip = self._caps["localip"]
+        if self._localcontrol:
+            self._localip = self._caps.get("localip")
+            if not self._localip:
+                _LOGGER.warning(
+                    "%s did not report a local IP address, so commands will "
+                    "only be sent through MelView",
+                    self.get_friendly_name(),
+                )
         # Fanstage 0 means the unit has no fan control, e.g. air-to-water units
         if self._caps.get("fanstage") in FANSTAGES:
             self.fan = dict(FANSTAGES[self._caps["fanstage"]])
@@ -292,17 +303,38 @@ class MelViewDevice:
         _LOGGER.debug("Command sent to server")
 
         if self._localip:
-            if "lc" in data:
-                async with self._authentication.session.post(
-                    f"http://{self._localip}/smart",
-                    data=LOCAL_DATA.format(data["lc"]),
-                ) as req:
-                    if req.status == 200:
-                        _LOGGER.debug("Command sent locally")
-                    else:
-                        _LOGGER.error("Local command failed")
-            else:
-                _LOGGER.error("Missing local command key")
+            await self._async_send_local_command(data.get("lc"))
+
+    async def _async_send_local_command(self, key):
+        """Push a command MelView has accepted straight to the adapter.
+
+        Problems are only logged: the adapter still collects the command from
+        MelView at its next check-in.
+        """
+        if key is None:
+            _LOGGER.error("Missing local command key")
+            return
+        try:
+            async with (
+                timeout(LOCAL_TIMEOUT),
+                self._authentication.session.post(
+                    f"http://{self._localip}/smart", data=LOCAL_DATA.format(key)
+                ) as req,
+            ):
+                status = req.status
+        except (ClientError, TimeoutError) as err:
+            _LOGGER.warning(
+                "Local command to %s at %s not delivered (%s); the unit will "
+                "get it from MelView instead",
+                self.get_friendly_name(),
+                self._localip,
+                str(err) or "timed out",
+            )
+            return
+        if status == 200:
+            _LOGGER.debug("Command sent locally")
+        else:
+            _LOGGER.error("Local command failed")
 
     def get_id(self):
         """Get device ID"""

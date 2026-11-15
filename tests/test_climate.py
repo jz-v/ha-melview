@@ -338,6 +338,14 @@ async def test_local_commands(
     [
         (lambda api: api.status.update(smart=500), "Local command failed"),
         (lambda api: setattr(api, "local_command", None), "Missing local command key"),
+        (
+            lambda api: api.errors.update(smart=ClientError("No route to host")),
+            "Local command to Ducted AC at 192.0.2.10 not delivered (No route to host)",
+        ),
+        (
+            lambda api: api.errors.update(smart=TimeoutError()),
+            "Local command to Ducted AC at 192.0.2.10 not delivered (timed out)",
+        ),
     ],
 )
 async def test_local_command_problems_are_logged(
@@ -356,3 +364,20 @@ async def test_local_command_problems_are_logged(
 
     assert melview_api.commands == ["PW1"]
     assert message in caplog.text
+
+
+async def test_local_commands_without_local_ip(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    local_config_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A unit that reports no local IP only gets commands through MelView."""
+    del melview_api.caps["localip"]
+    await setup_entry(hass, local_config_entry)
+
+    await call(hass, SERVICE_TURN_ON)
+
+    assert "Ducted AC did not report a local IP address" in caplog.text
+    assert melview_api.commands == ["PW1"]
+    assert melview_api.local_commands == []
