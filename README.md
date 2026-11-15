@@ -18,16 +18,16 @@ Features:
 Note: this integration will only work for units in Australia and New Zealand.
 
 ## Installation
-Please completely remove any existing custom components for melview prior to installing this one.
+Requires Home Assistant 2025.8 or newer. Please completely remove any existing custom components for melview prior to installing this one.
 
-1. Install and set up HACS (hacs.xyz)
-2. Click this button to open in HACS:
+1. Click this button to open the repository in your Home Assistant:
 
-   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=ha-melview&owner=jz-v)
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jz-v&repository=ha-melview&category=integration)
 
-3. Click the 'Download' button in the lower right corner, then 'Download' button at the prompt.
-4. Restart Home Assistant
-5. Click this button to add the Integration:
+   On Home Assistant 2026.11 or newer this opens the built-in Marketplace (**Settings → Marketplace**). On older versions it opens HACS, which has to be [installed](https://hacs.xyz) first.
+2. Install the integration (in HACS the button is **Download**).
+3. Restart Home Assistant.
+4. Click this button to add the integration:
 
    [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=melview)
 

@@ -2,6 +2,10 @@
   "domain": "melview",
   "name": "Mitsubishi Electric Wi-Fi Control",
   "after_dependencies": ["logbook"],
+  "categories": [
+    "climate.heat_pumps_air_conditioning",
+    "climate.fans_ventilation"
+  ],
   "codeowners": ["@jz-v"],
   "config_flow": true,
   "dependencies": [],
