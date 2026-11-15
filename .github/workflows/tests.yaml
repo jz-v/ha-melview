@@ -20,5 +20,9 @@ jobs:
           cache-dependency-path: requirements_test.txt
       - name: Install test dependencies
         run: pip install -r requirements_test.txt
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
       - name: Run tests
         run: pytest --cov --cov-report=term-missing --cov-fail-under=95

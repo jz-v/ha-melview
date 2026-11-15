@@ -63,10 +63,10 @@ For truly local control, these adapters are also compatible with the ECHONETLite
 ## Lossnay support
 Lossnay ERV units with Wi-Fi Control can now be added as a unique device.
 Devices include a **fan entity** with adjustable speed and presets, as well as additional sensors for:  
-- Outdoor temperature  
-- Supply temperature  
-- Exhaust temperature  
-- Core efficiency.
+- Fresh Air (outdoor air temperature)  
+- Pre-warmed (supply air temperature after heat recovery)  
+- Stale Air (exhaust air temperature)  
+- Core Efficiency.
 
 Support is experimental due to limited testing. If you encounter a problem please [report an issue](#reporting-issues).
 
