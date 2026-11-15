@@ -14,6 +14,9 @@ _LOGGER = logging.getLogger(__name__)
 LOCAL_DATA = """<?xml version="1.0" encoding="UTF-8"?>
 <ESV>{}</ESV>"""
 
+# Seconds to wait for MelView to answer a request
+API_TIMEOUT = 15
+
 # Seconds to wait for the adapter to accept a command over the LAN
 LOCAL_TIMEOUT = 5
 
@@ -75,24 +78,30 @@ class MelViewAuthentication:
         """Generate a new login cookie.
 
         Return False if the credentials are rejected; raise MelViewError if
-        the server returns an error status.
+        the server returns an error status or does not answer in time.
         """
         _LOGGER.debug("Trying to login")
         self._cookie = None
         self._login_json = None
-        async with self._session.post(
-            "https://api.melview.net/api/login.aspx",
-            json={
-                "user": self._email,
-                "pass": self._password,
-                "appversion": APPVERSION,
-            },
-            headers=HEADERS,
-        ) as req:
-            status = req.status
-            auth = req.cookies.get("auth")
-            if status == 200:
-                self._login_json = await req.json()
+        try:
+            async with (
+                timeout(API_TIMEOUT),
+                self._session.post(
+                    "https://api.melview.net/api/login.aspx",
+                    json={
+                        "user": self._email,
+                        "pass": self._password,
+                        "appversion": APPVERSION,
+                    },
+                    headers=HEADERS,
+                ) as req,
+            ):
+                status = req.status
+                auth = req.cookies.get("auth")
+                if status == 200:
+                    self._login_json = await req.json()
+        except TimeoutError as err:
+            raise MelViewError(f"Login timed out after {API_TIMEOUT} seconds") from err
         _LOGGER.debug("Login status code: %d", status)
         if status != 200:
             raise MelViewError(f"Login failed (status {status})")
@@ -126,18 +135,27 @@ class MelViewAuthentication:
 
         On 401 or 503 (MelView returns 503 for an invalidated session), log in
         again once; raise MelViewAuthError if the credentials are rejected.
-        Raise MelViewError for any other failure status; callers polling via
-        the coordinator rely on it to log the failure once, not every update.
+        Raise MelViewError for any other failure status or if MelView does
+        not answer in time; callers polling via the coordinator rely on it to
+        log the failure once, not every update.
         """
-        async with self._session.post(
-            f"https://api.melview.net/api/{endpoint}",
-            json=payload,
-            headers=headers,
-            cookies=self.get_cookie(),
-        ) as resp:
-            if resp.status == 200:
-                return await resp.json()
-            status = resp.status
+        try:
+            async with (
+                timeout(API_TIMEOUT),
+                self._session.post(
+                    f"https://api.melview.net/api/{endpoint}",
+                    json=payload,
+                    headers=headers,
+                    cookies=self.get_cookie(),
+                ) as resp,
+            ):
+                if resp.status == 200:
+                    return await resp.json()
+                status = resp.status
+        except TimeoutError as err:
+            raise MelViewError(
+                f"{endpoint} timed out after {API_TIMEOUT} seconds"
+            ) from err
         if status in (401, 503) and retry:
             _LOGGER.debug("%s returned %d, logging in again", endpoint, status)
             if not await self.async_login():

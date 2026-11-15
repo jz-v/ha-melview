@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from asyncio import timeout
 
 import voluptuous as vol
 from aiohttp import ClientError
@@ -75,11 +74,10 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         valid = False
         error = "invalid_auth"
         try:
-            async with timeout(15):
-                auth = MelViewAuthentication(
-                    email, password, async_get_clientsession(self.hass)
-                )
-                valid = await auth.async_login()
+            auth = MelViewAuthentication(
+                email, password, async_get_clientsession(self.hass)
+            )
+            valid = await auth.async_login()
         except (TimeoutError, ClientError, MelViewError) as e:
             _LOGGER.error("MelView auth error during config flow: %r", e)
             error = "cannot_connect"
@@ -134,13 +132,12 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             valid = False
             error = "invalid_auth"
             try:
-                async with timeout(15):
-                    auth = MelViewAuthentication(
-                        email,
-                        user_input[CONF_PASSWORD],
-                        async_get_clientsession(self.hass),
-                    )
-                    valid = await auth.async_login()
+                auth = MelViewAuthentication(
+                    email,
+                    user_input[CONF_PASSWORD],
+                    async_get_clientsession(self.hass),
+                )
+                valid = await auth.async_login()
             except (TimeoutError, ClientError, MelViewError) as e:
                 _LOGGER.error("MelView auth error during reconfigure: %r", e)
                 valid = False
@@ -179,13 +176,12 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             valid = False
             try:
-                async with timeout(15):
-                    auth = MelViewAuthentication(
-                        email,
-                        user_input[CONF_PASSWORD],
-                        async_get_clientsession(self.hass),
-                    )
-                    valid = await auth.async_login()
+                auth = MelViewAuthentication(
+                    email,
+                    user_input[CONF_PASSWORD],
+                    async_get_clientsession(self.hass),
+                )
+                valid = await auth.async_login()
             except (TimeoutError, ClientError, MelViewError) as e:
                 _LOGGER.error("MelView auth error during reauth: %r", e)
                 self._errors["base"] = "cannot_connect"

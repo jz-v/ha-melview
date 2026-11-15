@@ -297,6 +297,39 @@ async def test_outage_logged_once_then_recovery(
     assert "Fetching MelView: Ducted AC data recovered" in caplog.text
 
 
+async def test_request_that_never_answers_times_out(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    init_integration: MockConfigEntry,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A poll MelView never answers is given up on, not left hanging."""
+    monkeypatch.setattr("custom_components.melview.melview.API_TIMEOUT", 0.01)
+    melview_api.hang.add("unitcommand.aspx")
+
+    await init_integration.runtime_data[0].async_refresh()
+
+    assert hass.states.get(CLIMATE).state == STATE_UNAVAILABLE
+    assert "unitcommand.aspx timed out after 0.01 seconds" in caplog.text
+
+
+async def test_login_that_never_answers_retries_setup(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A login MelView never answers is given up on and setup is retried."""
+    monkeypatch.setattr("custom_components.melview.melview.API_TIMEOUT", 0.01)
+    melview_api.hang.add("login.aspx")
+
+    await setup_entry(hass, config_entry)
+
+    assert config_entry.state is ConfigEntryState.SETUP_RETRY
+    assert "Login timed out after 0.01 seconds" in config_entry.reason
+
+
 async def test_comm_fault_makes_entities_unavailable(
     hass: HomeAssistant,
     melview_api: MelViewApi,

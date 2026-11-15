@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import Generator
 from pathlib import Path
@@ -66,6 +67,8 @@ class MelViewApi:
         self.status_once: dict[str, list[int]] = {}
         # Endpoint -> exception raised instead of responding
         self.errors: dict[str, Exception] = {}
+        # Endpoints that never answer
+        self.hang: set[str] = set()
         # Key returned with each command for sending it over the LAN
         self.local_command: str | None = "LOCALCMD"
 
@@ -101,6 +104,8 @@ class MelViewApi:
         return self.status.get(endpoint, 200)
 
     async def _login(self, method, url, data) -> AiohttpClientMockResponse:
+        if "login.aspx" in self.hang:
+            await asyncio.sleep(3600)
         if exc := self.errors.get("login.aspx"):
             raise exc
         self.login_count += 1
@@ -116,6 +121,8 @@ class MelViewApi:
 
     async def _api(self, method, url, data) -> AiohttpClientMockResponse:
         endpoint = url.name
+        if endpoint in self.hang:
+            await asyncio.sleep(3600)
         if exc := self.errors.get(endpoint):
             raise exc
         status = self._status(endpoint)
