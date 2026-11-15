@@ -62,6 +62,23 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
+    async def _async_login(
+        self, email: str, password: str
+    ) -> tuple[MelViewAuthentication, str | None]:
+        """Log in to MelView; return the client and an error key if it failed."""
+        auth = MelViewAuthentication(
+            email, password, async_get_clientsession(self.hass)
+        )
+        try:
+            valid = await auth.async_login()
+        except (TimeoutError, ClientError, MelViewError) as err:
+            _LOGGER.error("Unable to log in to MelView: %r", err)
+            return auth, "cannot_connect"
+        except Exception:
+            _LOGGER.exception("Unexpected error logging in to MelView")
+            return auth, "unknown"
+        return auth, None if valid else "invalid_auth"
+
     async def _create_client(
         self,
         email: str,
@@ -71,23 +88,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         sensor: bool,
     ):
         """Create client and validate credentials."""
-        valid = False
-        error = "invalid_auth"
-        try:
-            auth = MelViewAuthentication(
-                email, password, async_get_clientsession(self.hass)
-            )
-            valid = await auth.async_login()
-        except (TimeoutError, ClientError, MelViewError) as e:
-            _LOGGER.error("MelView auth error during config flow: %r", e)
-            error = "cannot_connect"
-            valid = False
-        except Exception:
-            _LOGGER.exception("Unexpected MelView error during config flow")
-            error = "unknown"
-            valid = False
-
-        if valid:
+        auth, error = await self._async_login(email, password)
+        if error is None:
             units = auth.number_units()
             if units is False:
                 error = "unknown"
@@ -122,45 +124,30 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             sensor=user_input[CONF_SENSOR],
         )
 
-    async def async_step_reconfigure(self, user_input=None):
-        """Reconfigure / change password."""
+    async def _async_step_new_password(self, step_id: str, entry, user_input):
+        """Ask for the account's password and store it once MelView accepts it."""
         self._errors = {}
-        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         email = entry.data[CONF_EMAIL]
 
         if user_input is not None:
-            valid = False
-            error = "invalid_auth"
-            try:
-                auth = MelViewAuthentication(
-                    email,
-                    user_input[CONF_PASSWORD],
-                    async_get_clientsession(self.hass),
+            _, error = await self._async_login(email, user_input[CONF_PASSWORD])
+            if error is None:
+                return self.async_update_reload_and_abort(
+                    entry, data_updates={CONF_PASSWORD: user_input[CONF_PASSWORD]}
                 )
-                valid = await auth.async_login()
-            except (TimeoutError, ClientError, MelViewError) as e:
-                _LOGGER.error("MelView auth error during reconfigure: %r", e)
-                valid = False
-                error = "cannot_connect"
-
-            if not valid:
-                self._errors["base"] = error
-                return self.async_show_form(
-                    step_id="reconfigure",
-                    data_schema=PASSWORD_SCHEMA,
-                    errors=self._errors,
-                    description_placeholders={"email": email},
-                )
-
-            data = dict(entry.data)
-            data[CONF_PASSWORD] = user_input[CONF_PASSWORD]
-
-            return self.async_update_reload_and_abort(entry, data=data)
+            self._errors["base"] = error
 
         return self.async_show_form(
-            step_id="reconfigure",
+            step_id=step_id,
             data_schema=PASSWORD_SCHEMA,
+            errors=self._errors,
             description_placeholders={"email": email},
+        )
+
+    async def async_step_reconfigure(self, user_input=None):
+        """Reconfigure / change password."""
+        return await self._async_step_new_password(
+            "reconfigure", self._get_reconfigure_entry(), user_input
         )
 
     async def async_step_reauth(self, entry_data):
@@ -169,36 +156,8 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth_confirm(self, user_input=None):
         """Ask for the new password and validate it."""
-        self._errors = {}
-        entry = self._get_reauth_entry()
-        email = entry.data[CONF_EMAIL]
-
-        if user_input is not None:
-            valid = False
-            try:
-                auth = MelViewAuthentication(
-                    email,
-                    user_input[CONF_PASSWORD],
-                    async_get_clientsession(self.hass),
-                )
-                valid = await auth.async_login()
-            except (TimeoutError, ClientError, MelViewError) as e:
-                _LOGGER.error("MelView auth error during reauth: %r", e)
-                self._errors["base"] = "cannot_connect"
-            else:
-                if not valid:
-                    self._errors["base"] = "invalid_auth"
-
-            if valid:
-                return self.async_update_reload_and_abort(
-                    entry, data_updates={CONF_PASSWORD: user_input[CONF_PASSWORD]}
-                )
-
-        return self.async_show_form(
-            step_id="reauth_confirm",
-            data_schema=PASSWORD_SCHEMA,
-            errors=self._errors,
-            description_placeholders={"email": email},
+        return await self._async_step_new_password(
+            "reauth_confirm", self._get_reauth_entry(), user_input
         )
 
     @staticmethod

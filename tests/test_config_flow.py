@@ -169,6 +169,13 @@ async def test_reauth_flow(
     assert result["errors"] == {"base": "cannot_connect"}
 
     restore(melview_api)
+    unexpected_error(melview_api)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_PASSWORD: "new-password"}
+    )
+    assert result["errors"] == {"base": "unknown"}
+
+    restore(melview_api)
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {CONF_PASSWORD: "new-password"}
     )
@@ -198,6 +205,13 @@ async def test_reconfigure_flow(
         result["flow_id"], {CONF_PASSWORD: "new-password"}
     )
     assert result["errors"] == {"base": "cannot_connect"}
+
+    restore(melview_api)
+    unexpected_error(melview_api)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_PASSWORD: "new-password"}
+    )
+    assert result["errors"] == {"base": "unknown"}
 
     restore(melview_api)
     result = await hass.config_entries.flow.async_configure(
