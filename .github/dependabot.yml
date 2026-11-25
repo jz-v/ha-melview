@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    # Pinned to the minimum Home Assistant version in hacs.json, raised by hand
+    exclude-paths:
+      - requirements_test_min.txt
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
