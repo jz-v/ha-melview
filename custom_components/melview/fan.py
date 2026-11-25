@@ -1,3 +1,5 @@
+"""Fan entities for MelView Lossnay ERV units."""
+
 from __future__ import annotations
 
 import logging
@@ -29,6 +31,7 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
     )
 
     def __init__(self, coordinator: MelViewCoordinator):
+        """Initialize the fan entity for a Lossnay unit."""
         super().__init__(coordinator, coordinator.device)
         self._attr_unique_id = f"{coordinator.get_id()}_lossnay"
         self._attr_preset_modes = list(LOSSNAY_PRESETS)
@@ -38,10 +41,12 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
 
     @property
     def is_on(self) -> bool:
+        """Return whether the unit is on."""
         return self.coordinator.data.get("power") == 1
 
     @property
     def preset_mode(self) -> str | None:
+        """Return the current Lossnay preset, if it is a known one."""
         code = self.coordinator.data.get("setmode")
         return next(
             (name for name, val in LOSSNAY_PRESETS.items() if val == code), None
@@ -49,6 +54,7 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         # Home Assistant has already checked preset_mode is in preset_modes
+        """Set the Lossnay preset, turning the unit on first if needed."""
         if not self.is_on:
             await self._async_command(self.coordinator.async_power_on())
         await self._async_command(
@@ -62,6 +68,7 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
         preset_mode: str | None = None,
         **kwargs,
     ) -> None:
+        """Turn the unit on, optionally with a preset or speed."""
         if preset_mode:
             await self.async_set_preset_mode(preset_mode)
         elif percentage is not None:
@@ -71,11 +78,13 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
             await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs) -> None:
+        """Turn the unit off."""
         await self._async_command(self.coordinator.async_power_off())
         await self.coordinator.async_request_refresh()
 
     @property
     def percentage(self) -> int | None:
+        """Return the fan speed as a percentage of the available speeds."""
         code = self.coordinator.data.get("setfan")
         if code in self._speed_codes:
             percentage = ordered_list_item_to_percentage(self._speed_codes, code)
@@ -90,6 +99,7 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
 
     @property
     def speed_count(self) -> int:
+        """Return the number of fan speeds."""
         count = len(self._speed_codes)
         _LOGGER.debug(
             "Lossnay fan speed_count: speed_codes=%s, count=%d",
@@ -99,6 +109,7 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
         return count
 
     async def async_set_percentage(self, percentage: int) -> None:
+        """Set the fan speed from a percentage."""
         code = percentage_to_ordered_list_item(self._speed_codes, percentage)
         _LOGGER.debug(
             "Lossnay fan set speed with percentage=%d, mapped code=%s", percentage, code

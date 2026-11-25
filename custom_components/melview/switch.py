@@ -1,3 +1,5 @@
+"""Zone switch entities for MelView units."""
+
 import logging
 
 from homeassistant.components.switch import SwitchEntity
@@ -11,9 +13,10 @@ PARALLEL_UPDATES = 0
 
 
 class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
-    """MelView zone switch handler for Home Assistant"""
+    """MelView zone switch handler for Home Assistant."""
 
     def __init__(self, coordinator: MelViewCoordinator, zone):
+        """Initialize the switch for one zone."""
         super().__init__(coordinator, coordinator.device)
         self._id = zone.id
         self._attr_unique_id = f"{self.coordinator.get_id()}-{self._id}"
@@ -39,13 +42,13 @@ class MelViewZoneSwitch(MelViewBaseEntity, SwitchEntity):
         }
 
     async def async_turn_on(self):
-        """Turn on the zone"""
+        """Turn on the zone."""
         _LOGGER.debug("Switch on zone %s", self._attr_name)
         await self._async_command(self.coordinator.async_enable_zone(self._id))
         await self.coordinator.async_refresh()
 
     async def async_turn_off(self):
-        """Turn off the zone"""
+        """Turn off the zone."""
         _LOGGER.debug("Switch off zone %s", self._attr_name)
         await self._async_command(self.coordinator.async_disable_zone(self._id))
         await self.coordinator.async_refresh()

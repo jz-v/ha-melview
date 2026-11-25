@@ -1,9 +1,9 @@
 """Tests for the MelView sensors."""
 
-import pytest
 from homeassistant.components.climate import ATTR_CURRENT_TEMPERATURE
 from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.melview.const import CONF_SENSOR, DOMAIN

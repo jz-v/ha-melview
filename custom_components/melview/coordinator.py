@@ -1,6 +1,8 @@
+"""Data update coordinator for MelView units."""
+
+from datetime import timedelta
 import json
 import logging
-from datetime import timedelta
 
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -32,10 +34,10 @@ class MelViewCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from the MelView API."""
         try:
-            await self.device.async_refresh_device_info()
-            _LOGGER.debug("Data: %s", json.dumps(self.device._json, indent=2))
-            return self.device._json
+            data = await self.device.async_refresh_device_info()
         except MelViewAuthError as err:
             raise ConfigEntryAuthFailed(str(err)) from err
         except Exception as err:
             raise UpdateFailed(str(err)) from err
+        _LOGGER.debug("Data: %s", json.dumps(data, indent=2))
+        return data

@@ -1,3 +1,5 @@
+"""Sensor entities for MelView units."""
+
 from __future__ import annotations
 
 import logging
@@ -72,6 +74,7 @@ class MelViewOutdoorTempSensor(MelViewBaseEntity, SensorEntity):
     _attr_name = "Fresh Air"
 
     def __init__(self, coordinator):
+        """Initialize the sensor."""
         super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -81,6 +84,7 @@ class MelViewOutdoorTempSensor(MelViewBaseEntity, SensorEntity):
 
     @property
     def native_value(self):
+        """Return the fresh air temperature."""
         return self._data_float("outdoortemp")
 
 
@@ -90,6 +94,7 @@ class MelViewSupplyTempSensor(MelViewBaseEntity, SensorEntity):
     _attr_name = "Pre-warmed"
 
     def __init__(self, coordinator):
+        """Initialize the sensor."""
         super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -99,6 +104,7 @@ class MelViewSupplyTempSensor(MelViewBaseEntity, SensorEntity):
 
     @property
     def native_value(self):
+        """Return the supply air temperature, estimated from the core efficiency."""
         room = self._data_float("roomtemp")
         outdoor = self._data_float("outdoortemp")
         efficiency = self._data_float("coreefficiency")
@@ -113,6 +119,7 @@ class MelViewExhaustTempSensor(MelViewBaseEntity, SensorEntity):
     _attr_name = "Stale Air"
 
     def __init__(self, coordinator):
+        """Initialize the sensor."""
         super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -122,6 +129,7 @@ class MelViewExhaustTempSensor(MelViewBaseEntity, SensorEntity):
 
     @property
     def native_value(self):
+        """Return the stale air temperature."""
         return self._data_float("exhausttemp")
 
 
@@ -131,6 +139,7 @@ class MelViewCoreEfficiencySensor(MelViewBaseEntity, SensorEntity):
     _attr_name = "Core Efficiency"
 
     def __init__(self, coordinator):
+        """Initialize the sensor."""
         super().__init__(coordinator, coordinator.device)
         api = coordinator.device
         self._attr_native_unit_of_measurement = PERCENTAGE
@@ -139,6 +148,7 @@ class MelViewCoreEfficiencySensor(MelViewBaseEntity, SensorEntity):
 
     @property
     def native_value(self):
+        """Return the core efficiency as a percentage."""
         efficiency = self._data_float("coreefficiency")
         if efficiency is None:
             return None

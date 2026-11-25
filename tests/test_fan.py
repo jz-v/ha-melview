@@ -2,17 +2,14 @@
 
 from typing import Any
 
-import pytest
 from homeassistant.components.fan import (
     ATTR_PERCENTAGE,
     ATTR_PERCENTAGE_STEP,
     ATTR_PRESET_MODE,
     ATTR_PRESET_MODES,
+    DOMAIN as FAN_DOMAIN,
     SERVICE_SET_PERCENTAGE,
     SERVICE_SET_PRESET_MODE,
-)
-from homeassistant.components.fan import (
-    DOMAIN as FAN_DOMAIN,
 )
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -23,6 +20,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .conftest import MelViewApi, setup_entry

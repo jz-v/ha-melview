@@ -4,9 +4,9 @@ Home Assistant validates action input before it reaches the integration, so
 these call the device directly to check its own input checks.
 """
 
-import pytest
 from homeassistant.components.climate import HVACMode
 from homeassistant.core import HomeAssistant
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.melview.melview import MelViewDevice, MelViewValidationError

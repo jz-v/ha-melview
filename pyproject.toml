@@ -8,3 +8,159 @@ source = ["custom_components/melview"]
 
 [tool.coverage.report]
 show_missing = true
+
+[tool.ruff]
+required-version = ">=0.17.5"
+# Home Assistant 2025.8, the minimum in hacs.json, runs on Python 3.13
+target-version = "py313"
+
+[tool.ruff.lint]
+# Rule set of Home Assistant core (home-assistant/core pyproject.toml, November 2026)
+select = [
+    "A001",
+    "ASYNC",
+    "B",
+    "BLE",
+    "C",
+    "COM818",
+    "D",
+    "DTZ003",
+    "DTZ004",
+    "DTZ011",
+    "E",
+    "F",
+    "F541",
+    "FLY",
+    "FURB",
+    "G",
+    "I",
+    "INP",
+    "ISC",
+    "ICN001",
+    "ICN002",
+    "LOG",
+    "N804",
+    "N805",
+    "N806",
+    "N815",
+    "PERF",
+    "PGH",
+    "PIE",
+    "PL",
+    "PT",
+    "PTH",
+    "PYI",
+    "RET",
+    "RSE",
+    "RUF",
+    "S107",
+    "S102",
+    "S103",
+    "S108",
+    "S301",
+    "S306",
+    "S307",
+    "S313",
+    "S314",
+    "S315",
+    "S316",
+    "S317",
+    "S318",
+    "S319",
+    "S601",
+    "S602",
+    "S604",
+    "S608",
+    "S609",
+    "SIM",
+    "SLF",
+    "SLOT",
+    "T100",
+    "T20",
+    "TC",
+    "TID",
+    "TRY",
+    "UP",
+    "UP031",
+    "UP032",
+    "W",
+]
+ignore = [
+    "ASYNC109",
+    "ASYNC110",
+    "ASYNC240",
+    "B008",
+    "B019",
+    "D202",
+    "D203",
+    "D213",
+    "D406",
+    "D407",
+    "D417",
+    "E501",
+    "PLC1901",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR0917",
+    "PLR2004",
+    "PLW0108",
+    "PLW1641",
+    "PLW2901",
+    "PT011",
+    "PT018",
+    "RUF001",
+    "RUF012",
+    "RUF015",
+    "RUF043",
+    "SIM102",
+    "SIM103",
+    "SIM108",
+    "SIM115",
+    "TC001",
+    "TC002",
+    "TC003",
+    "TC006",
+    "TRY003",
+    "TRY400",
+    "UP047",
+    "UP049",
+    "W191",
+    "E111",
+    "E114",
+    "E117",
+    "D206",
+    "D300",
+    "Q",
+    "COM812",
+    "COM819",
+    "PLE0605",
+    "FURB116",
+    "ISC004",
+    "LOG004",
+]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+# Core also bans voluptuous (for probatio) and `from __future__ import annotations`;
+# not adopted while the minimum Home Assistant version runs on Python 3.13
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"async_timeout".msg = "use asyncio.timeout instead"
+"pytz".msg = "use zoneinfo instead"
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+combine-as-imports = true
+split-on-trailing-comma = false
+
+[tool.ruff.lint.mccabe]
+max-complexity = 25
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PTH"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

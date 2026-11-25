@@ -3,12 +3,12 @@
 from collections.abc import Callable
 from unittest.mock import AsyncMock
 
-import pytest
 from aiohttp import ClientError
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.melview.const import CONF_LOCAL, CONF_SENSOR, DOMAIN
@@ -26,38 +26,47 @@ pytestmark = pytest.mark.usefixtures("mock_setup_entry")
 
 
 def reject_credentials(api: MelViewApi) -> None:
+    """Make MelView reject the credentials."""
     api.accept_logins = 0
 
 
 def server_error(api: MelViewApi) -> None:
+    """Make login fail with a server error."""
     api.login_status = 500
 
 
 def network_error(api: MelViewApi) -> None:
+    """Make login fail with a network error."""
     api.errors["login.aspx"] = ClientError()
 
 
 def timeout(api: MelViewApi) -> None:
+    """Make login time out."""
     api.errors["login.aspx"] = TimeoutError()
 
 
 def no_units(api: MelViewApi) -> None:
+    """Report an account without units."""
     api.login_json = {"userunits": 0}
 
 
 def missing_units(api: MelViewApi) -> None:
+    """Leave the unit count out of the login response."""
     api.login_json = {}
 
 
 def unreadable_units(api: MelViewApi) -> None:
+    """Report a unit count that is not a number."""
     api.login_json = {"userunits": "many"}
 
 
 def unexpected_error(api: MelViewApi) -> None:
+    """Make login raise an unexpected error."""
     api.errors["login.aspx"] = RuntimeError("Something unexpected")
 
 
 def restore(api: MelViewApi) -> None:
+    """Undo every failure the helpers above set up."""
     api.accept_logins = None
     api.login_status = 200
     api.login_json = {"userunits": 1}

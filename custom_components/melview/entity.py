@@ -1,7 +1,9 @@
+"""Base entity for MelView."""
+
 from __future__ import annotations
 
-import logging
 from collections.abc import Awaitable
+import logging
 
 from aiohttp import ClientError
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
@@ -21,6 +23,7 @@ class MelViewBaseEntity(CoordinatorEntity[MelViewCoordinator]):
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: MelViewCoordinator, device) -> None:
+        """Initialize the entity and its device info."""
         super().__init__(coordinator)
         self._device = device
         self._attr_device_info = DeviceInfo(

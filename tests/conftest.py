@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from collections.abc import Generator
+import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from aiohttp import ClientError
 from homeassistant.config_entries import SOURCE_REAUTH
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.test_util.aiohttp import (
     AiohttpClientMocker,
@@ -52,6 +52,7 @@ class MelViewApi:
     """
 
     def __init__(self, aioclient_mock: AiohttpClientMocker) -> None:
+        """Load the fixtures and register the mocked endpoints."""
         self._mock = aioclient_mock
         self.rooms = load_fixture("rooms.json")
         self.caps = load_fixture("unitcapabilities.json")

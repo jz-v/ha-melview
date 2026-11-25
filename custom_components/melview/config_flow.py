@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 
-import voluptuous as vol
 from aiohttp import ClientError
 from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
@@ -15,6 +14,7 @@ from homeassistant.helpers.selector import (
     TextSelectorConfig,
     TextSelectorType,
 )
+import voluptuous as vol
 
 from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 from .melview import MelViewAuthentication, MelViewError

@@ -1,16 +1,16 @@
 """Tests for MelView setup, unload and polling."""
 
-import logging
 from collections.abc import Callable
 from datetime import timedelta
+import logging
 
-import pytest
 from aiohttp import ClientError
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
+import pytest
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
     async_fire_time_changed,
@@ -19,14 +19,7 @@ from pytest_homeassistant_custom_component.common import (
 from custom_components.melview import async_setup
 from custom_components.melview.const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 
-from .conftest import (
-    EMAIL,
-    PASSWORD,
-    UNIT_ID,
-    MelViewApi,
-    reauth_started,
-    setup_entry,
-)
+from .conftest import EMAIL, PASSWORD, UNIT_ID, MelViewApi, reauth_started, setup_entry
 
 CLIMATE = "climate.ducted_ac"
 
@@ -44,47 +37,58 @@ async def test_setup_and_unload(
 
 
 def login_network_error(api: MelViewApi) -> None:
+    """Make login fail with a network error."""
     api.errors["login.aspx"] = ClientError()
 
 
 def login_server_error(api: MelViewApi) -> None:
+    """Make login fail with a server error."""
     api.login_status = 500
 
 
 def unreadable_units(api: MelViewApi) -> None:
+    """Report a unit count that is not a number."""
     api.login_json = {}
 
 
 def rooms_server_error(api: MelViewApi) -> None:
+    """Make the unit list fail with a server error."""
     api.status["rooms.aspx"] = 500
 
 
 def rooms_network_error(api: MelViewApi) -> None:
+    """Make the unit list fail with a network error."""
     api.errors["rooms.aspx"] = ClientError()
 
 
 def no_rooms(api: MelViewApi) -> None:
+    """Return an empty unit list."""
     api.rooms = []
 
 
 def caps_server_error(api: MelViewApi) -> None:
+    """Make unit capabilities fail with a server error."""
     api.status["unitcapabilities.aspx"] = 500
 
 
 def unit_server_error(api: MelViewApi) -> None:
+    """Make the unit state fail with a server error."""
     api.status["unitcommand.aspx"] = 500
 
 
 def credentials_rejected(api: MelViewApi) -> None:
+    """Reject the credentials at every login."""
     api.accept_logins = 0
 
 
 def credentials_rejected_after_session_expires(api: MelViewApi) -> None:
+    """Expire the session, then reject the credentials at the next login."""
     api.status["rooms.aspx"] = 401
     api.accept_logins = 1
 
 
 def no_units(api: MelViewApi) -> None:
+    """Report an account without units."""
     api.login_json = {"userunits": 0}
 
 

@@ -1,7 +1,9 @@
+"""Client for the MelView cloud API and the Wi-Fi adapter's local interface."""
+
+from asyncio import timeout
 import json
 import logging
 import time
-from asyncio import timeout
 
 from aiohttp import ClientError, ClientSession
 from homeassistant.components.climate.const import HVACMode
@@ -63,6 +65,7 @@ class MelViewAuthentication:
     """Implementation to remember and refresh MelView cookies."""
 
     def __init__(self, email, password, session: ClientSession):
+        """Store the account credentials and the shared HTTP session."""
         self._email = email
         self._password = password
         self._session = session
@@ -71,7 +74,7 @@ class MelViewAuthentication:
 
     @property
     def session(self) -> ClientSession:
-        """Return the shared HTTP session"""
+        """Return the shared HTTP session."""
         return self._session
 
     async def async_login(self):
@@ -127,7 +130,7 @@ class MelViewAuthentication:
         return True
 
     def get_cookie(self):
-        """Return authentication cookie"""
+        """Return authentication cookie."""
         return {"auth": self._cookie}
 
     async def async_api_post(self, endpoint, payload, *, headers=None, retry=True):
@@ -176,16 +179,20 @@ class MelViewAuthentication:
 
 
 class MelViewZone:
+    """A zone of a ducted unit, as last reported by MelView."""
+
     def __init__(self, id, name, status):
+        """Initialize the zone."""
         self.id = id
         self.name = name
         self.status = status
 
 
 class MelViewDevice:
-    """Handler class for a MelView unit"""
+    """Handler class for a MelView unit."""
 
     def __init__(self, deviceid, friendlyname, authentication, localcontrol=False):
+        """Initialize the unit handler; capabilities are fetched separately."""
         self._deviceid = deviceid
         self._friendlyname = friendlyname
         self._authentication = authentication
@@ -195,7 +202,6 @@ class MelViewDevice:
         self._json = None
         self._localcontrol = localcontrol
         self._localip = None
-        self._standby = 0
         self._zones = {}
 
         self.fan = dict(FANSTAGES[3])
@@ -204,6 +210,7 @@ class MelViewDevice:
         self.temp_ranges = {}
 
     async def async_refresh_device_caps(self):
+        """Fetch the unit capabilities and derive fan speeds, temperature ranges and local IP."""
         self._caps = await self._authentication.async_api_post(
             "unitcapabilities.aspx", {"unitid": self._deviceid, "v": APIVERSION}
         )
@@ -253,6 +260,10 @@ class MelViewDevice:
         return True
 
     async def async_refresh_device_info(self):
+        """Fetch and return the current unit state.
+
+        Raise if the unit is not communicating.
+        """
         self._json = None
         self._last_info_time_s = time.time()
 
@@ -288,9 +299,7 @@ class MelViewDevice:
                 z["zoneid"]: MelViewZone(z["zoneid"], z["name"], z["status"])
                 for z in self._json["zones"]
             }
-        if "standby" in self._json:
-            self._standby = self._json["standby"]
-        return True
+        return self._json
 
     async def async_is_info_valid(self):
         """Ensure cached unit info is fresh; raise if it cannot be refreshed."""
@@ -386,19 +395,29 @@ class MelViewDevice:
         return True
 
     def get_id(self):
-        """Get device ID"""
+        """Get device ID."""
         return self._deviceid
 
     def get_friendly_name(self):
-        """Get customised device name"""
+        """Get customised device name."""
         return self._friendlyname
+
+    @property
+    def authentication(self) -> MelViewAuthentication:
+        """Return the account login the unit is reached through."""
+        return self._authentication
+
+    @property
+    def capabilities(self) -> dict:
+        """Return the capabilities MelView last reported for the unit."""
+        return self._caps
 
     def get_unit_type(self):
         """Return the unit type from capabilities."""
         return self._caps.get("unittype")
 
     async def async_get_mode(self):
-        """Get the set mode (reported even when the unit is off)"""
+        """Get the set mode (reported even when the unit is off)."""
         await self.async_is_info_valid()
 
         for key, val in MODE.items():
@@ -408,19 +427,21 @@ class MelViewDevice:
         return HVACMode.AUTO
 
     def get_zone(self, zoneid):
+        """Return the zone with this ID, or None if the unit no longer reports it."""
         return self._zones.get(zoneid)
 
     def get_zones(self):
+        """Return all zones the unit reports."""
         return self._zones.values()
 
     async def async_is_power_on(self):
-        """Check unit is on"""
+        """Check unit is on."""
         await self.async_is_info_valid()
 
         return self._json["power"]
 
     async def async_set_temperature(self, temperature):
-        """Set the target temperature"""
+        """Set the target temperature."""
         mode = await self.async_get_mode()
         temp_range = self.temp_ranges.get(mode)
         if not temp_range:
@@ -436,7 +457,7 @@ class MelViewDevice:
         return await self.async_send_command(f"TS{temperature:.2f}")
 
     async def _async_ensure_power_on(self):
-        """Turn the unit on if it is off"""
+        """Turn the unit on if it is off."""
         if not await self.async_is_power_on():
             await self.async_power_on()
 
@@ -455,26 +476,26 @@ class MelViewDevice:
         return await self.async_send_command(f"FS{speed_code:.2f}")
 
     async def async_set_mode(self, mode):
-        """Set operating mode"""
+        """Set operating mode."""
         if mode not in MODE:
             raise MelViewValidationError(f"Mode {mode} not supported")
         await self._async_ensure_power_on()
         return await self.async_send_command(f"MD{MODE[mode]}")
 
     async def async_enable_zone(self, zoneid):
-        """Turn on a zone"""
+        """Turn on a zone."""
         return await self.async_send_command(f"Z{zoneid}1")
 
     async def async_disable_zone(self, zoneid):
-        """Turn off a zone"""
+        """Turn off a zone."""
         return await self.async_send_command(f"Z{zoneid}0")
 
     async def async_power_on(self):
-        """Turn on the unit"""
+        """Turn on the unit."""
         return await self.async_send_command("PW1")
 
     async def async_power_off(self):
-        """Turn off the unit"""
+        """Turn off the unit."""
         return await self.async_send_command("PW0")
 
     async def async_set_lossnay_preset(self, preset_name: str) -> None:
@@ -486,14 +507,15 @@ class MelViewDevice:
 
 
 class MelView:
-    """Handler for multiple MelView devices under one user"""
+    """Handler for multiple MelView devices under one user."""
 
     def __init__(self, authentication, localcontrol=False):
+        """Initialize the account handler."""
         self._authentication = authentication
         self._localcontrol = localcontrol
 
     async def async_get_devices_list(self):
-        """Return all the devices found, as handlers"""
+        """Return all the devices found, as handlers."""
         try:
             reply = await self._authentication.async_api_post(
                 "rooms.aspx", {"unitid": 0}, headers=HEADERS

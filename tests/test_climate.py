@@ -1,10 +1,11 @@
 """Tests for the MelView climate entity."""
 
 from collections.abc import Callable
+from datetime import timedelta
 from typing import Any
 
-import pytest
 from aiohttp import ClientError
+from freezegun.api import FrozenDateTimeFactory
 from homeassistant.components.climate import (
     ATTR_CURRENT_TEMPERATURE,
     ATTR_FAN_MODE,
@@ -15,6 +16,7 @@ from homeassistant.components.climate import (
     ATTR_MAX_TEMP,
     ATTR_MIN_TEMP,
     ATTR_TARGET_TEMP_STEP,
+    DOMAIN as CLIMATE_DOMAIN,
     SERVICE_SET_FAN_MODE,
     SERVICE_SET_HVAC_MODE,
     SERVICE_SET_TEMPERATURE,
@@ -24,9 +26,6 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.components.climate import (
-    DOMAIN as CLIMATE_DOMAIN,
-)
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_SUPPORTED_FEATURES,
@@ -35,15 +34,10 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from .conftest import (
-    LOCAL_IP,
-    NEW_LOCAL_IP,
-    MelViewApi,
-    reauth_started,
-    setup_entry,
-)
+from .conftest import LOCAL_IP, NEW_LOCAL_IP, MelViewApi, reauth_started, setup_entry
 
 CLIMATE = "climate.ducted_ac"
 
@@ -256,17 +250,20 @@ async def test_temperature_without_range_for_mode(
     assert "No temperature range available for mode auto" in caplog.text
 
 
-def expire_cached_data(entry: MockConfigEntry) -> None:
-    """Age the cached unit data past its 30 second lease."""
-    entry.runtime_data[0].device._last_info_time_s -= 60
+def expire_cached_data(freezer: FrozenDateTimeFactory) -> None:
+    """Move the clock past the 30 second lease of the cached unit data."""
+    freezer.tick(timedelta(seconds=31))
 
 
 async def test_command_refreshes_expired_data_first(
-    hass: HomeAssistant, melview_api: MelViewApi, init_integration: MockConfigEntry
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    init_integration: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Stale unit data is refreshed before a command is sent."""
     melview_api.unit["power"] = 0  # changed since the last poll
-    expire_cached_data(init_integration)
+    expire_cached_data(freezer)
 
     await call(hass, SERVICE_SET_HVAC_MODE, hvac_mode=HVACMode.COOL)
 
@@ -274,11 +271,14 @@ async def test_command_refreshes_expired_data_first(
 
 
 async def test_comm_fault_blocks_commands(
-    hass: HomeAssistant, melview_api: MelViewApi, init_integration: MockConfigEntry
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    init_integration: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
 ) -> None:
     """A unit that has stopped talking to MelView explains why commands fail."""
     melview_api.unit["fault"] = "COMM"
-    expire_cached_data(init_integration)
+    expire_cached_data(freezer)
 
     with pytest.raises(HomeAssistantError, match="Check the adapter is connected"):
         await call(hass, SERVICE_TURN_ON)
@@ -286,14 +286,17 @@ async def test_comm_fault_blocks_commands(
 
 
 def server_error(api: MelViewApi) -> None:
+    """Make MelView fail commands with a server error."""
     api.status["unitcommand.aspx"] = 500
 
 
 def network_error(api: MelViewApi) -> None:
+    """Make commands fail with a network error."""
     api.errors["unitcommand.aspx"] = ClientError("Connection reset")
 
 
 def timeout(api: MelViewApi) -> None:
+    """Make commands time out."""
     api.errors["unitcommand.aspx"] = TimeoutError()
 
 

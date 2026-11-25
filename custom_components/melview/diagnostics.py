@@ -46,7 +46,7 @@ def _unit_diagnostics(coordinator: MelViewCoordinator) -> dict[str, Any]:
     device = coordinator.device
     return {
         "name": device.get_friendly_name(),
-        "capabilities": _without_zone_names(device._caps),
+        "capabilities": _without_zone_names(device.capabilities),
         "data": _without_zone_names(coordinator.data),
         "fan_speeds": device.fan,
         "temperature_ranges": device.temp_ranges,
@@ -65,7 +65,7 @@ async def async_get_config_entry_diagnostics(
     return {
         "entry": _entry_diagnostics(entry),
         "account": {
-            "units_reported": coordinators[0].device._authentication.number_units(),
+            "units_reported": coordinators[0].device.authentication.number_units(),
             "units_set_up": len(coordinators),
         },
         "units": [_unit_diagnostics(coordinator) for coordinator in coordinators],
