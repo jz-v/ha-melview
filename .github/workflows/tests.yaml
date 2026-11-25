@@ -26,3 +26,18 @@ jobs:
           ruff format --check .
       - name: Run tests
         run: pytest --cov --cov-report=term-missing --cov-fail-under=95
+
+  pytest-minimum:
+    name: Pytest (minimum Home Assistant)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements_test_min.txt
+      - name: Install test dependencies
+        run: pip install -r requirements_test_min.txt
+      - name: Run tests
+        run: pytest

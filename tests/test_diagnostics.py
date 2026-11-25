@@ -131,8 +131,13 @@ async def test_device_diagnostics(
     init_integration: MockConfigEntry,
 ) -> None:
     """Each unit's device page has its own download."""
-    device = dr.async_get(hass).async_get_device_by_identifier(
-        (DOMAIN, UNIT_ID), init_integration.entry_id
+    # Looked up this way so the test runs on every supported Home Assistant version
+    device = next(
+        device
+        for device in dr.async_entries_for_config_entry(
+            dr.async_get(hass), init_integration.entry_id
+        )
+        if (DOMAIN, UNIT_ID) in device.identifiers
     )
 
     diagnostics = await get_diagnostics_for_device(

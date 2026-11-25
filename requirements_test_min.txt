@@ -1,0 +1,4 @@
+# Tests against the minimum Home Assistant version; keep in step with hacs.json
+pytest-homeassistant-custom-component==0.13.269
+# aiodns in Home Assistant 2025.8 does not work with pycares 5
+pycares<5
