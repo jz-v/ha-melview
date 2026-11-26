@@ -17,6 +17,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 
+from .const import REPORT_ISSUE_URL
 from .coordinator import MelViewCoordinator
 from .entity import MelViewBaseEntity
 from .melview import MODE
@@ -41,6 +42,8 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
 
         self._operations_list = [*MODE, HVACMode.OFF]
         self._speeds_list = list(self._device.fan_keyed)
+        # Fan codes already warned about, so each is logged once
+        self._unknown_fan_codes: set = set()
 
         self._precision = PRECISION_WHOLE
         self._target_step = 1.0
@@ -135,8 +138,16 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         """Return the current fan speed label."""
         code = self.coordinator.data.get("setfan")
         label = self._device.fan.get(code)
-        if label is None:
-            _LOGGER.error("Fan code %s not present in available modes", code)
+        if label is None and code is not None and code not in self._unknown_fan_codes:
+            self._unknown_fan_codes.add(code)
+            _LOGGER.warning(
+                "Unit %s reported fan speed code %s, which is not one of its "
+                "known speeds. Please raise an issue with a diagnostics "
+                "download attached: %s",
+                self._device.get_friendly_name(),
+                code,
+                REPORT_ISSUE_URL,
+            )
         return label
 
     @property

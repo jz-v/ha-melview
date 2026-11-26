@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from datetime import timedelta
+import logging
 from typing import Any
 
 from aiohttp import ClientError
@@ -130,15 +131,66 @@ async def test_fan_only_mode(
 async def test_unknown_fan_code(
     hass: HomeAssistant,
     melview_api: MelViewApi,
+    init_integration: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A fan code the unit does not support has no fan mode and is warned about once."""
+    coordinator = init_integration.runtime_data.coordinators[0]
+    melview_api.unit["setfan"] = 4
+
+    await coordinator.async_refresh()
+    await coordinator.async_refresh()
+
+    assert hass.states.get(CLIMATE).attributes[ATTR_FAN_MODE] is None
+    [record] = [
+        record
+        for record in caplog.records
+        if "reported fan speed code" in record.getMessage()
+    ]
+    assert record.levelno == logging.WARNING
+    assert record.getMessage() == (
+        "Unit Ducted AC reported fan speed code 4, which is not one of its known "
+        "speeds. Please raise an issue with a diagnostics download attached: "
+        "https://github.com/jz-v/ha-melview#reporting-issues"
+    )
+
+
+async def test_missing_fan_code(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
     config_entry: MockConfigEntry,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """A fan code the unit does not support has no fan mode."""
-    melview_api.unit["setfan"] = 4
+    """A unit that reports no fan code has no fan mode, without a warning."""
+    del melview_api.unit["setfan"]
     await setup_entry(hass, config_entry)
 
     assert hass.states.get(CLIMATE).attributes[ATTR_FAN_MODE] is None
-    assert "Fan code 4 not present in available modes" in caplog.text
+    assert "fan speed code" not in caplog.text
+
+
+async def test_unknown_fanstage(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A fanstage the integration does not know gets three speeds and a warning."""
+    melview_api.caps["fanstage"] = 9
+    await setup_entry(hass, config_entry)
+
+    assert hass.states.get(CLIMATE).attributes[ATTR_FAN_MODES] == [
+        "low",
+        "medium",
+        "high",
+        "auto",
+    ]
+    assert (
+        "Unit Ducted AC reports fanstage 9, which this integration does not know, "
+        "so it is given the low, medium and high speeds. Please raise an issue "
+        "with a diagnostics download attached: "
+        "https://github.com/jz-v/ha-melview#reporting-issues"
+    ) in caplog.text
 
 
 async def test_no_fan_control(
@@ -156,7 +208,7 @@ async def test_no_fan_control(
     assert not state.attributes[ATTR_SUPPORTED_FEATURES] & ClimateEntityFeature.FAN_MODE
     assert ATTR_FAN_MODE not in state.attributes
     assert ATTR_FAN_MODES not in state.attributes
-    assert "not present in available modes" not in caplog.text
+    assert "fan speed code" not in caplog.text
 
 
 @pytest.mark.parametrize(

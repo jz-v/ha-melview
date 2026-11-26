@@ -8,7 +8,7 @@ import time
 from aiohttp import ClientError, ClientSession
 from homeassistant.components.climate.const import HVACMode
 
-from .const import APIVERSION, APPVERSION, HEADERS
+from .const import APIVERSION, APPVERSION, HEADERS, REPORT_ISSUE_URL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -224,8 +224,18 @@ class MelViewDevice:
                     self.get_friendly_name(),
                 )
         # Fanstage 0 means the unit has no fan control, e.g. air-to-water units
-        if self._caps.get("fanstage") in FANSTAGES:
-            self.fan = dict(FANSTAGES[self._caps["fanstage"]])
+        fanstage = self._caps.get("fanstage")
+        if fanstage in FANSTAGES:
+            self.fan = dict(FANSTAGES[fanstage])
+        else:
+            _LOGGER.warning(
+                "Unit %s reports fanstage %s, which this integration does not "
+                "know, so it is given the low, medium and high speeds. Please "
+                "raise an issue with a diagnostics download attached: %s",
+                self.get_friendly_name(),
+                fanstage,
+                REPORT_ISSUE_URL,
+            )
         if "hasautofan" in self._caps and self._caps["hasautofan"] == 1:
             self.fan[0] = "auto"
         self.fan_keyed = {value: key for key, value in self.fan.items()}
