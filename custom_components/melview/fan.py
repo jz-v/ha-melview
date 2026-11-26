@@ -120,7 +120,7 @@ class MelViewLossnayFan(MelViewBaseEntity, FanEntity):
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView Lossnay fans based on a config entry."""
-    coordinators = entry.runtime_data
+    coordinators = entry.runtime_data.coordinators
     entities = [
         MelViewLossnayFan(coordinator)
         for coordinator in coordinators

@@ -17,7 +17,7 @@ from .conftest import MelViewApi
 @pytest.fixture
 def device(init_integration: MockConfigEntry) -> MelViewDevice:
     """Return the set-up MelView device."""
-    return init_integration.runtime_data[0].device
+    return init_integration.runtime_data.coordinators[0].device
 
 
 @pytest.mark.parametrize(

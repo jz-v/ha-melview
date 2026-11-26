@@ -32,7 +32,7 @@ async def async_setup_entry(
         _LOGGER.debug("Sensor option is disabled in config entry.")
         return
 
-    coordinators = entry.runtime_data
+    coordinators = entry.runtime_data.coordinators
 
     entities = [MelViewCurrentTempSensor(coordinator) for coordinator in coordinators]
     for coordinator in coordinators:

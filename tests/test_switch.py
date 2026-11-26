@@ -55,7 +55,7 @@ async def test_zone_no_longer_reported(
     hass: HomeAssistant, melview_api: MelViewApi, init_integration: MockConfigEntry
 ) -> None:
     """A zone the unit stops reporting is unavailable until it comes back."""
-    coordinator = init_integration.runtime_data[0]
+    coordinator = init_integration.runtime_data.coordinators[0]
     bedroom = melview_api.unit["zones"].pop()
 
     await coordinator.async_refresh()

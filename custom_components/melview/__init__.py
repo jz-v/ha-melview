@@ -17,10 +17,10 @@ from homeassistant.helpers import device_registry as dr, issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
-from .coordinator import MelViewCoordinator
+from .coordinator import MelViewCoordinator, MelViewData
 from .melview import MelView, MelViewAuthentication, MelViewAuthError, MelViewError
 
-type MelViewConfigEntry = ConfigEntry[list[MelViewCoordinator]]
+type MelViewConfigEntry = ConfigEntry[MelViewData]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -104,10 +104,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
             err.__cause__ or err,
         )
         _reload_when_unit_responds(hass, entry, coordinator)
-    entry.runtime_data = device_list
+    entry.runtime_data = MelViewData(
+        device_list, [coordinator for coordinator, _ in not_responding]
+    )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    _LOGGER.debug("Set up coordinator(s): %s", entry.runtime_data)
+    _LOGGER.debug("Set up coordinator(s): %s", device_list)
     return True
 
 

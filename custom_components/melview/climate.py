@@ -206,7 +206,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up MelView device climate based on config_entry."""
-    coordinators = entry.runtime_data
+    coordinators = entry.runtime_data.coordinators
     entities = [
         MelViewClimate(coordinator)
         for coordinator in coordinators

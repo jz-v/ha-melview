@@ -330,7 +330,7 @@ async def test_outage_logged_once_then_recovery(
 ) -> None:
     """An outage makes entities unavailable and is logged once (log-when-unavailable)."""
     caplog.set_level(logging.INFO)
-    coordinator = init_integration.runtime_data[0]
+    coordinator = init_integration.runtime_data.coordinators[0]
     melview_api.status["unitcommand.aspx"] = 500
 
     for _ in range(3):
@@ -357,7 +357,7 @@ async def test_request_that_never_answers_times_out(
     monkeypatch.setattr("custom_components.melview.melview.API_TIMEOUT", 0.01)
     melview_api.hang.add("unitcommand.aspx")
 
-    await init_integration.runtime_data[0].async_refresh()
+    await init_integration.runtime_data.coordinators[0].async_refresh()
 
     assert hass.states.get(CLIMATE).state == STATE_UNAVAILABLE
     assert "unitcommand.aspx timed out after 0.01 seconds" in caplog.text
@@ -387,7 +387,7 @@ async def test_comm_fault_makes_entities_unavailable(
 ) -> None:
     """A unit that has stopped talking to MelView is unavailable."""
     melview_api.unit["fault"] = "COMM"
-    await init_integration.runtime_data[0].async_refresh()
+    await init_integration.runtime_data.coordinators[0].async_refresh()
 
     assert hass.states.get(CLIMATE).state == STATE_UNAVAILABLE
     assert "not communicating with the MelView server" in caplog.text
@@ -400,7 +400,7 @@ async def test_unit_faults_logged_every_poll(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Unit faults and errors are logged on every poll; they may be serious."""
-    coordinator = init_integration.runtime_data[0]
+    coordinator = init_integration.runtime_data.coordinators[0]
     melview_api.unit.update(fault="E6", error="E7")
 
     await coordinator.async_refresh()
@@ -441,7 +441,7 @@ async def test_unit_data_missing_fields(
 ) -> None:
     """Unit data without the fault and error fields says what was missing."""
     melview_api.unit = unit_data
-    await init_integration.runtime_data[0].async_refresh()
+    await init_integration.runtime_data.coordinators[0].async_refresh()
 
     assert hass.states.get(CLIMATE).state == STATE_UNAVAILABLE
     assert message in caplog.text
@@ -455,7 +455,7 @@ async def test_expired_session_logs_in_again(
     status: int,
 ) -> None:
     """MelView returns 401 or 503 for an expired session; log in and retry."""
-    coordinator = init_integration.runtime_data[0]
+    coordinator = init_integration.runtime_data.coordinators[0]
     logins = melview_api.login_count
     melview_api.status_once["unitcommand.aspx"] = [status]
 
@@ -469,7 +469,7 @@ async def test_session_still_rejected_after_login(
     hass: HomeAssistant, melview_api: MelViewApi, init_integration: MockConfigEntry
 ) -> None:
     """If the retry after logging in fails too, the update fails."""
-    coordinator = init_integration.runtime_data[0]
+    coordinator = init_integration.runtime_data.coordinators[0]
     melview_api.status["unitcommand.aspx"] = 401
 
     await coordinator.async_refresh()
@@ -482,7 +482,7 @@ async def test_rejected_credentials_while_polling_start_reauth(
     hass: HomeAssistant, melview_api: MelViewApi, init_integration: MockConfigEntry
 ) -> None:
     """A changed password is detected while polling and starts reauth."""
-    coordinator = init_integration.runtime_data[0]
+    coordinator = init_integration.runtime_data.coordinators[0]
     melview_api.status["unitcommand.aspx"] = 401
     melview_api.accept_logins = melview_api.login_count
 

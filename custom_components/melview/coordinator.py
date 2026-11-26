@@ -1,5 +1,6 @@
 """Data update coordinator for MelView units."""
 
+from dataclasses import dataclass
 from datetime import timedelta
 import json
 import logging
@@ -41,3 +42,12 @@ class MelViewCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(str(err)) from err
         _LOGGER.debug("Data: %s", json.dumps(data, indent=2))
         return data
+
+
+@dataclass
+class MelViewData:
+    """The units of a MelView account."""
+
+    coordinators: list[MelViewCoordinator]
+    # Units that did not respond at setup, polled until they do and then added
+    not_responding: list[MelViewCoordinator]

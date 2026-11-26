@@ -40,6 +40,7 @@ async def test_config_entry_diagnostics(
     assert entry["data"] == {}
     assert entry["options"] == {CONF_LOCAL: False, CONF_SENSOR: True}
     assert diagnostics["account"] == {"units_reported": 1, "units_set_up": 1}
+    assert diagnostics["units_not_responding"] == []
 
     [unit] = diagnostics["units"]
     assert unit["name"] == "Ducted AC"
@@ -82,7 +83,10 @@ async def test_zone_names_left_out(
     ]
     assert "Lounge" not in json.dumps(diagnostics)
     # The live data the zone switches use still has the names
-    assert init_integration.runtime_data[0].data["zones"][0]["name"] == "Lounge"
+    assert (
+        init_integration.runtime_data.coordinators[0].data["zones"][0]["name"]
+        == "Lounge"
+    )
     assert hass.states.get("switch.ducted_ac_zone_lounge")
 
 
@@ -113,7 +117,7 @@ async def test_diagnostics_during_outage(
 ) -> None:
     """During an outage the last error is shown, with the last good data."""
     melview_api.status["unitcommand.aspx"] = 500
-    await init_integration.runtime_data[0].async_refresh()
+    await init_integration.runtime_data.coordinators[0].async_refresh()
 
     diagnostics = await get_diagnostics_for_config_entry(
         hass, hass_client, init_integration
@@ -148,3 +152,64 @@ async def test_device_diagnostics(
     assert diagnostics["entry"]["data"] == {}
     assert diagnostics["unit"]["name"] == "Ducted AC"
     assert diagnostics["unit"]["capabilities"]["modelname"] == "PEA-M140HAA"
+    assert diagnostics["set_up"] is True
+
+
+async def test_unit_not_responding_at_setup(
+    hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+) -> None:
+    """A unit left out at setup is in both downloads, with the reason."""
+    melview_api.login_json = {"userunits": 2}
+    melview_api.rooms[0]["units"].append({"room": "Bedroom AC", "unitid": "100002"})
+    melview_api.units["100002"] = {**melview_api.unit, "fault": "COMM"}
+    # The unit's device is left from when it last loaded
+    config_entry.add_to_hass(hass)
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=config_entry.entry_id, identifiers={(DOMAIN, "100002")}
+    )
+    await setup_entry(hass, config_entry)
+
+    diagnostics = await get_diagnostics_for_config_entry(
+        hass, hass_client, config_entry
+    )
+
+    assert diagnostics["account"] == {"units_reported": 2, "units_set_up": 1}
+    [unit] = diagnostics["units"]
+    assert unit["name"] == "Ducted AC"
+    [unit] = diagnostics["units_not_responding"]
+    assert unit["name"] == "Bedroom AC"
+    assert unit["capabilities"]["modelname"] == "PEA-M140HAA"
+    assert unit["data"] is None
+    assert unit["last_update_success"] is False
+    assert unit["last_error"].startswith(
+        "Unit is not communicating with the MelView server (COMM fault)"
+    )
+
+    diagnostics = await get_diagnostics_for_device(
+        hass, hass_client, config_entry, device
+    )
+
+    assert diagnostics["unit"]["name"] == "Bedroom AC"
+    assert diagnostics["set_up"] is False
+
+
+async def test_device_diagnostics_for_removed_unit(
+    hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
+    init_integration: MockConfigEntry,
+) -> None:
+    """A device for a unit no longer in the account still has a download."""
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=init_integration.entry_id, identifiers={(DOMAIN, "999999")}
+    )
+
+    diagnostics = await get_diagnostics_for_device(
+        hass, hass_client, init_integration, device
+    )
+
+    assert diagnostics["entry"]["data"] == {}
+    assert diagnostics["unit"] is None
+    assert diagnostics["set_up"] is False
