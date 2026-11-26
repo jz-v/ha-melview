@@ -207,6 +207,7 @@ class MelViewDevice:
         self.fan = dict(FANSTAGES[3])
         self.halfdeg = False
         self.model = None
+        self.modes = dict(MODE)
         self.temp_ranges = {}
 
     async def async_refresh_device_caps(self):
@@ -239,6 +240,17 @@ class MelViewDevice:
         if "hasautofan" in self._caps and self._caps["hasautofan"] == 1:
             self.fan[0] = "auto"
         self.fan_keyed = {value: key for key, value in self.fan.items()}
+        # Leave out modes only when the unit says it does not have them
+        unsupported = set()
+        if self._caps.get("hasautomode") == 0:
+            unsupported.add(HVACMode.AUTO)
+        if self._caps.get("hasdrymode") == 0:
+            unsupported.add(HVACMode.DRY)
+        if self._caps.get("hascoolonly") == 1:
+            unsupported |= {HVACMode.HEAT, HVACMode.AUTO}
+        self.modes = {
+            mode: code for mode, code in MODE.items() if mode not in unsupported
+        }
         if "max" in self._caps:
             for hvac_mode, mode_id in MODE.items():
                 caps_range = self._caps["max"].get(str(mode_id))
@@ -494,10 +506,10 @@ class MelViewDevice:
 
     async def async_set_mode(self, mode):
         """Set operating mode."""
-        if mode not in MODE:
+        if mode not in self.modes:
             raise MelViewValidationError(f"Mode {mode} not supported")
         await self._async_ensure_power_on()
-        return await self.async_send_command(f"MD{MODE[mode]}")
+        return await self.async_send_command(f"MD{self.modes[mode]}")
 
     async def async_enable_zone(self, zoneid):
         """Turn on a zone."""

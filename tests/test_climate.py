@@ -77,6 +77,52 @@ async def test_state(hass: HomeAssistant, init_integration: MockConfigEntry) -> 
     )
 
 
+@pytest.mark.parametrize(
+    ("caps", "modes"),
+    [
+        (
+            {"hasautomode": 0},
+            [HVACMode.HEAT, HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY],
+        ),
+        (
+            {"hasdrymode": 0},
+            [HVACMode.AUTO, HVACMode.HEAT, HVACMode.COOL, HVACMode.FAN_ONLY],
+        ),
+        ({"hascoolonly": 1}, [HVACMode.COOL, HVACMode.DRY, HVACMode.FAN_ONLY]),
+        # Flags the unit does not report leave every mode in
+        (
+            {"hasautomode": None, "hasdrymode": None, "hascoolonly": None},
+            [
+                HVACMode.AUTO,
+                HVACMode.HEAT,
+                HVACMode.COOL,
+                HVACMode.DRY,
+                HVACMode.FAN_ONLY,
+            ],
+        ),
+    ],
+)
+async def test_modes_from_capabilities(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+    caps: dict[str, int | None],
+    modes: list[HVACMode],
+) -> None:
+    """Only the modes the unit has are offered; None means the flag is missing."""
+    for key, value in caps.items():
+        if value is None:
+            del melview_api.caps[key]
+        else:
+            melview_api.caps[key] = value
+    await setup_entry(hass, config_entry)
+
+    assert hass.states.get(CLIMATE).attributes[ATTR_HVAC_MODES] == [
+        *modes,
+        HVACMode.OFF,
+    ]
+
+
 async def test_state_off(
     hass: HomeAssistant, melview_api: MelViewApi, config_entry: MockConfigEntry
 ) -> None:

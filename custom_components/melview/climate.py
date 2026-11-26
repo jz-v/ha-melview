@@ -40,7 +40,7 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
 
         self._attr_unique_id = device.get_id()
 
-        self._operations_list = [*MODE, HVACMode.OFF]
+        self._operations_list = [*self._device.modes, HVACMode.OFF]
         self._speeds_list = list(self._device.fan_keyed)
         # Fan codes already warned about, so each is logged once
         self._unknown_fan_codes: set = set()

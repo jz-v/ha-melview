@@ -11,7 +11,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.melview.melview import MelViewDevice, MelViewValidationError
 
-from .conftest import MelViewApi
+from .conftest import MelViewApi, setup_entry
 
 
 @pytest.fixture
@@ -43,6 +43,19 @@ async def test_invalid_input_rejected_before_sending(
 
     with pytest.raises(MelViewValidationError, match=message):
         await getattr(device, method)(value)
+    assert melview_api.commands == []
+
+
+async def test_mode_the_unit_does_not_have_rejected(
+    hass: HomeAssistant, melview_api: MelViewApi, config_entry: MockConfigEntry
+) -> None:
+    """A mode the unit does not have raises without sending anything."""
+    melview_api.caps["hascoolonly"] = 1
+    await setup_entry(hass, config_entry)
+    device = config_entry.runtime_data.coordinators[0].device
+
+    with pytest.raises(MelViewValidationError, match="Mode heat not supported"):
+        await device.async_set_mode(HVACMode.HEAT)
     assert melview_api.commands == []
 
 
