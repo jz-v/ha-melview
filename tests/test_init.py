@@ -417,6 +417,36 @@ async def test_unit_faults_logged_every_poll(
     )
 
 
+@pytest.mark.parametrize(
+    ("unit_data", "message"),
+    [
+        (
+            {"id": UNIT_ID, "error": "ok"},
+            "MelView sent unit data without fault (fields received: id, error)",
+        ),
+        (
+            {"id": UNIT_ID},
+            "MelView sent unit data without fault or error (fields received: id)",
+        ),
+        ({}, "MelView sent unit data without fault or error (fields received: none)"),
+    ],
+)
+async def test_unit_data_missing_fields(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    init_integration: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+    unit_data: dict,
+    message: str,
+) -> None:
+    """Unit data without the fault and error fields says what was missing."""
+    melview_api.unit = unit_data
+    await init_integration.runtime_data[0].async_refresh()
+
+    assert hass.states.get(CLIMATE).state == STATE_UNAVAILABLE
+    assert message in caplog.text
+
+
 @pytest.mark.parametrize("status", [401, 503])
 async def test_expired_session_logs_in_again(
     hass: HomeAssistant,

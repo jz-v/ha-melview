@@ -267,9 +267,16 @@ class MelViewDevice:
         self._json = None
         self._last_info_time_s = time.time()
 
-        self._json = await self._authentication.async_api_post(
+        data = await self._authentication.async_api_post(
             "unitcommand.aspx", {"unitid": self._deviceid, "v": APIVERSION}
         )
+        if missing := [key for key in ("fault", "error") if key not in data]:
+            _LOGGER.debug("Unexpected unit data: %s", data)
+            raise MelViewError(
+                f"MelView sent unit data without {' or '.join(missing)} "
+                f"(fields received: {', '.join(data) or 'none'})"
+            )
+        self._json = data
 
         fault = self._json["fault"]
         error = self._json["error"]
