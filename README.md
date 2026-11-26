@@ -78,6 +78,12 @@ Always attach a diagnostics download to a [new issue](https://github.com/jz-v/ha
 If the problem is an error or unexpected behaviour, also include debug logs: from the same **⋮** menu choose **Enable debug logging**, reproduce the problem, then choose **Disable debug logging** and attach the file that downloads. Debug logs leave out your password and name, but can include your email address and unit and zone names; remove as you see fit.
 
 ## Removal
+On Home Assistant 2026.11 or newer:
+1. **Settings → Marketplace**, open **Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Uninstall**.
+2. Choose **Delete and uninstall**. This deletes the setup, with its devices and entities, and removes the files.
+3. If a repair under **Settings → System → Repairs** asks you to restart, restart Home Assistant.
+
+On older versions:
 1. **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Delete**.
 2. To remove the files as well, open HACS, find **Mitsubishi Electric Wi-Fi Control**, open the **⋮** menu and choose **Remove**, then restart Home Assistant.
 
