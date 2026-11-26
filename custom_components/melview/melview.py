@@ -515,16 +515,14 @@ class MelView:
         self._localcontrol = localcontrol
 
     async def async_get_devices_list(self):
-        """Return all the devices found, as handlers."""
-        try:
-            reply = await self._authentication.async_api_post(
-                "rooms.aspx", {"unitid": 0}, headers=HEADERS
-            )
-        except MelViewAuthError:
-            raise
-        except Exception as err:  # noqa: BLE001 - any failure means "not ready, retry"
-            _LOGGER.error("Device list request failed: %s", err)
-            return None
+        """Return all the devices found, as handlers.
+
+        Raise if MelView cannot be reached or does not return the list, so
+        setup can retry with the reason.
+        """
+        reply = await self._authentication.async_api_post(
+            "rooms.aspx", {"unitid": 0}, headers=HEADERS
+        )
 
         devices = []
         for building in reply:

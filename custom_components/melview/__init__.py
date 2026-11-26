@@ -79,8 +79,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MelViewConfigEntry) -> b
     except (MelViewError, ClientError, TimeoutError) as err:
         raise ConfigEntryNotReady(f"Unable to connect to MelView: {err}") from err
     if not devices:
-        _LOGGER.debug("Unable to retrieve device list")
-        raise ConfigEntryNotReady("Unable to retrieve device list")
+        raise ConfigEntryNotReady("MelView returned an empty unit list")
 
     _cleanup_removed_devices(hass, entry, {str(device.get_id()) for device in devices})
 

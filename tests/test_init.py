@@ -122,6 +122,33 @@ async def test_setup_failures(
 
 
 @pytest.mark.parametrize(
+    ("break_api", "reason"),
+    [
+        (
+            rooms_server_error,
+            "Unable to connect to MelView: rooms.aspx failed (status 500)",
+        ),
+        (no_rooms, "MelView returned an empty unit list"),
+    ],
+)
+async def test_unit_list_failure_reason(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+    break_api: Callable[[MelViewApi], None],
+    reason: str,
+) -> None:
+    """A failed unit list retries setup with the reason, without logging an error."""
+    break_api(melview_api)
+    await setup_entry(hass, config_entry)
+
+    assert config_entry.state is ConfigEntryState.SETUP_RETRY
+    assert config_entry.reason == reason
+    assert not [record for record in caplog.records if record.levelno >= logging.ERROR]
+
+
+@pytest.mark.parametrize(
     "break_api", [credentials_rejected, credentials_rejected_after_session_expires]
 )
 async def test_setup_rejected_credentials_start_reauth(
