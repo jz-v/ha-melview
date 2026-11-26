@@ -125,8 +125,8 @@ async def async_migrate_entry(hass, config_entry):
 
     if CONF_LOCAL in data:
         options[CONF_LOCAL] = data.pop(CONF_LOCAL)
-    if CONF_SENSOR in data:
-        options[CONF_SENSOR] = data.pop(CONF_SENSOR)
+    data.pop(CONF_SENSOR, None)
+    options.pop(CONF_SENSOR, None)
 
     hass.config_entries.async_update_entry(config_entry, data=data, options=options)
     return True

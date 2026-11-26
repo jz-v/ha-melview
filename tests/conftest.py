@@ -20,7 +20,7 @@ from pytest_homeassistant_custom_component.test_util.aiohttp import (
     AiohttpClientMockResponse,
 )
 
-from custom_components.melview.const import CONF_LOCAL, CONF_SENSOR, DOMAIN
+from custom_components.melview.const import CONF_LOCAL, DOMAIN
 
 API_URL = "https://api.melview.net/api"
 EMAIL = "user@example.com"
@@ -209,7 +209,7 @@ def config_entry() -> MockConfigEntry:
         title=EMAIL,
         unique_id=EMAIL,
         data={CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD},
-        options={CONF_LOCAL: False, CONF_SENSOR: True},
+        options={CONF_LOCAL: False},
     )
 
 

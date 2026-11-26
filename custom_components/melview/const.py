@@ -4,6 +4,8 @@ DOMAIN = "melview"
 MANUFACTURER = "Mitsubishi Electric"
 
 CONF_LOCAL = "local"
+# Former option to create the sensors, which are now always created; setup
+# removes it from older entries
 CONF_SENSOR = "sensor"
 
 # README section on raising an issue with a diagnostics download

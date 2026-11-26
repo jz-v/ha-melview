@@ -17,14 +17,12 @@
                 "data": {
                     "email": "Email",
                     "password": "Password",
-					"local": "Local commands (faster)",
-                    "sensor": "Current temperature"
+                    "local": "Local commands (faster)"
                 },
                 "data_description": {
                     "email": "The email you use to log in to the Mitsubishi Electric Wi-Fi Control app.",
                     "password": "The password for that account.",
-                    "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands.",
-                    "sensor": "Create sensor entities for room temperature, plus air temperature and core efficiency sensors for Lossnay units."
+                    "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands."
                 },
                 "description": "Enter your AU/NZ Mitsubishi Electric Wi‑Fi Control account credentials.\n\n0.5° temperature steps will be available if enabled in the Wi‑Fi Control app.",
                 "title": "Connect to Mitsubishi Electric Wi‑Fi Control"
@@ -55,12 +53,10 @@
         "step": {
             "init": {
                 "data": {
-					"local": "Local commands (faster)",
-                    "sensor": "Current temperature"
+                    "local": "Local commands (faster)"
                 },
                 "data_description": {
-                    "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands.",
-                    "sensor": "Create sensor entities for room temperature, plus air temperature and core efficiency sensors for Lossnay units."
+                    "local": "Send commands directly to the device over LAN. Internet is still required to verify and dispatch commands."
                 },
                 "description": "0.5° temperature steps will be available if enabled in the Wi‑Fi Control app.",
                 "title": "Options"

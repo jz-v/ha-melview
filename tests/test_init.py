@@ -252,25 +252,25 @@ async def test_options_moved_out_of_data(
     await setup_entry(hass, entry)
 
     assert entry.data == {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
-    assert entry.options == {CONF_LOCAL: False, CONF_SENSOR: False}
+    assert entry.options == {CONF_LOCAL: False}
 
 
 async def test_saving_options_reloads(
-    hass: HomeAssistant, init_integration: MockConfigEntry
+    hass: HomeAssistant, melview_api: MelViewApi, init_integration: MockConfigEntry
 ) -> None:
     """Changed options apply as soon as they are saved."""
-    sensor = "sensor.ducted_ac_current_temperature"
-    assert hass.states.get(sensor).state == "21.5"
-
     result = await hass.config_entries.options.async_init(init_integration.entry_id)
     await hass.config_entries.options.async_configure(
-        result["flow_id"], {CONF_LOCAL: False, CONF_SENSOR: False}
+        result["flow_id"], {CONF_LOCAL: True}
     )
     await hass.async_block_till_done()
 
-    # The entry reloaded without the sensor, so it is no longer provided
+    # The entry reloaded with local commands on, so commands also go over the LAN
     assert init_integration.state is ConfigEntryState.LOADED
-    assert hass.states.get(sensor).state == STATE_UNAVAILABLE
+    await hass.services.async_call(
+        "climate", "turn_off", {"entity_id": CLIMATE}, blocking=True
+    )
+    assert melview_api.local_commands
 
 
 async def test_yaml_config_warns_once(

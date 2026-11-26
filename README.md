@@ -12,7 +12,7 @@ Features:
  - fast (local) commands
  - zone control support (for ducted systems)
  - standby/preheating detection
- - optional 'current temperature' sensor entity
+ - room temperature sensor entity
  - Lossnay ERV support (experimental, see below)
 
 Note: this integration will only work for units in Australia and New Zealand.
@@ -35,9 +35,10 @@ Requires Home Assistant 2025.8 or newer. Please completely remove any existing c
 Setup asks for:
  - **Email** and **Password**: your Mitsubishi Electric Wi-Fi Control app login.
  - **Local commands (faster)**: also send commands to the adapter over LAN, see [About 'local commands'](#about-local-commands). Default: on.
- - **Current temperature**: create sensor entities for room temperature (and the [Lossnay sensors](#lossnay-support)). Default: on.
 
-Local commands and Current temperature can be changed later under **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control → Configure**. Changes apply as soon as they are saved.
+Local commands can be changed later under **Settings → Devices & services → Mitsubishi Electric Wi-Fi Control → Configure**. Changes apply as soon as they are saved.
+
+Each unit gets a room temperature sensor (and the [Lossnay sensors](#lossnay-support)). To hide one you don't need, disable it on its entity settings page.
 
 ## Compatible devices
 This integration is intended to work with any AU/NZ region Wi-Fi adapter connecting to the melview API:

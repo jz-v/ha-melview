@@ -16,7 +16,7 @@ from homeassistant.helpers.selector import (
 )
 import voluptuous as vol
 
-from .const import CONF_LOCAL, CONF_SENSOR, DOMAIN
+from .const import CONF_LOCAL, DOMAIN
 from .melview import MelViewAuthentication, MelViewError
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,7 +31,6 @@ USER_SCHEMA = vol.Schema(
         ),
         vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
         vol.Required(CONF_LOCAL, default=True): bool,
-        vol.Required(CONF_SENSOR, default=True): bool,
     }
 )
 PASSWORD_SCHEMA = vol.Schema({vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR})
@@ -46,7 +45,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Initialize."""
         self._errors: dict[str, str] = {}
 
-    async def _create_entry(self, email: str, password: str, local: bool, sensor: bool):
+    async def _create_entry(self, email: str, password: str, local: bool):
         """Register new entry."""
         await self.async_set_unique_id(email)
         self._abort_if_unique_id_configured({CONF_EMAIL: email})
@@ -56,10 +55,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_EMAIL: email,
                 CONF_PASSWORD: password,
             },
-            options={
-                CONF_LOCAL: local,
-                CONF_SENSOR: sensor,
-            },
+            options={CONF_LOCAL: local},
         )
 
     async def _async_login(
@@ -85,7 +81,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         *,
         password: str,
         local: bool,
-        sensor: bool,
     ):
         """Create client and validate credentials."""
         auth, error = await self._async_login(email, password)
@@ -96,7 +91,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             elif units == 0:
                 error = "no_units"
             else:
-                return await self._create_entry(email, password, local, sensor)
+                return await self._create_entry(email, password, local)
 
         self._errors = {"base": error}
         # Show the form again with what the user entered, except the password
@@ -104,7 +99,7 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=self.add_suggested_values_to_schema(
                 USER_SCHEMA,
-                {CONF_EMAIL: email, CONF_LOCAL: local, CONF_SENSOR: sensor},
+                {CONF_EMAIL: email, CONF_LOCAL: local},
             ),
             errors=self._errors,
         )
@@ -121,7 +116,6 @@ class FlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             email,
             password=user_input[CONF_PASSWORD],
             local=user_input[CONF_LOCAL],
-            sensor=user_input[CONF_SENSOR],
         )
 
     async def _async_step_new_password(self, step_id: str, entry, user_input):
@@ -180,25 +174,15 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithReload):
             return self.async_create_entry(title="", data=user_input)
 
         local = True
-        sensor = True
 
         if CONF_LOCAL in self._config_entry.data:
             local = self._config_entry.data[CONF_LOCAL]
-        if CONF_SENSOR in self._config_entry.data:
-            sensor = self._config_entry.data[CONF_SENSOR]
 
         if self._config_entry.options:
             if CONF_LOCAL in self._config_entry.options:
                 local = self._config_entry.options[CONF_LOCAL]
-            if CONF_SENSOR in self._config_entry.options:
-                sensor = self._config_entry.options[CONF_SENSOR]
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_LOCAL, default=local): bool,
-                    vol.Required(CONF_SENSOR, default=sensor): bool,
-                }
-            ),
+            data_schema=vol.Schema({vol.Required(CONF_LOCAL, default=local): bool}),
         )

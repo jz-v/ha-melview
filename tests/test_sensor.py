@@ -3,12 +3,13 @@
 from homeassistant.components.climate import ATTR_CURRENT_TEMPERATURE
 from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.melview.const import CONF_SENSOR, DOMAIN
+from custom_components.melview.const import CONF_LOCAL, CONF_SENSOR, DOMAIN
 
-from .conftest import EMAIL, MelViewApi, setup_entry
+from .conftest import EMAIL, UNIT_ID, MelViewApi, setup_entry
 
 CLIMATE = "climate.ducted_ac"
 ROOM_TEMP = "sensor.ducted_ac_current_temperature"
@@ -25,20 +26,37 @@ async def test_current_temperature(
     assert "source" not in state.attributes
 
 
-async def test_sensor_option_off(
-    hass: HomeAssistant, melview_api: MelViewApi, config_entry: MockConfigEntry
+@pytest.mark.parametrize("sensor_option", [True, False])
+async def test_old_sensor_option_removed(
+    hass: HomeAssistant,
+    melview_api: MelViewApi,
+    config_entry: MockConfigEntry,
+    sensor_option: bool,
 ) -> None:
-    """No sensors are created when the option is off."""
+    """The former sensor option is removed and the sensors are created either way.
+
+    With the option off, earlier versions left the sensor unavailable; the
+    same entity is used again.
+    """
     entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id=EMAIL,
         data=config_entry.data,
-        options={**config_entry.options, CONF_SENSOR: False},
+        options={CONF_LOCAL: False, CONF_SENSOR: sensor_option},
     )
-    await setup_entry(hass, entry)
+    entry.add_to_hass(hass)
+    er.async_get(hass).async_get_or_create(
+        "sensor",
+        DOMAIN,
+        f"{UNIT_ID}_current_temp",
+        config_entry=entry,
+        suggested_object_id="ducted_ac_current_temperature",
+    )
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
 
-    assert hass.states.get(CLIMATE)
-    assert hass.states.get(ROOM_TEMP) is None
+    assert entry.options == {CONF_LOCAL: False}
+    assert hass.states.get(ROOM_TEMP).state == "21.5"
 
 
 async def test_missing_temperature_is_unknown(

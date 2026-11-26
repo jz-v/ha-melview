@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -14,10 +12,7 @@ from homeassistant.const import PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_SENSOR
 from .entity import MelViewBaseEntity
-
-_LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 0
 
@@ -28,10 +23,6 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up MelView temperature sensors from a config entry."""
-    if not entry.options.get(CONF_SENSOR, True):
-        _LOGGER.debug("Sensor option is disabled in config entry.")
-        return
-
     coordinators = entry.runtime_data.coordinators
 
     entities = [MelViewCurrentTempSensor(coordinator) for coordinator in coordinators]

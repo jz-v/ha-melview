@@ -11,7 +11,7 @@ from pytest_homeassistant_custom_component.components.diagnostics import (
 )
 from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
 
-from custom_components.melview.const import CONF_LOCAL, CONF_SENSOR, DOMAIN
+from custom_components.melview.const import CONF_LOCAL, DOMAIN
 
 from .conftest import EMAIL, LOCAL_IP, PASSWORD, UNIT_ID, MelViewApi, setup_entry
 
@@ -38,7 +38,7 @@ async def test_config_entry_diagnostics(
     assert "title" not in entry
     assert "unique_id" not in entry
     assert entry["data"] == {}
-    assert entry["options"] == {CONF_LOCAL: False, CONF_SENSOR: True}
+    assert entry["options"] == {CONF_LOCAL: False}
     assert diagnostics["account"] == {"units_reported": 1, "units_set_up": 1}
     assert diagnostics["units_not_responding"] == []
 

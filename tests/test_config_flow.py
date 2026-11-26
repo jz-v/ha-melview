@@ -19,7 +19,6 @@ USER_INPUT = {
     CONF_EMAIL: " User@Example.com ",
     CONF_PASSWORD: PASSWORD,
     CONF_LOCAL: True,
-    CONF_SENSOR: False,
 }
 
 pytestmark = pytest.mark.usefixtures("mock_setup_entry")
@@ -90,7 +89,7 @@ async def test_user_flow(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == EMAIL
     assert result["data"] == {CONF_EMAIL: EMAIL, CONF_PASSWORD: PASSWORD}
-    assert result["options"] == {CONF_LOCAL: True, CONF_SENSOR: False}
+    assert result["options"] == {CONF_LOCAL: True}
     assert result["result"].unique_id == EMAIL
     assert len(mock_setup_entry.mock_calls) == 1
 
@@ -130,7 +129,7 @@ async def test_user_flow_errors(
         key.schema: key.description["suggested_value"]
         for key in result["data_schema"].schema
         if key.description
-    } == {CONF_EMAIL: EMAIL, CONF_LOCAL: True, CONF_SENSOR: False}
+    } == {CONF_EMAIL: EMAIL, CONF_LOCAL: True}
 
     restore(melview_api)
     result = await hass.config_entries.flow.async_configure(
@@ -236,14 +235,14 @@ async def test_options_flow(hass: HomeAssistant, config_entry: MockConfigEntry) 
     config_entry.add_to_hass(hass)
     result = await hass.config_entries.options.async_init(config_entry.entry_id)
     assert result["type"] is FlowResultType.FORM
-    assert result["data_schema"]({}) == {CONF_LOCAL: False, CONF_SENSOR: True}
+    assert result["data_schema"]({}) == {CONF_LOCAL: False}
 
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {CONF_LOCAL: True, CONF_SENSOR: False}
+        result["flow_id"], {CONF_LOCAL: True}
     )
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert config_entry.options == {CONF_LOCAL: True, CONF_SENSOR: False}
+    assert config_entry.options == {CONF_LOCAL: True}
 
 
 async def test_options_flow_legacy_data(hass: HomeAssistant) -> None:
@@ -261,4 +260,4 @@ async def test_options_flow_legacy_data(hass: HomeAssistant) -> None:
     entry.add_to_hass(hass)
     result = await hass.config_entries.options.async_init(entry.entry_id)
 
-    assert result["data_schema"]({}) == {CONF_LOCAL: False, CONF_SENSOR: False}
+    assert result["data_schema"]({}) == {CONF_LOCAL: False}
