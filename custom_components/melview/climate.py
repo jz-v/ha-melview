@@ -78,19 +78,37 @@ class MelViewClimate(MelViewBaseEntity, ClimateEntity):
         return self._precision
 
     @property
-    def temperature_unit(self):
-        """Define unit for temperature."""
+    def native_temperature_unit(self) -> str:
+        """Return the unit temperatures are reported in."""
         return UnitOfTemperature.CELSIUS
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         """Get the current room temperature."""
         return self._data_float("roomtemp")
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Get the target temperature."""
         return self._data_float("settemp")
+
+    # Home Assistant before 2026.11 reads these names instead of the native_
+    # ones above. Remove them once the minimum version in hacs.json is 2026.11
+    # or newer; Home Assistant 2027.11 stops supporting them.
+    @property
+    def temperature_unit(self) -> str:
+        """Return the unit temperatures are reported in."""
+        return self.native_temperature_unit
+
+    @property
+    def current_temperature(self) -> float | None:
+        """Get the current room temperature."""
+        return self.native_current_temperature
+
+    @property
+    def target_temperature(self) -> float | None:
+        """Get the target temperature."""
+        return self.native_target_temperature
 
     @property
     def min_temp(self) -> float:
